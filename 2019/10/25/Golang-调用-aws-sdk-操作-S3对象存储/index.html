@@ -1,0 +1,347 @@
+<!DOCTYPE HTML>
+<html lang="cn">
+
+<head>
+    <!--Setting-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Cache-Control" content="no-siteapp">
+    <meta http-equiv="Cache-Control" content="no-transform">
+    <meta name="renderer" content="webkit|ie-comp|ie-stand">
+    <meta name="apple-mobile-web-app-capable" content="Yemilice">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no,email=no,adress=no">
+    <meta name="browsermode" content="application">
+    <meta name="screen-orientation" content="portrait">
+    <meta name="theme-version" content="1.2.3">
+    <meta name="root" content="/">
+    <link rel="dns-prefetch" href="http://yoursite.com">
+    <!--SEO-->
+
+<meta name="keywords" content="前后端" />
+
+
+<meta name="description" content="Golang 调用 aws-sdk 操作 S3对象存储前言因为业务问题，要写一个S3对象存储管理代码，由于一直写Go，所以这次采用了Go，Go嘛，快，自带多线程，这种好处就不用多说了吧。
+基础的..." />
+
+
+<meta name="robots" content="all" />
+<meta name="google" content="all" />
+<meta name="googlebot" content="all" />
+<meta name="verify" content="all" />
+    <!--Title-->
+
+<title>
+    
+    Golang 调用 aws-sdk 操作 S3对象存储 |
+    
+    Yemilice
+</title>
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+
+
+<link rel="icon" href="/favicon.ico">
+
+    
+
+<link rel="stylesheet" href="/css/bootstrap.min.css?rev=3.3.7">
+<link rel="stylesheet" href="/css/font-awesome.min.css?rev=4.7.0">
+<link rel="stylesheet" href="/css/style.css?rev=@@hash">
+    
+<div class="hide">
+    <script type="text/javascript">
+    var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cspan class='cnzz_stat_icon_1263868967 hide' %3E%3Cscript%20src%3D%22https%3A%2F%2Fs95.cnzz.com%2Fz_stat.php%3Fweb_id%3D1272564536%22%3E%3C%2Fscript%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s19.cnzz.com/z_stat.php%3Fid%3D1263868967%26show%3Dpic1' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+</div>
+
+
+
+
+    
+
+</head>
+<!--[if lte IE 8]>
+<style>
+    html{ font-size: 1em }
+</style>
+<![endif]-->
+<!--[if lte IE 9]>
+<div style="ie">你使用的浏览器版本过低，为了你更好的阅读体验，请更新浏览器的版本或者使用其他现代浏览器，比如Chrome、Firefox、Safari等。</div>
+<![endif]-->
+<body>
+    <header class="main-header"  style="background-image:url(
+    /./img/1.jpg)"
+     >
+    <div class="main-header-box">
+        <a class="header-avatar" href="/" title='Yemilice lau'>
+            <img src="/img/avatar.jpg" alt="logo头像" class="img-responsive center-block">
+        </a>
+        <div class="branding">
+            <!--<h2 class="text-hide">Snippet主题,从未如此简单有趣</h2>-->
+            
+            <img src="/img/branding.png" alt="Snippet 博客主题" class="img-responsive center-block">
+            
+        </div>
+    </div>
+</header>
+    <nav class="main-navigation">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="navbar-header"><span class="nav-toggle-button collapsed pull-right" data-toggle="collapse" data-target="#main-menu" id="mnav">
+                        <span class="sr-only"></span>
+                        <i class="fa fa-bars"></i>
+                    </span>
+                    <a class="navbar-brand" href="http://yoursite.com">
+                        Yemilice</a>
+                </div>
+                <div class="collapse navbar-collapse" id="main-menu">
+                    <ul class="menu">
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/"><i class="fa "></i>
+                                Home</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/安全/"><i class="fa "></i>
+                                安全</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/前后端/"><i class="fa "></i>
+                                前后端</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/算法/"><i class="fa "></i>
+                                算法</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/其他技术/"><i class="fa "></i>
+                                其他技术</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/杂七杂八/"><i class="fa "></i>
+                                杂七杂八</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/archives/"><i class="fa "></i>
+                                时间轴</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+    <section class="content-wrap">
+        <div class="container">
+            <div class="row">
+                <main class="col-md-8 main-content m-post">
+                    <p id="process"></p>
+<article class="post">
+    <div class="post-head">
+        <h1 id="Golang 调用 aws-sdk 操作 S3对象存储">
+            
+            Golang 调用 aws-sdk 操作 S3对象存储
+            
+        </h1>
+        <div class="post-meta">
+    
+    <span class="categories-meta fa-wrap">
+        <i class="fa fa-folder-open-o"></i>
+        
+    </span>
+    
+    
+    <span class="fa-wrap">
+        <i class="fa fa-tags"></i>
+        <span class="tags-meta">
+            
+            <a class="tag-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a>
+            
+        </span>
+    </span>
+    
+    
+    
+    <span class="fa-wrap">
+        <i class="fa fa-clock-o"></i>
+        <span class="date-meta">
+            2019/10/25</span>
+    </span>
+    
+    <span class="fa-wrap">
+        <i class="fa fa-eye"></i>
+        <span id="busuanzi_value_page_pv"></span>
+    </span>
+    
+    
+</div>
+        
+        
+    </div>
+    
+    <div class="post-body post-content">
+        <h1 id="Golang-调用-aws-sdk-操作-S3对象存储"><a href="#Golang-调用-aws-sdk-操作-S3对象存储" class="headerlink" title="Golang 调用 aws-sdk 操作 S3对象存储"></a>Golang 调用 aws-sdk 操作 S3对象存储</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>因为业务问题，要写一个S3对象存储管理代码，由于一直写Go，所以这次采用了Go，Go嘛，快，自带多线程，这种好处就不用多说了吧。</p>
+<h2 id="基础的功能"><a href="#基础的功能" class="headerlink" title="基础的功能"></a>基础的功能</h2><ol>
+<li>查看S3中包含的bucket</li>
+<li>bucket中的文件/文件夹</li>
+<li>bucket的删除</li>
+<li>bucket的创建</li>
+<li>bucket的文件上传</li>
+<li>bucket的文件下载</li>
+<li>bucket的文件删除  </li>
+</ol>
+<h2 id="aws-sdk-的安装"><a href="#aws-sdk-的安装" class="headerlink" title="aws-sdk 的安装"></a>aws-sdk 的安装</h2><p>玩Golang你还能不会那啥？对吧，那啥？那飞机！那飞机场，安上~  </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go get github.com/aws/aws-sdk-go</span><br></pre></td></tr></table></figure>
+<h2 id="aws-sdk-go-的基础使用"><a href="#aws-sdk-go-的基础使用" class="headerlink" title="aws-sdk-go 的基础使用"></a>aws-sdk-go 的基础使用</h2><h3 id="构建基础的S3连接"><a href="#构建基础的S3连接" class="headerlink" title="构建基础的S3连接"></a>构建基础的S3连接</h3><p>访问S3的时候，咱们需要access_key，secret_key，对象存储访问IP这三个参数，我们首先要创建一个aws的config，说白了，我们需要定义aws的配置，这样它才知道要怎么访问，去哪里访问等问题。<br>构建一个S3连接代码如下</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"os"</span></span><br><span class="line">    <span class="string">"github.com/aws/aws-sdk-go/aws"</span></span><br><span class="line">    <span class="string">"github.com/aws/aws-sdk-go/aws/credentials"</span></span><br><span class="line">    _ <span class="string">"github.com/aws/aws-sdk-go/service/s3/s3manager"</span></span><br><span class="line">    <span class="string">"github.com/aws/aws-sdk-go/aws/session"</span></span><br><span class="line">    <span class="string">"github.com/aws/aws-sdk-go/service/s3"</span></span><br><span class="line">)</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">    access_key := <span class="string">"xxxxxxxxxxxxx"</span></span><br><span class="line">    secret_key := <span class="string">"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"</span></span><br><span class="line">	end_point := <span class="string">"http://xx.xx.xx.xx:7480"</span> <span class="comment">//endpoint设置，不要动</span></span><br><span class="line">	</span><br><span class="line">	sess, err := session.NewSession(&amp;aws.Config&#123;</span><br><span class="line">        Credentials:      credentials.NewStaticCredentials(access_key, secret_key, <span class="string">""</span>),</span><br><span class="line">        Endpoint:         aws.String(end_point),</span><br><span class="line">        Region:           aws.String(<span class="string">"us-east-1"</span>),</span><br><span class="line">        DisableSSL:       aws.Bool(<span class="literal">true</span>),</span><br><span class="line">        S3ForcePathStyle: aws.Bool(<span class="literal">false</span>), <span class="comment">//virtual-host style方式，不要修改</span></span><br><span class="line">	&#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这时候需要你自己去定义一下access_key，secret_key，end_point这三个参数<br>接下来所有的代码，都是以这个连接模板，为核心，后面我就用<strong>同上</strong>代替配置，请注意！<br>所有的代码都传到GIT上了，到时候会给出地址，不懂得copy下来吧！</p>
+<h3 id="查看S3中包含的bucket"><a href="#查看S3中包含的bucket" class="headerlink" title="查看S3中包含的bucket"></a>查看S3中包含的bucket</h3><p>查看所有的bucket</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    导入包同上</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">exitErrorf</span><span class="params">(msg <span class="keyword">string</span>, args ...<span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">    fmt.Fprintf(os.Stderr, msg+<span class="string">"\n"</span>, args...)</span><br><span class="line">    os.Exit(<span class="number">1</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">    配置同上</span><br><span class="line"></span><br><span class="line">	svc := s3.New(sess)</span><br><span class="line">	result, err := svc.ListBuckets(<span class="literal">nil</span>)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		exitErrorf(<span class="string">"Unable to list buckets, %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	fmt.Println(<span class="string">"Buckets:"</span>)</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">for</span> _, b := <span class="keyword">range</span> result.Buckets &#123;</span><br><span class="line">		fmt.Printf(<span class="string">"* %s created on %s\n"</span>,</span><br><span class="line">			aws.StringValue(b.Name), aws.TimeValue(b.CreationDate))</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> _, b := <span class="keyword">range</span> result.Buckets &#123;</span><br><span class="line">		fmt.Printf(<span class="string">"%s\n"</span>, aws.StringValue(b.Name))</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="列出bucket中的文件-文件夹"><a href="#列出bucket中的文件-文件夹" class="headerlink" title="列出bucket中的文件/文件夹"></a>列出bucket中的文件/文件夹</h3><p>查看某个bucket中包含的文件/文件夹</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">"github.com/aws/aws-sdk-go/aws"</span></span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/aws/session"</span></span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/aws/credentials"</span></span><br><span class="line">    <span class="string">"github.com/aws/aws-sdk-go/service/s3"</span></span><br><span class="line">    <span class="string">"fmt"</span></span><br><span class="line">    <span class="string">"os"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">exitErrorf</span><span class="params">(msg <span class="keyword">string</span>, args ...<span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">    fmt.Fprintf(os.Stderr, msg+<span class="string">"\n"</span>, args...)</span><br><span class="line">    os.Exit(<span class="number">1</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">    配置同上</span><br><span class="line"></span><br><span class="line">    <span class="comment">// bucket后跟，go run ....go bucketname</span></span><br><span class="line">    bucket := os.Args[<span class="number">1</span>]</span><br><span class="line">	fmt.Printf(bucket)</span><br><span class="line">	fmt.Printf(<span class="string">"\n"</span>)</span><br><span class="line"></span><br><span class="line">	svc := s3.New(sess)</span><br><span class="line"></span><br><span class="line">	params := &amp;s3.ListObjectsInput&#123;</span><br><span class="line">		Bucket:             aws.String(bucket), </span><br><span class="line">    &#125;</span><br><span class="line">	resp, err := svc.ListObjects(params)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		exitErrorf(<span class="string">"Unable to list items in bucket %q, %v"</span>, bucket, err)</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> resp.Contents &#123;</span><br><span class="line">		fmt.Println(<span class="string">"Name:         "</span>, *item.Key)</span><br><span class="line">		fmt.Println(<span class="string">"Last modified:"</span>, *item.LastModified)</span><br><span class="line">		fmt.Println(<span class="string">"Size:         "</span>, *item.Size)</span><br><span class="line">		fmt.Println(<span class="string">"Storage class:"</span>, *item.StorageClass)</span><br><span class="line">		fmt.Println(<span class="string">""</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="bucket的创建"><a href="#bucket的创建" class="headerlink" title="bucket的创建"></a>bucket的创建</h3><p>创建bucket</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    导包同上</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">exitErrorf</span><span class="params">(msg <span class="keyword">string</span>, args ...<span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">    fmt.Fprintf(os.Stderr, msg+<span class="string">"\n"</span>, args...)</span><br><span class="line">    os.Exit(<span class="number">1</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">    配置同上</span><br><span class="line"></span><br><span class="line">	bucket := os.Args[<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(os.Args) != <span class="number">2</span> &#123;</span><br><span class="line">		exitErrorf(<span class="string">"Bucket name required\nUsage: %s bucket_name"</span>,</span><br><span class="line">			os.Args[<span class="number">0</span>])</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Create S3 service client</span></span><br><span class="line">	svc := s3.New(sess)</span><br><span class="line"></span><br><span class="line">	params := &amp;s3.CreateBucketInput&#123;</span><br><span class="line">		Bucket: aws.String(bucket),</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">	_, err = svc.CreateBucket(params)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		exitErrorf(<span class="string">"Unable to create bucket %q, %v"</span>, bucket, err)</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// Wait until bucket is created before finishing</span></span><br><span class="line">	fmt.Printf(<span class="string">"Waiting for bucket %q to be created...\n"</span>, bucket)</span><br><span class="line">	</span><br><span class="line">	err = svc.WaitUntilBucketExists(&amp;s3.HeadBucketInput&#123;</span><br><span class="line">		Bucket: aws.String(bucket),</span><br><span class="line">	&#125;)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		exitErrorf(<span class="string">"Error occurred while waiting for bucket to be created, %v"</span>, bucket)</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	fmt.Printf(<span class="string">"Bucket %q successfully created\n"</span>, bucket)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="bucket的文件上传"><a href="#bucket的文件上传" class="headerlink" title="bucket的文件上传"></a>bucket的文件上传</h3><p>往某个固定的bucket里传文件</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/aws"</span></span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/aws/session"</span></span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/aws/credentials"</span></span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/service/s3/s3manager"</span></span><br><span class="line">    <span class="string">"fmt"</span></span><br><span class="line">    <span class="string">"os"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">exitErrorf</span><span class="params">(msg <span class="keyword">string</span>, args ...<span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">    fmt.Fprintf(os.Stderr, msg+<span class="string">"\n"</span>, args...)</span><br><span class="line">    os.Exit(<span class="number">1</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">    配置同上</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(os.Args) != <span class="number">3</span> &#123;</span><br><span class="line">		exitErrorf(<span class="string">"bucket and file name required\nUsage: %s bucket_name filename"</span>,</span><br><span class="line">			os.Args[<span class="number">0</span>])</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	bucket := os.Args[<span class="number">1</span>]</span><br><span class="line">	filename := os.Args[<span class="number">2</span>]</span><br><span class="line">	</span><br><span class="line">	file, err := os.Open(filename)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		exitErrorf(<span class="string">"Unable to open file %q, %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">defer</span> file.Close()</span><br><span class="line"></span><br><span class="line">	uploader := s3manager.NewUploader(sess)</span><br><span class="line"></span><br><span class="line">	_, err = uploader.Upload(&amp;s3manager.UploadInput&#123;</span><br><span class="line">		Bucket: aws.String(bucket),</span><br><span class="line">		Key: aws.String(filename),</span><br><span class="line">		Body: file,</span><br><span class="line">	&#125;)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="comment">// Print the error and exit.</span></span><br><span class="line">		exitErrorf(<span class="string">"Unable to upload %q to %q, %v"</span>, filename, bucket, err)</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	fmt.Printf(<span class="string">"Successfully uploaded %q to %q\n"</span>, filename, bucket)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="bucket的文件下载"><a href="#bucket的文件下载" class="headerlink" title="bucket的文件下载"></a>bucket的文件下载</h3><p>下载某个bucket中的某个文件</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/aws"</span></span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/aws/session"</span></span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/aws/credentials"</span></span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/service/s3"</span></span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/service/s3/s3manager"</span></span><br><span class="line"></span><br><span class="line">    <span class="string">"fmt"</span></span><br><span class="line">    <span class="string">"os"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">exitErrorf</span><span class="params">(msg <span class="keyword">string</span>, args ...<span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">    fmt.Fprintf(os.Stderr, msg+<span class="string">"\n"</span>, args...)</span><br><span class="line">    os.Exit(<span class="number">1</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">    配置同上</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(os.Args) != <span class="number">3</span> &#123;</span><br><span class="line">		exitErrorf(<span class="string">"Bucket and item names required\nUsage: %s bucket_name item_name"</span>,</span><br><span class="line">			os.Args[<span class="number">0</span>])</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	bucket := os.Args[<span class="number">1</span>]</span><br><span class="line">	item := os.Args[<span class="number">2</span>]</span><br><span class="line"></span><br><span class="line">	file, err := os.Create(item)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        exitErrorf(<span class="string">"Unable to open file %q, %v"</span>, err)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">defer</span> file.Close()</span><br><span class="line">	</span><br><span class="line">	downloader := s3manager.NewDownloader(sess)</span><br><span class="line"></span><br><span class="line">	numBytes, err := downloader.Download(file,</span><br><span class="line">    &amp;s3.GetObjectInput&#123;</span><br><span class="line">        Bucket: aws.String(bucket),</span><br><span class="line">        Key:    aws.String(item),</span><br><span class="line">    &#125;)</span><br><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    exitErrorf(<span class="string">"Unable to download item %q, %v"</span>, item, err)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">fmt.Println(<span class="string">"Downloaded"</span>, file.Name(), numBytes, <span class="string">"bytes"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="bucket的文件删除"><a href="#bucket的文件删除" class="headerlink" title="bucket的文件删除"></a>bucket的文件删除</h3><p>删除某个bucket里面的某个文件</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/aws"</span></span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/aws/session"</span></span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/aws/credentials"</span></span><br><span class="line">	<span class="string">"github.com/aws/aws-sdk-go/service/s3"</span></span><br><span class="line">    <span class="string">"fmt"</span></span><br><span class="line">    <span class="string">"os"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">exitErrorf</span><span class="params">(msg <span class="keyword">string</span>, args ...<span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">    fmt.Fprintf(os.Stderr, msg+<span class="string">"\n"</span>, args...)</span><br><span class="line">    os.Exit(<span class="number">1</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">    配置同上</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(os.Args) != <span class="number">3</span> &#123;</span><br><span class="line">		exitErrorf(<span class="string">"Bucket and object name required\nUsage: %s bucket_name object_name"</span>,</span><br><span class="line">			os.Args[<span class="number">0</span>])</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	bucket := os.Args[<span class="number">1</span>]</span><br><span class="line">	obj := os.Args[<span class="number">2</span>]</span><br><span class="line">	</span><br><span class="line">	svc := s3.New(sess)</span><br><span class="line"></span><br><span class="line">	_, err = svc.DeleteObject(&amp;s3.DeleteObjectInput&#123;Bucket: aws.String(bucket), Key: aws.String(obj)&#125;)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		exitErrorf(<span class="string">"Unable to delete object %q from bucket %q, %v"</span>, obj, bucket, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	err = svc.WaitUntilObjectNotExists(&amp;s3.HeadObjectInput&#123;</span><br><span class="line">		Bucket: aws.String(bucket),</span><br><span class="line">		Key:    aws.String(obj),</span><br><span class="line">	&#125;)</span><br><span class="line"></span><br><span class="line">	fmt.Printf(<span class="string">"Object %q successfully deleted\n"</span>, obj)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="代码所在地"><a href="#代码所在地" class="headerlink" title="代码所在地"></a>代码所在地</h2><p><a href="https://github.com/Alexanderklau/Go_poject/tree/master/Go-Storage" target="_blank" rel="noopener">https://github.com/Alexanderklau/Go_poject/tree/master/Go-Storage</a></p>
+
+    </div>
+    
+    <div class="post-footer">
+        <div>
+            
+            转载声明：
+            商业转载请联系作者获得授权,非商业转载请注明出处 © <a href="" target="_blank">Yemilice</a>
+            
+            
+        </div>
+        <div>
+            
+        </div>
+    </div>
+</article>
+<div class="article-nav prev-next-wrap clearfix">
+    
+    <a href="/2019/10/25/Elasticsearch-for-python-API%E6%A8%A1%E5%9D%97%E5%8C%96%E5%B0%81%E8%A3%85/" class="pre-post btn btn-default" title='Elasticsearch for python API模块化封装'>
+        <i class="fa fa-angle-left fa-fw"></i><span class="hidden-lg">上一篇</span>
+        <span class="hidden-xs">
+            Elasticsearch for python API模块化封装</span>
+    </a>
+    
+    
+    <a href="/2019/10/25/%E7%A8%8B%E5%BA%8F%E5%91%98%E5%A6%82%E4%BD%95%E9%94%BB%E7%82%BC%E8%87%AA%E5%B7%B1%E7%9A%84%E4%BA%A7%E5%93%81%E6%80%9D%E7%BB%B4/" class="next-post btn btn-default" title='程序员如何锻炼自己的产品思维'>
+        <span class="hidden-lg">下一篇</span>
+        <span class="hidden-xs">
+            程序员如何锻炼自己的产品思维</span><i class="fa fa-angle-right fa-fw"></i>
+    </a>
+    
+</div>
+
+<div id="comments">
+    
+
+<div id="vcomments" class="valine"></div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src="/assets/valine.min.js"></script>
+<script>
+new Valine({
+    av: AV,
+    el: '#vcomments',
+    appId: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+    appKey: 'BXI6KlgeojX4R82TLkdGxsKJ',
+    placeholder: '来撩我一下？',
+    notify: false,
+    verify: true,
+    avatar: 'mm',
+    meta: 'nick,mail'.split(','),
+    pageSize: '10',
+    path: window.location.pathname,
+    lang: 'cn'.toLowerCase()
+})
+</script>
+
+
+</div>
+
+                </main>
+                
+                    <aside id="article-toc" role="navigation" class="col-md-4">
+    <div class="widget">
+        <h3 class="title">
+            Table of Contents
+        </h3>
+        
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Golang-调用-aws-sdk-操作-S3对象存储"><span class="toc-text">Golang 调用 aws-sdk 操作 S3对象存储</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#基础的功能"><span class="toc-text">基础的功能</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#aws-sdk-的安装"><span class="toc-text">aws-sdk 的安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#aws-sdk-go-的基础使用"><span class="toc-text">aws-sdk-go 的基础使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#构建基础的S3连接"><span class="toc-text">构建基础的S3连接</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#查看S3中包含的bucket"><span class="toc-text">查看S3中包含的bucket</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#列出bucket中的文件-文件夹"><span class="toc-text">列出bucket中的文件/文件夹</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bucket的创建"><span class="toc-text">bucket的创建</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bucket的文件上传"><span class="toc-text">bucket的文件上传</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bucket的文件下载"><span class="toc-text">bucket的文件下载</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bucket的文件删除"><span class="toc-text">bucket的文件删除</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#代码所在地"><span class="toc-text">代码所在地</span></a></li></ol></li></ol>
+        
+    </div>
+</aside>
+                
+            </div>
+        </div>
+    </section>
+    <footer class="main-footer">
+    <div class="container">
+        <div class="row">
+        </div>
+    </div>
+</footer>
+<a id="back-to-top" class="icon-btn hide">
+    <i class="fa fa-chevron-up"></i>
+</a>
+    <div class="copyright">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="busuanzi">
+    
+    Total:
+    <strong id="busuanzi_value_site_pv">
+        <i class="fa fa-spinner fa-spin"></i>
+    </strong>
+    &nbsp; | &nbsp;
+    Visitors:
+    <strong id="busuanzi_value_site_uv">
+        <i class="fa fa-spinner fa-spin"></i>
+    </strong>
+    
+</div>
+            </div>
+            <div class="col-sm-12">
+                <span>Copyright &copy;
+                    2019
+                    
+                </span> |
+                <span>
+                    Powered by <a href="//hexo.io" class="copyright-links" target="_blank" rel="nofollow">Hexo</a>
+                </span> |
+                <span>
+                    Theme by <a href="//github.com/shenliyang/hexo-theme-snippet.git" class="copyright-links" target="_blank" rel="nofollow">Snippet</a>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script src="/js/app.js?rev=@@hash"></script>
+</body>
+</html>
