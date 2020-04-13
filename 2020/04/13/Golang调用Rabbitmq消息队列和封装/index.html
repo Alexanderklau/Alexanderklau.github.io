@@ -1,0 +1,332 @@
+<!DOCTYPE HTML>
+<html lang="cn">
+
+<head>
+    <!--Setting-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Cache-Control" content="no-siteapp">
+    <meta http-equiv="Cache-Control" content="no-transform">
+    <meta name="renderer" content="webkit|ie-comp|ie-stand">
+    <meta name="apple-mobile-web-app-capable" content="Yemilice">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no,email=no,adress=no">
+    <meta name="browsermode" content="application">
+    <meta name="screen-orientation" content="portrait">
+    <meta name="theme-version" content="1.2.3">
+    <meta name="root" content="/">
+    <link rel="dns-prefetch" href="https://yemilice.com">
+    <!--SEO-->
+
+<meta name="keywords" content="前后端" />
+
+
+<meta name="description" content="前言介绍RabbimqRabbitmq消息队列是干嘛的？简单的说，消息队列，引申一下就是传递消息用的队列，也可以称为传递消息的通信方法。用争抢订单的快车举个例子，假如，A用户发送了一个用车的消息..." />
+
+
+<meta name="robots" content="all" />
+<meta name="google" content="all" />
+<meta name="googlebot" content="all" />
+<meta name="verify" content="all" />
+    <!--Title-->
+
+<title>
+    
+    Golang调用Rabbitmq消息队列和封装 |
+    
+    Yemilice
+</title>
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+
+
+<link rel="icon" href="/favicon.ico">
+
+    
+
+<link rel="stylesheet" href="/css/bootstrap.min.css?rev=3.3.7">
+<link rel="stylesheet" href="/css/font-awesome.min.css?rev=4.7.0">
+<link rel="stylesheet" href="/css/style.css?rev=@@hash">
+    
+<div class="hide">
+    <script type="text/javascript">
+    var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cspan class='cnzz_stat_icon_1263868967 hide' %3E%3Cscript%20src%3D%22https%3A%2F%2Fs95.cnzz.com%2Fz_stat.php%3Fweb_id%3D1272564536%22%3E%3C%2Fscript%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s19.cnzz.com/z_stat.php%3Fid%3D1263868967%26show%3Dpic1' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+</div>
+
+
+
+
+    
+
+</head>
+<!--[if lte IE 8]>
+<style>
+    html{ font-size: 1em }
+</style>
+<![endif]-->
+<!--[if lte IE 9]>
+<div style="ie">你使用的浏览器版本过低，为了你更好的阅读体验，请更新浏览器的版本或者使用其他现代浏览器，比如Chrome、Firefox、Safari等。</div>
+<![endif]-->
+<body>
+    <header class="main-header"  style="background-image:url(
+    /./img/1.jpg)"
+     >
+    <div class="main-header-box">
+        <a class="header-avatar" href="/" title='Yemilice lau'>
+            <img src="/img/avatar.jpg" alt="logo头像" class="img-responsive center-block">
+        </a>
+        <div class="branding">
+            <!--<h2 class="text-hide">Snippet主题,从未如此简单有趣</h2>-->
+            
+            <img src="/img/branding.png" alt="Snippet 博客主题" class="img-responsive center-block">
+            
+        </div>
+    </div>
+</header>
+    <nav class="main-navigation">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="navbar-header"><span class="nav-toggle-button collapsed pull-right" data-toggle="collapse" data-target="#main-menu" id="mnav">
+                        <span class="sr-only"></span>
+                        <i class="fa fa-bars"></i>
+                    </span>
+                    <a class="navbar-brand" href="https://yemilice.com">
+                        Yemilice</a>
+                </div>
+                <div class="collapse navbar-collapse" id="main-menu">
+                    <ul class="menu">
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/"><i class="fa "></i>
+                                Home</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/安全/"><i class="fa "></i>
+                                安全</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/前后端/"><i class="fa "></i>
+                                前后端</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/算法/"><i class="fa "></i>
+                                算法</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/其他技术/"><i class="fa "></i>
+                                其他技术</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/杂七杂八/"><i class="fa "></i>
+                                杂七杂八</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/archives/"><i class="fa "></i>
+                                时间轴</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+    <section class="content-wrap">
+        <div class="container">
+            <div class="row">
+                <main class="col-md-8 main-content m-post">
+                    <p id="process"></p>
+<article class="post">
+    <div class="post-head">
+        <h1 id="Golang调用Rabbitmq消息队列和封装">
+            
+            Golang调用Rabbitmq消息队列和封装
+            
+        </h1>
+        <div class="post-meta">
+    
+    <span class="categories-meta fa-wrap">
+        <i class="fa fa-folder-open-o"></i>
+        
+    </span>
+    
+    
+    <span class="fa-wrap">
+        <i class="fa fa-tags"></i>
+        <span class="tags-meta">
+            
+            <a class="tag-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a>
+            
+        </span>
+    </span>
+    
+    
+    
+    <span class="fa-wrap">
+        <i class="fa fa-clock-o"></i>
+        <span class="date-meta">
+            2020/04/13</span>
+    </span>
+    
+    <span class="fa-wrap">
+        <i class="fa fa-eye"></i>
+        <span id="busuanzi_value_page_pv"></span>
+    </span>
+    
+    
+</div>
+        
+        
+    </div>
+    
+    <div class="post-body post-content">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><h3 id="介绍Rabbimq"><a href="#介绍Rabbimq" class="headerlink" title="介绍Rabbimq"></a>介绍Rabbimq</h3><h4 id="Rabbitmq消息队列是干嘛的？"><a href="#Rabbitmq消息队列是干嘛的？" class="headerlink" title="Rabbitmq消息队列是干嘛的？"></a>Rabbitmq消息队列是干嘛的？</h4><p>简单的说，消息队列，引申一下就是传递消息用的队列，也可以称为传递消息的通信方法。用争抢订单的快车举个例子，假如，A用户发送了一个用车的消息，那么消息队列要做的就是把A用户用车的这个消息广而告之，发送到一个公用队列当中，司机只管取到消息，而不管是谁发布的，这就是一个简单的消息队列例子，Rabbitmq其实就是消息队列的一种，用的比较多的还可能有Redis，kafka，ActiceMq等等，这个后面的博文里面我会说，这次我们只说Rabbimq消息队列</p>
+<h4 id="Rabbitmq消息队列的好处是什么？为什么我们要用他？"><a href="#Rabbitmq消息队列的好处是什么？为什么我们要用他？" class="headerlink" title="Rabbitmq消息队列的好处是什么？为什么我们要用他？"></a>Rabbitmq消息队列的好处是什么？为什么我们要用他？</h4><p>这个网上有很多类似的玩意，我不说太多，就只说我在使用中感觉比较好的地方。</p>
+<ol>
+<li><p>分布式，多节点部署。一个集群，保证消息的持久化和高可用，某节点挂了，其他节点可以结力。</p>
+</li>
+<li><p>路由Exchange，这个已经提供了内部的几种实现方法，可以指定路由，也就是指定传递的地址。</p>
+</li>
+<li><p>多语言支持，我以前干活儿用Python，现在用Go和java，人家无缝对接，多牛逼！</p>
+</li>
+<li><p>Ack的消息确认机制，这样就保证了，任务下发时候的稳定性，ack消息确认可以手动，也可以自动，这样就保证了任务下发时候的可控和监控。</p>
+</li>
+</ol>
+<h2 id="初步开始"><a href="#初步开始" class="headerlink" title="初步开始"></a>初步开始</h2><h3 id="简单的生产者和消费者的模型"><a href="#简单的生产者和消费者的模型" class="headerlink" title="简单的生产者和消费者的模型"></a>简单的生产者和消费者的模型</h3><p>讲那么多废话理论，还不如直接开始写代码更直观是吧，所以，奥莉给，干了兄弟们！我们实现一个简答的生产者，消费者模型。这个不用我多解释吧，基础的流程就是，我们定义一个生产者，生产信息到Rabbitmq中，然后再定义一个消费者，把数据从Rabbitmq中取出来，就这么简单，下面咱们就干了，先讲几个基础。</p>
+<h3 id="Rabbitmq的基础知识"><a href="#Rabbitmq的基础知识" class="headerlink" title="Rabbitmq的基础知识"></a>Rabbitmq的基础知识</h3><h4 id="发送-Publish"><a href="#发送-Publish" class="headerlink" title="发送 Publish"></a>发送 Publish</h4><p>发送，你可以理解为上传，意思就是，上传一个消息到Rabbitmq当中。它这块的基础代码比较简单</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">  <span class="string">"log"</span></span><br><span class="line">  <span class="string">"github.com/streadway/amqp"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//初始化一个Rabbimtq连接，后跟ip，user，password</span></span><br><span class="line">    conn, err := amqp.Dial(<span class="string">"amqp://guest:guest@localhost:5672/"</span>)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">defer</span> conn.Close()</span><br><span class="line">    <span class="comment">//创建一个channel的套接字连接</span></span><br><span class="line">    ch, _ := conn.Channel()</span><br><span class="line">    <span class="comment">//创建一个指定的队列</span></span><br><span class="line">    q, _ := ch.QueueDeclare(</span><br><span class="line">        <span class="string">"work"</span>, <span class="comment">// 队列名</span></span><br><span class="line">        <span class="literal">false</span>,   <span class="comment">// durable</span></span><br><span class="line">        <span class="literal">false</span>,   <span class="comment">// 不使用删除？</span></span><br><span class="line">        <span class="literal">false</span>,   <span class="comment">// exclusive</span></span><br><span class="line">        <span class="literal">false</span>,   <span class="comment">// 不必等待</span></span><br><span class="line">        <span class="literal">nil</span>,     <span class="comment">// arguments</span></span><br><span class="line">    )</span><br><span class="line">    <span class="comment">//定义上传的消息</span></span><br><span class="line">    body := <span class="string">"work message"</span></span><br><span class="line">    <span class="comment">//调用Publish上传消息1到指定的work队列当中</span></span><br><span class="line">    err = ch.Publish(</span><br><span class="line">        <span class="string">""</span>,     <span class="comment">// exchange</span></span><br><span class="line">        <span class="string">"work"</span>, <span class="comment">// 队列名</span></span><br><span class="line">        <span class="literal">false</span>,  <span class="comment">// mandatory</span></span><br><span class="line">        <span class="literal">false</span>,  <span class="comment">// immediate</span></span><br><span class="line">        amqp.Publishing &#123;</span><br><span class="line">                ContentType: <span class="string">"text/plain"</span>,</span><br><span class="line">                <span class="comment">//[]byte化body</span></span><br><span class="line">                Body:        []<span class="keyword">byte</span>(body),</span><br><span class="line">        &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样就完成了上传消息到work队列当中。</p>
+<h4 id="接收-Consume"><a href="#接收-Consume" class="headerlink" title="接收 Consume"></a>接收 Consume</h4><p>接收，顾名思义，就是接收到指定队列中的信息，信息存在队列当中，总要被拿出来用吧，放那里又不能下崽儿，所以，拿出来感觉用了才是最重要的。这块的基础代码如下</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">  <span class="string">"log"</span></span><br><span class="line">  <span class="string">"github.com/streadway/amqp"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//初始化一个Rabbimtq连接，后跟ip，user，password</span></span><br><span class="line">    conn, err := amqp.Dial(<span class="string">"amqp://guest:guest@localhost:5672/"</span>)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">defer</span> conn.Close()</span><br><span class="line">    <span class="comment">//创建一个channel的套接字连接</span></span><br><span class="line">    ch, _ := conn.Channel()</span><br><span class="line"></span><br><span class="line">    msgs, err := ch.Consume(</span><br><span class="line">        <span class="string">"work"</span> <span class="comment">// 队列名</span></span><br><span class="line">        <span class="string">""</span>,     <span class="comment">// consumer</span></span><br><span class="line">        <span class="literal">true</span>,   <span class="comment">// auto-ack</span></span><br><span class="line">        <span class="literal">false</span>,  <span class="comment">// exclusive</span></span><br><span class="line">        <span class="literal">false</span>,  <span class="comment">// no-local</span></span><br><span class="line">        <span class="literal">false</span>,  <span class="comment">// 不等待</span></span><br><span class="line">        <span class="literal">nil</span>,    <span class="comment">// args</span></span><br><span class="line">    )</span><br><span class="line">    <span class="comment">//定义一个forever，让他驻留在后台，等待消息，来了就消费</span></span><br><span class="line">    forever := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">bool</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">//执行一个go func 完成任务消费</span></span><br><span class="line">    <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">for</span> d := <span class="keyword">range</span> msgs &#123;</span><br><span class="line">            <span class="comment">//打印body</span></span><br><span class="line">            log.Printf(<span class="string">"message %s"</span>, d.Body)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;()</span><br><span class="line">    &lt;-forever</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="生产者／消费者模型"><a href="#生产者／消费者模型" class="headerlink" title="生产者／消费者模型"></a>生产者／消费者模型</h3><p>上面简单说了一下rabbimq的发送和接收，这下咱们就要实现一个生产者消费者模型了，这个模型的主要逻辑，就是生产者发送任务到指定的队列，有一个，或者多个消费者，会在此留守，一有任务，就争抢并且消费。</p>
+<h4 id="生产者逻辑"><a href="#生产者逻辑" class="headerlink" title="生产者逻辑"></a>生产者逻辑</h4><p>其实生产者逻辑和上面的发送逻辑差不多，这里给出写法。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">  <span class="string">"log"</span></span><br><span class="line">  <span class="string">"github.com/streadway/amqp"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//初始化一个Rabbimtq连接，后跟ip，user，password</span></span><br><span class="line">    conn, err := amqp.Dial(<span class="string">"amqp://guest:guest@localhost:5672/"</span>)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">defer</span> conn.Close()</span><br><span class="line">    <span class="comment">//创建一个channel的套接字连接</span></span><br><span class="line">    ch, _ := conn.Channel()</span><br><span class="line">    <span class="comment">//创建一个指定的队列</span></span><br><span class="line">    q, _ := ch.QueueDeclare(</span><br><span class="line">        <span class="string">"work"</span>, <span class="comment">// 队列名</span></span><br><span class="line">        <span class="literal">false</span>,   <span class="comment">// durable</span></span><br><span class="line">        <span class="literal">false</span>,   <span class="comment">// 不使用删除？</span></span><br><span class="line">        <span class="literal">false</span>,   <span class="comment">// exclusive</span></span><br><span class="line">        <span class="literal">false</span>,   <span class="comment">// 不必等待</span></span><br><span class="line">        <span class="literal">nil</span>,     <span class="comment">// arguments</span></span><br><span class="line">    )</span><br><span class="line">    <span class="comment">//定义上传的消息</span></span><br><span class="line">    body := <span class="string">"work message"</span></span><br><span class="line">    <span class="comment">//调用Publish上传消息1到指定的work队列当中</span></span><br><span class="line">    err = ch.Publish(</span><br><span class="line">        <span class="string">""</span>,     <span class="comment">// exchange</span></span><br><span class="line">        <span class="string">"work"</span>, <span class="comment">// 队列名</span></span><br><span class="line">        <span class="literal">false</span>,  <span class="comment">// mandatory</span></span><br><span class="line">        <span class="literal">false</span>,  <span class="comment">// immediate</span></span><br><span class="line">        amqp.Publishing &#123;</span><br><span class="line">                ContentType: <span class="string">"text/plain"</span>,</span><br><span class="line">                <span class="comment">//[]byte化body</span></span><br><span class="line">                Body:        []<span class="keyword">byte</span>(body),</span><br><span class="line">        &#125;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="消费者逻辑"><a href="#消费者逻辑" class="headerlink" title="消费者逻辑"></a>消费者逻辑</h4><p>消费者逻辑这边，主要是加了一个qos控制和手动ack，代码如下</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">  <span class="string">"log"</span></span><br><span class="line">  <span class="string">"github.com/streadway/amqp"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//初始化一个Rabbimtq连接，后跟ip，user，password</span></span><br><span class="line">    conn, err := amqp.Dial(<span class="string">"amqp://guest:guest@localhost:5672/"</span>)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">defer</span> conn.Close()</span><br><span class="line">    <span class="comment">//创建一个channel的套接字连接</span></span><br><span class="line">    ch, _ := conn.Channel()</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//创建一个qos控制</span></span><br><span class="line">    err = ch.Qos(</span><br><span class="line">            <span class="number">3</span>,     <span class="comment">// 同时最大消费数量（意思就是最多能消费几个任务）</span></span><br><span class="line">            <span class="number">0</span>,     <span class="comment">// prefetch size</span></span><br><span class="line">            <span class="literal">false</span>, <span class="comment">// 全局设定？</span></span><br><span class="line">        )</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> err</span><br><span class="line">            &#125;</span><br><span class="line">    msgs, err := ch.Consume(</span><br><span class="line">        <span class="string">"work"</span> <span class="comment">// 队列名</span></span><br><span class="line">        <span class="string">""</span>,     <span class="comment">// consumer</span></span><br><span class="line">        <span class="literal">true</span>,   <span class="comment">// auto-ack</span></span><br><span class="line">        <span class="literal">false</span>,  <span class="comment">// exclusive</span></span><br><span class="line">        <span class="literal">false</span>,  <span class="comment">// no-local</span></span><br><span class="line">        <span class="literal">false</span>,  <span class="comment">// 不等待</span></span><br><span class="line">        <span class="literal">nil</span>,    <span class="comment">// args</span></span><br><span class="line">    )</span><br><span class="line">    <span class="comment">//定义一个forever，让他驻留在后台，等待消息，来了就消费</span></span><br><span class="line">    forever := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">bool</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">//执行一个go func 完成任务消费</span></span><br><span class="line">    <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">for</span> d := <span class="keyword">range</span> msgs &#123;</span><br><span class="line">            <span class="comment">//打印body</span></span><br><span class="line">            log.Printf(<span class="string">"message %s"</span>, <span class="keyword">string</span>(d.Body))</span><br><span class="line">            <span class="comment">//手动ack，不管是否发送完毕。</span></span><br><span class="line">            d.Ack(<span class="literal">false</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;()</span><br><span class="line">    &lt;-forever</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Golang封装Rabbitmq的基础接口"><a href="#Golang封装Rabbitmq的基础接口" class="headerlink" title="Golang封装Rabbitmq的基础接口"></a>Golang封装Rabbitmq的基础接口</h2><p>Rabbitmq会用了吧，上面那个估计比较简单，但是估摸着你们还想要别的功能，好，那我就惯大家一次，干了兄弟们，奥莉给！</p>
+<h3 id="初始化Rabbitmq连接"><a href="#初始化Rabbitmq连接" class="headerlink" title="初始化Rabbitmq连接"></a>初始化Rabbitmq连接</h3><p>为了避免每次重复调用Rabbitmq连接，我这里提供一个简单写法。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line"><span class="string">"context"</span></span><br><span class="line"><span class="string">"fmt"</span></span><br><span class="line"></span><br><span class="line"><span class="string">"github.com/streadway/amqp"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">//Rabbitmq 初始化rabbitmq连接</span></span><br><span class="line"><span class="keyword">type</span> Rabbitmq <span class="keyword">struct</span> &#123;</span><br><span class="line">        conn *amqp.Connection</span><br><span class="line">        err  error</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">New</span><span class="params">(ip <span class="keyword">string</span>)</span> <span class="params">(*Rabbitmq, error)</span></span> &#123;</span><br><span class="line">        amqps := fmt.Sprintf(<span class="string">"amqp://guest:guest@%s:5672/"</span>, ip)</span><br><span class="line">        conn, err := amqp.Dial(amqps)</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">        &#125;</span><br><span class="line">        rabbitmq := &amp;Rabbitmq&#123;</span><br><span class="line">            conn: conn,</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> rabbitmq, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="创建一个Queue队列"><a href="#创建一个Queue队列" class="headerlink" title="创建一个Queue队列"></a>创建一个Queue队列</h3><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rabbitmq *Rabbitmq)</span> <span class="title">CreateQueue</span><span class="params">(id <span class="keyword">string</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">        ch, err := rabbitmq.conn.Channel()</span><br><span class="line">        <span class="keyword">defer</span> ch.Close()</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> err</span><br><span class="line">        &#125;</span><br><span class="line">        _, err = ch.QueueDeclare(</span><br><span class="line">            id,    <span class="comment">// name</span></span><br><span class="line">            <span class="literal">true</span>,  <span class="comment">// durable</span></span><br><span class="line">            <span class="literal">false</span>, <span class="comment">// delete when unused</span></span><br><span class="line">            <span class="literal">false</span>, <span class="comment">// exclusive</span></span><br><span class="line">            <span class="literal">false</span>, <span class="comment">// no-wait</span></span><br><span class="line">            <span class="literal">nil</span>,   <span class="comment">// arguments</span></span><br><span class="line">        )</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> err</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="上传消息到指定的queue中"><a href="#上传消息到指定的queue中" class="headerlink" title="上传消息到指定的queue中"></a>上传消息到指定的queue中</h3><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rabbitmq *Rabbitmq)</span> <span class="title">PublishQueue</span><span class="params">(id <span class="keyword">string</span>, body <span class="keyword">string</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">        ch, err := rabbitmq.conn.Channel()</span><br><span class="line">        <span class="keyword">defer</span> ch.Close()</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> err</span><br><span class="line">        &#125;</span><br><span class="line">        err = ch.Publish(</span><br><span class="line">            <span class="string">""</span>,    <span class="comment">// exchange</span></span><br><span class="line">            id,    <span class="comment">// routing key</span></span><br><span class="line">            <span class="literal">false</span>, <span class="comment">// mandatory</span></span><br><span class="line">            <span class="literal">false</span>,</span><br><span class="line">            amqp.Publishing&#123;</span><br><span class="line">                DeliveryMode: amqp.Persistent,</span><br><span class="line">                ContentType:  <span class="string">"text/plain"</span>,</span><br><span class="line">                Body:         []<span class="keyword">byte</span>(body),</span><br><span class="line">            &#125;)</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> err</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="从队列中取出消息并且消费"><a href="#从队列中取出消息并且消费" class="headerlink" title="从队列中取出消息并且消费"></a>从队列中取出消息并且消费</h3><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rabbitmq *Rabbitmq)</span> <span class="title">PublishQueue</span><span class="params">(id <span class="keyword">string</span>, body <span class="keyword">string</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">        ch, err := rabbitmq.conn.Channel()</span><br><span class="line">        <span class="keyword">defer</span> ch.Close()</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> err</span><br><span class="line">        &#125;</span><br><span class="line">        err = ch.Publish(</span><br><span class="line">            <span class="string">""</span>,    <span class="comment">// exchange</span></span><br><span class="line">            id,    <span class="comment">// routing key</span></span><br><span class="line">            <span class="literal">false</span>, <span class="comment">// mandatory</span></span><br><span class="line">            <span class="literal">false</span>,</span><br><span class="line">            amqp.Publishing&#123;</span><br><span class="line">                DeliveryMode: amqp.Persistent,</span><br><span class="line">                ContentType:  <span class="string">"text/plain"</span>,</span><br><span class="line">                Body:         []<span class="keyword">byte</span>(body),</span><br><span class="line">            &#125;)</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> err</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="统计队列中预备消费的数据"><a href="#统计队列中预备消费的数据" class="headerlink" title="统计队列中预备消费的数据"></a>统计队列中预备消费的数据</h3><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rabbitmq *Rabbitmq)</span> <span class="title">GetReadyCount</span><span class="params">(id <span class="keyword">string</span>)</span> <span class="params">(<span class="keyword">int</span>, error)</span></span> &#123;</span><br><span class="line">        count := <span class="number">0</span></span><br><span class="line">        ch, err := rabbitmq.conn.Channel()</span><br><span class="line">        <span class="keyword">defer</span> ch.Close()</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> count, err</span><br><span class="line">        &#125;</span><br><span class="line">        state, err := ch.QueueInspect(id)</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> count, err</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> state.Messages, <span class="literal">nil</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="统计消费者／正在消费的数据"><a href="#统计消费者／正在消费的数据" class="headerlink" title="统计消费者／正在消费的数据"></a>统计消费者／正在消费的数据</h3><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rabbitmq *Rabbitmq)</span> <span class="title">GetConsumCount</span><span class="params">(id <span class="keyword">string</span>)</span> <span class="params">(<span class="keyword">int</span>, error)</span></span> &#123;</span><br><span class="line">        count := <span class="number">0</span></span><br><span class="line">        ch, err := rabbitmq.conn.Channel()</span><br><span class="line">        <span class="keyword">defer</span> ch.Close()</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> count, err</span><br><span class="line">        &#125;</span><br><span class="line">        state, err := ch.QueueInspect(id)</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> count, err</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> state.Consumers, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="清理队列"><a href="#清理队列" class="headerlink" title="清理队列"></a>清理队列</h3><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rabbitmq *Rabbitmq)</span> <span class="title">ClearQueue</span><span class="params">(id <span class="keyword">string</span>)</span> <span class="params">(<span class="keyword">string</span>, error)</span></span> &#123;</span><br><span class="line">        ch, err := rabbitmq.conn.Channel()</span><br><span class="line">        <span class="keyword">defer</span> ch.Close()</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="string">""</span>, err</span><br><span class="line">        &#125;</span><br><span class="line">        _, err = ch.QueuePurge(id, <span class="literal">false</span>)</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="string">""</span>, err</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"Clear queue success"</span>, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>简单讲了一下Rabbimtq是啥，怎么用，我是怎么用的。<br>完整代码请访问我的Github： <a href="https://github.com/Alexanderklau/Go_poject/blob/master/Go-Rabbitmq/rabbitmq.go" target="_blank" rel="noopener">https://github.com/Alexanderklau/Go_poject/blob/master/Go-Rabbitmq/rabbitmq.go</a><br>如果有不懂的欢迎留言！如果能帮大家的我一定会帮！也希望你们指出我的错误！一起进步！ </p>
+
+    </div>
+    
+    <div class="post-footer">
+        <div>
+            
+            转载声明：
+            商业转载请联系作者获得授权,非商业转载请注明出处 © <a href="" target="_blank">Yemilice</a>
+            
+            
+        </div>
+        <div>
+            
+        </div>
+    </div>
+</article>
+<div class="article-nav prev-next-wrap clearfix">
+    
+    
+    <a href="/2020/03/23/Golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-Crontab%E5%AE%9A%E6%97%B6%E5%99%A8%EF%BC%882%EF%BC%89/" class="next-post btn btn-default" title='Golang 完成一个 Crontab定时器（2）'>
+        <span class="hidden-lg">下一篇</span>
+        <span class="hidden-xs">
+            Golang 完成一个 Crontab定时器（2）</span><i class="fa fa-angle-right fa-fw"></i>
+    </a>
+    
+</div>
+
+<div id="comments">
+    
+<p>评论系统未开启，无法评论！</p>
+
+</div>
+
+                </main>
+                
+                    <aside id="article-toc" role="navigation" class="col-md-4">
+    <div class="widget">
+        <h3 class="title">
+            Table of Contents
+        </h3>
+        
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#介绍Rabbimq"><span class="toc-text">介绍Rabbimq</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Rabbitmq消息队列是干嘛的？"><span class="toc-text">Rabbitmq消息队列是干嘛的？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Rabbitmq消息队列的好处是什么？为什么我们要用他？"><span class="toc-text">Rabbitmq消息队列的好处是什么？为什么我们要用他？</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#初步开始"><span class="toc-text">初步开始</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#简单的生产者和消费者的模型"><span class="toc-text">简单的生产者和消费者的模型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Rabbitmq的基础知识"><span class="toc-text">Rabbitmq的基础知识</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#发送-Publish"><span class="toc-text">发送 Publish</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#接收-Consume"><span class="toc-text">接收 Consume</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#生产者／消费者模型"><span class="toc-text">生产者／消费者模型</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#生产者逻辑"><span class="toc-text">生产者逻辑</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#消费者逻辑"><span class="toc-text">消费者逻辑</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Golang封装Rabbitmq的基础接口"><span class="toc-text">Golang封装Rabbitmq的基础接口</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#初始化Rabbitmq连接"><span class="toc-text">初始化Rabbitmq连接</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#创建一个Queue队列"><span class="toc-text">创建一个Queue队列</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#上传消息到指定的queue中"><span class="toc-text">上传消息到指定的queue中</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#从队列中取出消息并且消费"><span class="toc-text">从队列中取出消息并且消费</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#统计队列中预备消费的数据"><span class="toc-text">统计队列中预备消费的数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#统计消费者／正在消费的数据"><span class="toc-text">统计消费者／正在消费的数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#清理队列"><span class="toc-text">清理队列</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li></ol>
+        
+    </div>
+</aside>
+                
+            </div>
+        </div>
+    </section>
+    <footer class="main-footer">
+    <div class="container">
+        <div class="row">
+        </div>
+    </div>
+</footer>
+<a id="back-to-top" class="icon-btn hide">
+    <i class="fa fa-chevron-up"></i>
+</a>
+    <div class="copyright">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="busuanzi">
+    
+    Total:
+    <strong id="busuanzi_value_site_pv">
+        <i class="fa fa-spinner fa-spin"></i>
+    </strong>
+    &nbsp; | &nbsp;
+    Visitors:
+    <strong id="busuanzi_value_site_uv">
+        <i class="fa fa-spinner fa-spin"></i>
+    </strong>
+    
+</div>
+            </div>
+            <div class="col-sm-12">
+                <span>Copyright &copy;
+                    2019
+                    
+                </span> |
+                <span>
+                    Powered by <a href="//hexo.io" class="copyright-links" target="_blank" rel="nofollow">Hexo</a>
+                </span> |
+                <span>
+                    Theme by <a href="//github.com/shenliyang/hexo-theme-snippet.git" class="copyright-links" target="_blank" rel="nofollow">Snippet</a>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script src="/js/app.js?rev=@@hash"></script>
+</body>
+</html>

@@ -1,0 +1,310 @@
+<!DOCTYPE HTML>
+<html lang="cn">
+
+<head>
+    <!--Setting-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Cache-Control" content="no-siteapp">
+    <meta http-equiv="Cache-Control" content="no-transform">
+    <meta name="renderer" content="webkit|ie-comp|ie-stand">
+    <meta name="apple-mobile-web-app-capable" content="Yemilice">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no,email=no,adress=no">
+    <meta name="browsermode" content="application">
+    <meta name="screen-orientation" content="portrait">
+    <meta name="theme-version" content="1.2.3">
+    <meta name="root" content="/">
+    <link rel="dns-prefetch" href="https://yemilice.com">
+    <!--SEO-->
+
+<meta name="keywords" content="前后端,其他技术" />
+
+
+<meta name="description" content="前言为什么要写这篇文章呢。。。主要还是业务中有个需求，遍历一个将近200w数据的文件夹，大部分还都是视频文件那种，但是这玩意用的次数还不多，做文件夹index也不是很ok，所以写了一个脚本来处理..." />
+
+
+<meta name="robots" content="all" />
+<meta name="google" content="all" />
+<meta name="googlebot" content="all" />
+<meta name="verify" content="all" />
+    <!--Title-->
+
+<title>
+    
+    Python高效率遍历文件夹寻找重复文件 |
+    
+    Yemilice
+</title>
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+
+
+<link rel="icon" href="/favicon.ico">
+
+    
+
+<link rel="stylesheet" href="/css/bootstrap.min.css?rev=3.3.7">
+<link rel="stylesheet" href="/css/font-awesome.min.css?rev=4.7.0">
+<link rel="stylesheet" href="/css/style.css?rev=@@hash">
+    
+<div class="hide">
+    <script type="text/javascript">
+    var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cspan class='cnzz_stat_icon_1263868967 hide' %3E%3Cscript%20src%3D%22https%3A%2F%2Fs95.cnzz.com%2Fz_stat.php%3Fweb_id%3D1272564536%22%3E%3C%2Fscript%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s19.cnzz.com/z_stat.php%3Fid%3D1263868967%26show%3Dpic1' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+</div>
+
+
+
+
+    
+
+</head>
+<!--[if lte IE 8]>
+<style>
+    html{ font-size: 1em }
+</style>
+<![endif]-->
+<!--[if lte IE 9]>
+<div style="ie">你使用的浏览器版本过低，为了你更好的阅读体验，请更新浏览器的版本或者使用其他现代浏览器，比如Chrome、Firefox、Safari等。</div>
+<![endif]-->
+<body>
+    <header class="main-header"  style="background-image:url(
+    /./img/1.jpg)"
+     >
+    <div class="main-header-box">
+        <a class="header-avatar" href="/" title='Yemilice lau'>
+            <img src="/img/avatar.jpg" alt="logo头像" class="img-responsive center-block">
+        </a>
+        <div class="branding">
+            <!--<h2 class="text-hide">Snippet主题,从未如此简单有趣</h2>-->
+            
+            <img src="/img/branding.png" alt="Snippet 博客主题" class="img-responsive center-block">
+            
+        </div>
+    </div>
+</header>
+    <nav class="main-navigation">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="navbar-header"><span class="nav-toggle-button collapsed pull-right" data-toggle="collapse" data-target="#main-menu" id="mnav">
+                        <span class="sr-only"></span>
+                        <i class="fa fa-bars"></i>
+                    </span>
+                    <a class="navbar-brand" href="https://yemilice.com">
+                        Yemilice</a>
+                </div>
+                <div class="collapse navbar-collapse" id="main-menu">
+                    <ul class="menu">
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/"><i class="fa "></i>
+                                Home</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/安全/"><i class="fa "></i>
+                                安全</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/前后端/"><i class="fa "></i>
+                                前后端</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/算法/"><i class="fa "></i>
+                                算法</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/其他技术/"><i class="fa "></i>
+                                其他技术</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/杂七杂八/"><i class="fa "></i>
+                                杂七杂八</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/archives/"><i class="fa "></i>
+                                时间轴</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+    <section class="content-wrap">
+        <div class="container">
+            <div class="row">
+                <main class="col-md-8 main-content m-post">
+                    <p id="process"></p>
+<article class="post">
+    <div class="post-head">
+        <h1 id="Python高效率遍历文件夹寻找重复文件">
+            
+            Python高效率遍历文件夹寻找重复文件
+            
+        </h1>
+        <div class="post-meta">
+    
+    <span class="categories-meta fa-wrap">
+        <i class="fa fa-folder-open-o"></i>
+        
+    </span>
+    
+    
+    <span class="fa-wrap">
+        <i class="fa fa-tags"></i>
+        <span class="tags-meta">
+            
+            <a class="tag-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/" rel="tag">其他技术</a> <a class="tag-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a>
+            
+        </span>
+    </span>
+    
+    
+    
+    <span class="fa-wrap">
+        <i class="fa fa-clock-o"></i>
+        <span class="date-meta">
+            2019/10/28</span>
+    </span>
+    
+    <span class="fa-wrap">
+        <i class="fa fa-eye"></i>
+        <span id="busuanzi_value_page_pv"></span>
+    </span>
+    
+    
+</div>
+        
+        
+    </div>
+    
+    <div class="post-body post-content">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>为什么要写这篇文章呢。。。主要还是业务中有个需求，遍历一个将近200w数据的文件夹，大部分还都是视频文件那种，但是这玩意用的次数还不多，做文件夹index也不是很ok，所以写了一个脚本来处理这个问题，从而发现了自己的一些薄弱点，将其记录下来，方便自己，也方便未来其他的兄弟使用</p>
+<h2 id="基本需求"><a href="#基本需求" class="headerlink" title="基本需求"></a>基本需求</h2><ol>
+<li>把文件夹中的重复文件找出来</li>
+<li>找出来之后用csv输出，左边是源文件，右边是重复文件</li>
+<li>效率不能差，不能直接撑爆内存，不能占用过多资源</li>
+<li>检测的文件夹和存放csv的地方可以自己定义，加上终端交互</li>
+<li>重复文件筛选支持md5，大小等方式<h2 id="需求分析"><a href="#需求分析" class="headerlink" title="需求分析"></a>需求分析</h2>首先要分析一点，就是我们该如何去做重复文件的对比，并且效率还要高，首先网上过多的递归，os.walk的方法不可用，因为他们都会把遍历到的内容直接做成一个大列表，塞到内存里面，数据量大很容易爆掉，并且还要进行MD5，或者是大小比对，这个就非常难缠了。<h2 id="基础想法"><a href="#基础想法" class="headerlink" title="基础想法"></a>基础想法</h2>其实说白了，拿到所有文件列表file_list，把文件依次对比，这里我们可以用dict，分两种情况  <h3 id="按照文件名和大小"><a href="#按照文件名和大小" class="headerlink" title="按照文件名和大小"></a>按照文件名和大小</h3>设定两个dict，例如record和dup，遍历file_list,生成一个数组，比对其中的文件名和大小<h3 id="按照大小和MD5值"><a href="#按照大小和MD5值" class="headerlink" title="按照大小和MD5值"></a>按照大小和MD5值</h3>设定两个dict，例如record和dup，遍历file_list,生成一个数组，比对其中的md5值和大小<h2 id="具体代码"><a href="#具体代码" class="headerlink" title="具体代码"></a>具体代码</h2>闲话休提，我们开始写代码吧<h3 id="定义遍历函数代码"><a href="#定义遍历函数代码" class="headerlink" title="定义遍历函数代码"></a>定义遍历函数代码</h3>首先定义遍历文件夹的部分diskwalk.py</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># coding: utf-8</span></span><br><span class="line"></span><br><span class="line">__author__ = <span class="string">"lau.wenbo"</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> os,sys</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">diskwalk</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, path)</span>:</span></span><br><span class="line">        self.path = path</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">paths</span><span class="params">(self)</span>:</span></span><br><span class="line">        path = self.path</span><br><span class="line">        <span class="comment"># 这里用了一个迭代器逻辑，防止所有数据塞内存爆掉</span></span><br><span class="line">        path_collection = (os.path.join(root,fn) <span class="keyword">for</span> root,dirs,files <span class="keyword">in</span> os.walk(path) <span class="keyword">for</span> fn <span class="keyword">in</span> files)</span><br><span class="line">        <span class="keyword">return</span> path_collection</span><br></pre></td></tr></table></figure>
+<h3 id="定义检查md5值代码"><a href="#定义检查md5值代码" class="headerlink" title="定义检查md5值代码"></a>定义检查md5值代码</h3><p>接着我们定义检查md5值的一个逻辑checksum.py</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># coding: utf-8</span></span><br><span class="line"></span><br><span class="line">__author__ = <span class="string">"lau.wenbo"</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> hashlib,sys</span><br><span class="line"></span><br><span class="line"><span class="comment"># 分块读MD，速度快</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">create_checksum</span><span class="params">(path)</span>:</span></span><br><span class="line">    fp = open(path)</span><br><span class="line">    checksum = hashlib.md5()</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        buffer = fp.read(<span class="number">8192</span>)</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> buffer: <span class="keyword">break</span></span><br><span class="line">        checksum.update(buffer)</span><br><span class="line">    fp.close()</span><br><span class="line">    checksum = checksum.digest()</span><br><span class="line">    <span class="keyword">return</span> checksum</span><br></pre></td></tr></table></figure>
+<h3 id="定义主函数代码"><a href="#定义主函数代码" class="headerlink" title="定义主函数代码"></a>定义主函数代码</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># coding: utf-8</span></span><br><span class="line"></span><br><span class="line">__author__ = <span class="string">"lau.wenbo"</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> checksum <span class="keyword">import</span> create_checksum</span><br><span class="line"><span class="keyword">from</span> diskwalk <span class="keyword">import</span> diskwalk</span><br><span class="line"><span class="keyword">from</span> os.path <span class="keyword">import</span> getsize</span><br><span class="line"><span class="keyword">import</span> csv</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line">reload(sys)</span><br><span class="line">sys.setdefaultencoding(<span class="string">'utf8'</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">findDupes</span><span class="params">(path)</span>:</span></span><br><span class="line">    record = &#123;&#125;</span><br><span class="line">    dup = &#123;&#125;</span><br><span class="line">    d = diskwalk(path)</span><br><span class="line">    files = d.paths()</span><br><span class="line">    <span class="keyword">for</span> file <span class="keyword">in</span> files:</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="comment"># 这里使用了大小，文件名的对比方式，如果你需要MD5值的对比方式，可以打开下面的注释</span></span><br><span class="line">            <span class="comment">#compound_key = (getsize(file),create_checksum(file))</span></span><br><span class="line">            compound_key = (getsize(file), file.split(<span class="string">"/"</span>)[<span class="number">-1</span>])</span><br><span class="line">            <span class="keyword">if</span> compound_key <span class="keyword">in</span> record:</span><br><span class="line">                dup[file] = record[compound_key]</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                record[compound_key]=file</span><br><span class="line">        <span class="keyword">except</span>:</span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line">    <span class="keyword">return</span> dup</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line">    path = sys.argv[<span class="number">1</span>]</span><br><span class="line">    csv_path = sys.argv[<span class="number">2</span>]</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> os.path.isdir(path) <span class="keyword">or</span> <span class="keyword">not</span> os.path.isdir(csv_path) <span class="keyword">or</span> csv_path[<span class="number">-1</span>] != <span class="string">"/"</span>:</span><br><span class="line">        <span class="keyword">print</span> <span class="string">u"参数不是一个有效的文件夹！"</span></span><br><span class="line">        exit()</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        path = path.decode(<span class="string">"utf-8"</span>)</span><br><span class="line">        <span class="keyword">print</span> <span class="string">u"待检测的文件夹为&#123;path&#125;"</span>.format(path=path)</span><br><span class="line">        <span class="keyword">with</span> open(<span class="string">u"&#123;csv_path&#125;重复文件.csv"</span>.format(csv_path=csv_path),<span class="string">"w+"</span>) <span class="keyword">as</span> csvfile:</span><br><span class="line">            <span class="comment"># 源文件 重复文件</span></span><br><span class="line">            header = [<span class="string">"Source"</span>, <span class="string">"Duplicate"</span>]</span><br><span class="line">            writer = csv.DictWriter(csvfile, fieldnames=header)</span><br><span class="line">            writer.writeheader()</span><br><span class="line">            <span class="keyword">print</span> <span class="string">u"开始遍历文件夹，寻找重复文件，请等待........."</span></span><br><span class="line">            <span class="keyword">print</span> <span class="string">u"开始写入CSV文件，请等待........"</span></span><br><span class="line">            <span class="keyword">for</span> file <span class="keyword">in</span> findDupes(path).items():</span><br><span class="line">                writer.writerow(&#123;<span class="string">"Source"</span>:file[<span class="number">1</span>],<span class="string">"Duplicate"</span>:file[<span class="number">0</span>]&#125;)</span><br></pre></td></tr></table></figure>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>实现了哪些功能呢，哈哈，结尾来说一下，其实核心就是我用了一个列表生成器，加了一个迭代器，迭代器可是好东西，不会撑内存，不错了，效率也还可以，200w数据判定也就20多分钟，支持大数据量，如果有什么不懂的，可以邮件联系我或者等待我的评论系统搞完，over<br>github地址在这: <a href="https://github.com/Alexanderklau/Amusing_python/tree/master/File_operation/repeat" target="_blank" rel="noopener">https://github.com/Alexanderklau/Amusing_python/tree/master/File_operation/repeat</a></p>
+
+    </div>
+    
+    <div class="post-footer">
+        <div>
+            
+            转载声明：
+            商业转载请联系作者获得授权,非商业转载请注明出处 © <a href="" target="_blank">Yemilice</a>
+            
+            
+        </div>
+        <div>
+            
+        </div>
+    </div>
+</article>
+<div class="article-nav prev-next-wrap clearfix">
+    
+    <a href="/2019/11/13/%E7%AE%97%E6%B3%95%E7%AC%94%E8%AE%B0-%E5%85%A5%E9%97%A8-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%AF%87/" class="pre-post btn btn-default" title='算法笔记-入门-数据结构篇'>
+        <i class="fa fa-angle-left fa-fw"></i><span class="hidden-lg">上一篇</span>
+        <span class="hidden-xs">
+            算法笔记-入门-数据结构篇</span>
+    </a>
+    
+    
+    <a href="/2019/10/25/Elasticsearch-for-python-API%E6%A8%A1%E5%9D%97%E5%8C%96%E5%B0%81%E8%A3%85/" class="next-post btn btn-default" title='Elasticsearch for python API模块化封装'>
+        <span class="hidden-lg">下一篇</span>
+        <span class="hidden-xs">
+            Elasticsearch for python API模块化封装</span><i class="fa fa-angle-right fa-fw"></i>
+    </a>
+    
+</div>
+
+<div id="comments">
+    
+<p>评论系统未开启，无法评论！</p>
+
+</div>
+
+                </main>
+                
+                    <aside id="article-toc" role="navigation" class="col-md-4">
+    <div class="widget">
+        <h3 class="title">
+            Table of Contents
+        </h3>
+        
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#基本需求"><span class="toc-text">基本需求</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#需求分析"><span class="toc-text">需求分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#基础想法"><span class="toc-text">基础想法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#按照文件名和大小"><span class="toc-text">按照文件名和大小</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#按照大小和MD5值"><span class="toc-text">按照大小和MD5值</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#具体代码"><span class="toc-text">具体代码</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#定义遍历函数代码"><span class="toc-text">定义遍历函数代码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#定义检查md5值代码"><span class="toc-text">定义检查md5值代码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#定义主函数代码"><span class="toc-text">定义主函数代码</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-text">结语</span></a></li></ol>
+        
+    </div>
+</aside>
+                
+            </div>
+        </div>
+    </section>
+    <footer class="main-footer">
+    <div class="container">
+        <div class="row">
+        </div>
+    </div>
+</footer>
+<a id="back-to-top" class="icon-btn hide">
+    <i class="fa fa-chevron-up"></i>
+</a>
+    <div class="copyright">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="busuanzi">
+    
+    Total:
+    <strong id="busuanzi_value_site_pv">
+        <i class="fa fa-spinner fa-spin"></i>
+    </strong>
+    &nbsp; | &nbsp;
+    Visitors:
+    <strong id="busuanzi_value_site_uv">
+        <i class="fa fa-spinner fa-spin"></i>
+    </strong>
+    
+</div>
+            </div>
+            <div class="col-sm-12">
+                <span>Copyright &copy;
+                    2019
+                    
+                </span> |
+                <span>
+                    Powered by <a href="//hexo.io" class="copyright-links" target="_blank" rel="nofollow">Hexo</a>
+                </span> |
+                <span>
+                    Theme by <a href="//github.com/shenliyang/hexo-theme-snippet.git" class="copyright-links" target="_blank" rel="nofollow">Snippet</a>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script src="/js/app.js?rev=@@hash"></script>
+</body>
+</html>

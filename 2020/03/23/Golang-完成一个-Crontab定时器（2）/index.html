@@ -1,0 +1,387 @@
+<!DOCTYPE HTML>
+<html lang="cn">
+
+<head>
+    <!--Setting-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Cache-Control" content="no-siteapp">
+    <meta http-equiv="Cache-Control" content="no-transform">
+    <meta name="renderer" content="webkit|ie-comp|ie-stand">
+    <meta name="apple-mobile-web-app-capable" content="Yemilice">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no,email=no,adress=no">
+    <meta name="browsermode" content="application">
+    <meta name="screen-orientation" content="portrait">
+    <meta name="theme-version" content="1.2.3">
+    <meta name="root" content="/">
+    <link rel="dns-prefetch" href="https://yemilice.com">
+    <!--SEO-->
+
+<meta name="keywords" content="前后端" />
+
+
+<meta name="description" content="前言上篇文章，大概讲了一下robfig/cron 包的使用，怎么开始一个定时任务，那个东西比较简单，也就是调用函数而已，人家都给你把包都封装好了。鉴于上一章我没提到cron相关，这一章专门我写个..." />
+
+
+<meta name="robots" content="all" />
+<meta name="google" content="all" />
+<meta name="googlebot" content="all" />
+<meta name="verify" content="all" />
+    <!--Title-->
+
+<title>
+    
+    Golang 完成一个 Crontab定时器（2） |
+    
+    Yemilice
+</title>
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+
+
+<link rel="icon" href="/favicon.ico">
+
+    
+
+<link rel="stylesheet" href="/css/bootstrap.min.css?rev=3.3.7">
+<link rel="stylesheet" href="/css/font-awesome.min.css?rev=4.7.0">
+<link rel="stylesheet" href="/css/style.css?rev=@@hash">
+    
+<div class="hide">
+    <script type="text/javascript">
+    var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cspan class='cnzz_stat_icon_1263868967 hide' %3E%3Cscript%20src%3D%22https%3A%2F%2Fs95.cnzz.com%2Fz_stat.php%3Fweb_id%3D1272564536%22%3E%3C%2Fscript%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s19.cnzz.com/z_stat.php%3Fid%3D1263868967%26show%3Dpic1' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+</div>
+
+
+
+
+    
+
+</head>
+<!--[if lte IE 8]>
+<style>
+    html{ font-size: 1em }
+</style>
+<![endif]-->
+<!--[if lte IE 9]>
+<div style="ie">你使用的浏览器版本过低，为了你更好的阅读体验，请更新浏览器的版本或者使用其他现代浏览器，比如Chrome、Firefox、Safari等。</div>
+<![endif]-->
+<body>
+    <header class="main-header"  style="background-image:url(
+    /./img/1.jpg)"
+     >
+    <div class="main-header-box">
+        <a class="header-avatar" href="/" title='Yemilice lau'>
+            <img src="/img/avatar.jpg" alt="logo头像" class="img-responsive center-block">
+        </a>
+        <div class="branding">
+            <!--<h2 class="text-hide">Snippet主题,从未如此简单有趣</h2>-->
+            
+            <img src="/img/branding.png" alt="Snippet 博客主题" class="img-responsive center-block">
+            
+        </div>
+    </div>
+</header>
+    <nav class="main-navigation">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="navbar-header"><span class="nav-toggle-button collapsed pull-right" data-toggle="collapse" data-target="#main-menu" id="mnav">
+                        <span class="sr-only"></span>
+                        <i class="fa fa-bars"></i>
+                    </span>
+                    <a class="navbar-brand" href="https://yemilice.com">
+                        Yemilice</a>
+                </div>
+                <div class="collapse navbar-collapse" id="main-menu">
+                    <ul class="menu">
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/"><i class="fa "></i>
+                                Home</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/安全/"><i class="fa "></i>
+                                安全</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/前后端/"><i class="fa "></i>
+                                前后端</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/算法/"><i class="fa "></i>
+                                算法</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/其他技术/"><i class="fa "></i>
+                                其他技术</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/杂七杂八/"><i class="fa "></i>
+                                杂七杂八</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/archives/"><i class="fa "></i>
+                                时间轴</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+    <section class="content-wrap">
+        <div class="container">
+            <div class="row">
+                <main class="col-md-8 main-content m-post">
+                    <p id="process"></p>
+<article class="post">
+    <div class="post-head">
+        <h1 id="Golang 完成一个 Crontab定时器（2）">
+            
+            Golang 完成一个 Crontab定时器（2）
+            
+        </h1>
+        <div class="post-meta">
+    
+    <span class="categories-meta fa-wrap">
+        <i class="fa fa-folder-open-o"></i>
+        
+    </span>
+    
+    
+    <span class="fa-wrap">
+        <i class="fa fa-tags"></i>
+        <span class="tags-meta">
+            
+            <a class="tag-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a>
+            
+        </span>
+    </span>
+    
+    
+    
+    <span class="fa-wrap">
+        <i class="fa fa-clock-o"></i>
+        <span class="date-meta">
+            2020/03/23</span>
+    </span>
+    
+    <span class="fa-wrap">
+        <i class="fa fa-eye"></i>
+        <span id="busuanzi_value_page_pv"></span>
+    </span>
+    
+    
+</div>
+        
+        
+    </div>
+    
+    <div class="post-body post-content">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上篇文章，大概讲了一下robfig/cron 包的使用，怎么开始一个定时任务，那个东西比较简单，也就是调用函数而已，人家都给你把包都封装好了。鉴于上一章我没提到cron相关，这一章专门我写个cron相关，讲讲怎么cron语法，然后再实现一个自动生成cron语句的逻辑。</p>
+<h2 id="需求分析"><a href="#需求分析" class="headerlink" title="需求分析"></a>需求分析</h2><ol>
+<li>cron的基础科普</li>
+<li>根据时间自动生成可用的cron语句</li>
+</ol>
+<h2 id="Cron表达式的基础"><a href="#Cron表达式的基础" class="headerlink" title="Cron表达式的基础"></a>Cron表达式的基础</h2><p>Go的Cron和linux的Cron的区别就是，linux只到分钟，但是Go的Cron可以通过我上一节描述的代码设置精确到秒。所以一般的Cron表达式就是 </p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">* * * * * * command</span><br></pre></td></tr></table></figure>
+
+<p>可以看出来，这是一个时间集合，但是其中每个 * 代表什么含义呢？下面给出Golang的cron设置表  </p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>需要的值</th>
+<th>字符表示</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>秒</td>
+<td>0-59</td>
+<td>* / , -</td>
+</tr>
+<tr>
+<td>分</td>
+<td>0-59</td>
+<td>* / , -</td>
+</tr>
+<tr>
+<td>时</td>
+<td>0-23</td>
+<td>* / , -</td>
+</tr>
+<tr>
+<td>日</td>
+<td>1-31</td>
+<td>* / , -</td>
+</tr>
+<tr>
+<td>月</td>
+<td>1-12</td>
+<td>* / , -</td>
+</tr>
+<tr>
+<td>星期</td>
+<td>0-6</td>
+<td>* / , -</td>
+</tr>
+</tbody></table>
+<p>下面举几个cron的具体例子<br><strong>每秒执行一次任务</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">* * * * * * Command</span><br></pre></td></tr></table></figure>
+
+<p><strong>每分钟执行一次任务</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">* *／1 * * * * Command</span><br></pre></td></tr></table></figure>
+
+<p><strong>每天12点执行一次任务</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">* 0 12 * * * Command</span><br></pre></td></tr></table></figure>
+
+<p><strong>每个月1号12点执行一次任务</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">* 0 12 1 * * Command</span><br></pre></td></tr></table></figure>
+
+<p><strong>2月14号12点执行一次任务（执行一次）</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0 0 12 14 2 * Command</span><br></pre></td></tr></table></figure>
+
+<p><strong>每周二12点执行一次任务</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">* 0 12 * * 1 Command</span><br></pre></td></tr></table></figure>
+<h2 id="Golang-实现一个Cron表达式自动生成器"><a href="#Golang-实现一个Cron表达式自动生成器" class="headerlink" title="Golang 实现一个Cron表达式自动生成器"></a>Golang 实现一个Cron表达式自动生成器</h2><p>Cron这个东西，其实没那么难，但是你每次让我们徒手撸，还是会有点烦，特别是现在网上基本没有在线自动生成Cron语法的网站了，所以我们还是站撸一个Cron自动生成器，首先咱们要明确一个重要东西,<strong>任务可能是循环的，也可能是只执行一次的</strong>，看到了么，这下我们就要针对不同的任务类型，输出不同的任务表达式。</p>
+<h3 id="规定输入的时间格式"><a href="#规定输入的时间格式" class="headerlink" title="规定输入的时间格式"></a>规定输入的时间格式</h3><p>首先输入的时间有多种多样，我们没办法控制输入的时间表达，所以我在这里先行规定，我的代码也是按照这个规定来的，前提在此。  </p>
+<h4 id="循环执行的任务"><a href="#循环执行的任务" class="headerlink" title="循环执行的任务"></a>循环执行的任务</h4><p>对于循环执行的任务，可能有每月，每周，每日，每时等等，所以我在这里举例   </p>
+<p><strong>每月3号12点执行</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">m,03,12:00</span><br></pre></td></tr></table></figure>
+
+<p><strong>每周三的12点执行</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">w,3,12:00</span><br></pre></td></tr></table></figure>
+
+<p><strong>每天的12点执行</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">d,12:00</span><br></pre></td></tr></table></figure>
+<p>观察一下，聪明的你应该知道我要做什么，拿每天循环执行来举例</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">timelists := strings.Split(times, <span class="string">","</span>)</span><br><span class="line">hours := strings.Split(timelists[<span class="number">1</span>], <span class="string">":"</span>)[<span class="number">0</span>]</span><br><span class="line">minutes := strings.Split(timelists[<span class="number">1</span>], <span class="string">":"</span>)[<span class="number">1</span>]</span><br><span class="line">crontab := fmt.Sprintf(<span class="string">"* %s %s * * *"</span>, minutes, hours)</span><br><span class="line">fmt.Println(crontab)</span><br></pre></td></tr></table></figure>
+
+<p>结合其他部分</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">timelists := strings.Split(times, <span class="string">","</span>)</span><br><span class="line"><span class="comment">// 在这里判断类型，天，月，周</span></span><br><span class="line"><span class="keyword">if</span> timelists[<span class="number">0</span>] == <span class="string">"d"</span> &#123;</span><br><span class="line">    hours := strings.Split(timelists[<span class="number">1</span>], <span class="string">":"</span>)[<span class="number">0</span>]</span><br><span class="line">    minutes := strings.Split(timelists[<span class="number">1</span>], <span class="string">":"</span>)[<span class="number">1</span>]</span><br><span class="line">    crontab := fmt.Sprintf(<span class="string">"* %s %s * * *"</span>, minutes, hours)</span><br><span class="line">    <span class="keyword">return</span> crontab</span><br><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> timelists[<span class="number">0</span>] == <span class="string">"w"</span> &#123;</span><br><span class="line">    days := strings.Split(timelists[<span class="number">1</span>], <span class="string">","</span>)[<span class="number">0</span>]</span><br><span class="line">    hours := strings.Split(strings.Split(timelists[<span class="number">2</span>], <span class="string">","</span>)[<span class="number">0</span>], <span class="string">":"</span>)[<span class="number">0</span>]</span><br><span class="line">    minutes := strings.Split(strings.Split(timelists[<span class="number">2</span>], <span class="string">","</span>)[<span class="number">0</span>], <span class="string">":"</span>)[<span class="number">1</span>]</span><br><span class="line">    crontab := fmt.Sprintf(<span class="string">"* %s %s * * %s"</span>, minutes, hours, days)</span><br><span class="line">    <span class="keyword">return</span> crontab</span><br><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> timelists[<span class="number">0</span>] == <span class="string">"m"</span> &#123;</span><br><span class="line">    days := strings.Split(timelists[<span class="number">1</span>], <span class="string">","</span>)[<span class="number">0</span>]</span><br><span class="line">    hours := strings.Split(strings.Split(timelists[<span class="number">2</span>], <span class="string">","</span>)[<span class="number">0</span>], <span class="string">":"</span>)[<span class="number">0</span>]</span><br><span class="line">    minutes := strings.Split(strings.Split(timelists[<span class="number">2</span>], <span class="string">","</span>)[<span class="number">0</span>], <span class="string">":"</span>)[<span class="number">1</span>]</span><br><span class="line">    crontab := fmt.Sprintf(<span class="string">"* %s %s %s * *"</span>, minutes, hours, days)</span><br><span class="line">    <span class="keyword">return</span> crontab</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    crontab := <span class="string">"* * * * * *"</span></span><br><span class="line">    <span class="keyword">return</span> crontab</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>执行一发看看,生成个每月的cron表达式   </p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">* 0 12 03 * * Command</span><br></pre></td></tr></table></figure>
+
+<p>诶，怎么多了个03。。。看起来咱们需要格式化一下，把它转换一下成可用的。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">FkZero</span><span class="params">(times <span class="keyword">string</span>)</span> <span class="params">(fmttime <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">    <span class="comment">// 如果第一个值不为0，直接认为是正常的</span></span><br><span class="line">	<span class="keyword">if</span> <span class="keyword">string</span>(times[<span class="number">0</span>]) != <span class="string">"0"</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> times</span><br><span class="line">    <span class="comment">// 判断00的情况</span></span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> strings.Split(times, <span class="string">"0"</span>)[<span class="number">1</span>] == <span class="string">""</span> &#123;</span><br><span class="line">		fkzero := <span class="string">"0"</span></span><br><span class="line">        <span class="keyword">return</span> fkzero</span><br><span class="line">    <span class="comment">// 清理03，为 3</span></span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		fkzero := strings.Split(times, <span class="string">"0"</span>)[<span class="number">1</span>]</span><br><span class="line">		<span class="keyword">return</span> fkzero</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="执行一次的任务"><a href="#执行一次的任务" class="headerlink" title="执行一次的任务"></a>执行一次的任务</h4><p>执行一次的任务表达方式  <strong>2020-03-20 12:00</strong><br>处理代码如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">timelists := strings.Split(times, <span class="string">" "</span>)[<span class="number">0</span>]</span><br><span class="line">month := strings.Split(timelists, <span class="string">"-"</span>)[<span class="number">1</span>]</span><br><span class="line">day := strings.Split(timelists, <span class="string">"-"</span>)[<span class="number">2</span>]</span><br><span class="line">timework := strings.Split(times, <span class="string">" "</span>)[<span class="number">1</span>]</span><br><span class="line">hours := strings.Split(timework, <span class="string">":"</span>)[<span class="number">0</span>]</span><br><span class="line">minutes := strings.Split(timework, <span class="string">":"</span>)[<span class="number">1</span>]</span><br><span class="line">crontab := fmt.Sprintf(<span class="string">"0 %s %s %s %s *"</span>, minutes, hours, day, month)</span><br><span class="line"><span class="keyword">return</span> crontab</span><br></pre></td></tr></table></figure>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>其实这个代码主要就是一个strings的split切分，但是涉及到了crontab语言的输出，其实没那么难，也就是麻烦，我把它传到github上了，有需要可以自己get下来。<br><a href="https://github.com/Alexanderklau/Go_poject/tree/master/Go-Script/crontab" target="_blank" rel="noopener">https://github.com/Alexanderklau/Go_poject/tree/master/Go-Script/crontab</a></p>
+
+    </div>
+    
+    <div class="post-footer">
+        <div>
+            
+            转载声明：
+            商业转载请联系作者获得授权,非商业转载请注明出处 © <a href="" target="_blank">Yemilice</a>
+            
+            
+        </div>
+        <div>
+            
+        </div>
+    </div>
+</article>
+<div class="article-nav prev-next-wrap clearfix">
+    
+    <a href="/2020/04/13/Golang%E8%B0%83%E7%94%A8Rabbitmq%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%92%8C%E5%B0%81%E8%A3%85/" class="pre-post btn btn-default" title='Golang调用Rabbitmq消息队列和封装'>
+        <i class="fa fa-angle-left fa-fw"></i><span class="hidden-lg">上一篇</span>
+        <span class="hidden-xs">
+            Golang调用Rabbitmq消息队列和封装</span>
+    </a>
+    
+    
+    <a href="/2020/03/23/Golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-Crontab%E5%AE%9A%E6%97%B6%E5%99%A8%EF%BC%881%EF%BC%89/" class="next-post btn btn-default" title='Golang 完成一个 Crontab定时器（1）'>
+        <span class="hidden-lg">下一篇</span>
+        <span class="hidden-xs">
+            Golang 完成一个 Crontab定时器（1）</span><i class="fa fa-angle-right fa-fw"></i>
+    </a>
+    
+</div>
+
+<div id="comments">
+    
+<p>评论系统未开启，无法评论！</p>
+
+</div>
+
+                </main>
+                
+                    <aside id="article-toc" role="navigation" class="col-md-4">
+    <div class="widget">
+        <h3 class="title">
+            Table of Contents
+        </h3>
+        
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#需求分析"><span class="toc-text">需求分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Cron表达式的基础"><span class="toc-text">Cron表达式的基础</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Golang-实现一个Cron表达式自动生成器"><span class="toc-text">Golang 实现一个Cron表达式自动生成器</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#规定输入的时间格式"><span class="toc-text">规定输入的时间格式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#循环执行的任务"><span class="toc-text">循环执行的任务</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#执行一次的任务"><span class="toc-text">执行一次的任务</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li></ol>
+        
+    </div>
+</aside>
+                
+            </div>
+        </div>
+    </section>
+    <footer class="main-footer">
+    <div class="container">
+        <div class="row">
+        </div>
+    </div>
+</footer>
+<a id="back-to-top" class="icon-btn hide">
+    <i class="fa fa-chevron-up"></i>
+</a>
+    <div class="copyright">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="busuanzi">
+    
+    Total:
+    <strong id="busuanzi_value_site_pv">
+        <i class="fa fa-spinner fa-spin"></i>
+    </strong>
+    &nbsp; | &nbsp;
+    Visitors:
+    <strong id="busuanzi_value_site_uv">
+        <i class="fa fa-spinner fa-spin"></i>
+    </strong>
+    
+</div>
+            </div>
+            <div class="col-sm-12">
+                <span>Copyright &copy;
+                    2019
+                    
+                </span> |
+                <span>
+                    Powered by <a href="//hexo.io" class="copyright-links" target="_blank" rel="nofollow">Hexo</a>
+                </span> |
+                <span>
+                    Theme by <a href="//github.com/shenliyang/hexo-theme-snippet.git" class="copyright-links" target="_blank" rel="nofollow">Snippet</a>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script src="/js/app.js?rev=@@hash"></script>
+</body>
+</html>

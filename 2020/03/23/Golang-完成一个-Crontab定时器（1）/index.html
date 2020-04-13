@@ -1,0 +1,325 @@
+<!DOCTYPE HTML>
+<html lang="cn">
+
+<head>
+    <!--Setting-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Cache-Control" content="no-siteapp">
+    <meta http-equiv="Cache-Control" content="no-transform">
+    <meta name="renderer" content="webkit|ie-comp|ie-stand">
+    <meta name="apple-mobile-web-app-capable" content="Yemilice">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no,email=no,adress=no">
+    <meta name="browsermode" content="application">
+    <meta name="screen-orientation" content="portrait">
+    <meta name="theme-version" content="1.2.3">
+    <meta name="root" content="/">
+    <link rel="dns-prefetch" href="https://yemilice.com">
+    <!--SEO-->
+
+<meta name="keywords" content="前后端" />
+
+
+<meta name="description" content="前言Linux的Crontab定时器似乎已经足够强大，但是我认为还是没有办法满足我们所有的需求，例如定时器某一瞬间需要动态添加／删除任务的功能，例如定时器只能在指定的节点上启动（主节点），其他节..." />
+
+
+<meta name="robots" content="all" />
+<meta name="google" content="all" />
+<meta name="googlebot" content="all" />
+<meta name="verify" content="all" />
+    <!--Title-->
+
+<title>
+    
+    Golang 完成一个 Crontab定时器（1） |
+    
+    Yemilice
+</title>
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+
+
+<link rel="icon" href="/favicon.ico">
+
+    
+
+<link rel="stylesheet" href="/css/bootstrap.min.css?rev=3.3.7">
+<link rel="stylesheet" href="/css/font-awesome.min.css?rev=4.7.0">
+<link rel="stylesheet" href="/css/style.css?rev=@@hash">
+    
+<div class="hide">
+    <script type="text/javascript">
+    var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cspan class='cnzz_stat_icon_1263868967 hide' %3E%3Cscript%20src%3D%22https%3A%2F%2Fs95.cnzz.com%2Fz_stat.php%3Fweb_id%3D1272564536%22%3E%3C%2Fscript%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s19.cnzz.com/z_stat.php%3Fid%3D1263868967%26show%3Dpic1' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+</div>
+
+
+
+
+    
+
+</head>
+<!--[if lte IE 8]>
+<style>
+    html{ font-size: 1em }
+</style>
+<![endif]-->
+<!--[if lte IE 9]>
+<div style="ie">你使用的浏览器版本过低，为了你更好的阅读体验，请更新浏览器的版本或者使用其他现代浏览器，比如Chrome、Firefox、Safari等。</div>
+<![endif]-->
+<body>
+    <header class="main-header"  style="background-image:url(
+    /./img/1.jpg)"
+     >
+    <div class="main-header-box">
+        <a class="header-avatar" href="/" title='Yemilice lau'>
+            <img src="/img/avatar.jpg" alt="logo头像" class="img-responsive center-block">
+        </a>
+        <div class="branding">
+            <!--<h2 class="text-hide">Snippet主题,从未如此简单有趣</h2>-->
+            
+            <img src="/img/branding.png" alt="Snippet 博客主题" class="img-responsive center-block">
+            
+        </div>
+    </div>
+</header>
+    <nav class="main-navigation">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="navbar-header"><span class="nav-toggle-button collapsed pull-right" data-toggle="collapse" data-target="#main-menu" id="mnav">
+                        <span class="sr-only"></span>
+                        <i class="fa fa-bars"></i>
+                    </span>
+                    <a class="navbar-brand" href="https://yemilice.com">
+                        Yemilice</a>
+                </div>
+                <div class="collapse navbar-collapse" id="main-menu">
+                    <ul class="menu">
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/"><i class="fa "></i>
+                                Home</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/安全/"><i class="fa "></i>
+                                安全</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/前后端/"><i class="fa "></i>
+                                前后端</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/算法/"><i class="fa "></i>
+                                算法</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/其他技术/"><i class="fa "></i>
+                                其他技术</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/杂七杂八/"><i class="fa "></i>
+                                杂七杂八</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/archives/"><i class="fa "></i>
+                                时间轴</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+    <section class="content-wrap">
+        <div class="container">
+            <div class="row">
+                <main class="col-md-8 main-content m-post">
+                    <p id="process"></p>
+<article class="post">
+    <div class="post-head">
+        <h1 id="Golang 完成一个 Crontab定时器（1）">
+            
+            Golang 完成一个 Crontab定时器（1）
+            
+        </h1>
+        <div class="post-meta">
+    
+    <span class="categories-meta fa-wrap">
+        <i class="fa fa-folder-open-o"></i>
+        
+    </span>
+    
+    
+    <span class="fa-wrap">
+        <i class="fa fa-tags"></i>
+        <span class="tags-meta">
+            
+            <a class="tag-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a>
+            
+        </span>
+    </span>
+    
+    
+    
+    <span class="fa-wrap">
+        <i class="fa fa-clock-o"></i>
+        <span class="date-meta">
+            2020/03/23</span>
+    </span>
+    
+    <span class="fa-wrap">
+        <i class="fa fa-eye"></i>
+        <span id="busuanzi_value_page_pv"></span>
+    </span>
+    
+    
+</div>
+        
+        
+    </div>
+    
+    <div class="post-body post-content">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>Linux的Crontab定时器似乎已经足够强大，但是我认为还是没有办法满足我们所有的需求，例如定时器某一瞬间需要动态添加／删除任务的功能，例如定时器只能在指定的节点上启动（主节点），其他节点不需要定时服务，这种情况Linux自带的Crontab就不能够满足我们的需求了，所以这次要徒手定义一个Crontab定时器，作为自己的备用。</p>
+<h2 id="需求分析"><a href="#需求分析" class="headerlink" title="需求分析"></a>需求分析</h2><p>看我博客的基本也都知道，做任何事，都要进行一个需求分析。既然是一个定时器，那么应该支持的功能如下  </p>
+<ol>
+<li>定时启动任务（废话）</li>
+<li>支持基础的Crontab语法</li>
+<li>支持将时间转换为Crontab语法</li>
+<li>支持Crontab语法校验</li>
+<li>记录日志的功能</li>
+<li>支持crontab任务到秒级</li>
+</ol>
+<p>综合上面的需求，不难看出，其实最重要的功能就是实现一个定时启动任务的玩意儿，在Go开发当中，也就是在某个时间点执行某个Go函数。说的简单点，就是，定时跑Go函数。也就是定时go func而已。</p>
+<h2 id="robfig-cron-包的使用"><a href="#robfig-cron-包的使用" class="headerlink" title="robfig/cron 包的使用"></a>robfig/cron 包的使用</h2><h3 id="安装robfig-cron包"><a href="#安装robfig-cron包" class="headerlink" title="安装robfig/cron包"></a>安装robfig/cron包</h3><p>我这里默认你们都有go 基础,先安装个包，这玩意儿是驱动Golang 驱动 Crontab的重要框架。   </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go get github.com/robfig/cron</span><br></pre></td></tr></table></figure>
+<h3 id="robfig-cron的使用举例"><a href="#robfig-cron的使用举例" class="headerlink" title="robfig/cron的使用举例"></a>robfig/cron的使用举例</h3><p>启动一个定时任务其实很简单</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">job := cron.New()</span><br><span class="line">job.AddFunc(<span class="string">"* * * * *"</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;fmt.Println(<span class="string">"Start job...."</span>)&#125;)</span><br><span class="line">job.Start()</span><br></pre></td></tr></table></figure>
+
+<p>一个定时任务就这样被写好了，其实仔细琢磨一下，添加任务的方式就是</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 新任务</span></span><br><span class="line">job := cron.New()</span><br><span class="line"><span class="comment">///任务添加</span></span><br><span class="line">job.AddFunc(<span class="string">"Cronta 语句"</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;执行函数（）&#125;)</span><br><span class="line"><span class="comment">//任务开始</span></span><br><span class="line">job.Start()</span><br></pre></td></tr></table></figure>
+<p>这样就完成了一个定时任务的添加</p>
+<h2 id="支持crontab任务到秒级"><a href="#支持crontab任务到秒级" class="headerlink" title="支持crontab任务到秒级"></a>支持crontab任务到秒级</h2><p>估计你们看到这里一脸懵逼，为啥你个单独到秒级的也要整出来呢？其实我也表示，我也不想啊！奈何一点，robfig/cron这玩意有个很奇葩的一点，<strong>它只支持的分钟级别的任务，不支持到秒级别！！！！</strong>，<strong>它只支持的分钟级别的任务，不支持到秒级别！！！！</strong>，<strong>它只支持的分钟级别的任务，不支持到秒级别！！！！</strong>，重要的事儿说三遍！这里需要你自己定义秒级别的任务，在翻了一下它的test源码之后，拉到最底下，看到这么一行代码。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// newWithSeconds returns a Cron with the seconds field enabled.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">newWithSeconds</span><span class="params">()</span> *<span class="title">Cron</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> New(WithParser(secondParser), WithChain())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这行代码啥意思呢，意思就是启用返回seconds字段的任务，说白了就是，你要加这个，才能开启秒级别的任务<br>网上好多博客写的，都是你抄我，我抄你，抄来抄去，没一个代码能用的，大家如果发现抄网上那帮人的代码，跑不起来，那绝对就是这个原因！人家只支持到分钟，网上给出的例子全都是秒级别的，并且没打开秒级别任务定义，还能跑起来？我都怀疑你们怎么写的代码。<br><strong>定义秒级别任务代码</strong><br>这段代码主要的意思就是，开放到秒级别的任务支持，看到了second么，这段代码在源码包的test下有，你们可以自己去看看。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">newWithSeconds</span><span class="params">()</span> *<span class="title">cron</span>.<span class="title">Cron</span></span> &#123;</span><br><span class="line">	secondParser := cron.NewParser(cron.Second | cron.Minute |</span><br><span class="line">		cron.Hour | cron.Dom | cron.Month | cron.DowOptional | cron.Descriptor)</span><br><span class="line">	<span class="keyword">return</span> cron.New(cron.WithParser(secondParser), cron.WithChain())</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">// 使用秒级别任务</span></span><br><span class="line">    job := newWithSeconds()</span><br><span class="line">    <span class="comment">// 任务定义,3s输出一个j1 start job,不停循环</span></span><br><span class="line">    job.AddFunc(<span class="string">"0/3 * * * * ? "</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        fmt.Println(<span class="string">"j1 start job...."</span>, time.Now().Format(<span class="string">"2020-03-20 15:04:05"</span>))</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="comment">// 任务定义，每分钟的第三秒执行任务</span></span><br><span class="line">    job.AddFunc(<span class="string">"3 * * * * ? "</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        fmt.Println(<span class="string">"j2 start job...."</span>, time.Now().Format(<span class="string">"2020-03-20 15:04:05"</span>))</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="comment">//开始任务</span></span><br><span class="line">    job.Start()</span><br><span class="line">    <span class="keyword">select</span> &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出的结果</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">j1 start job.... 2020-03-21 17:09:36</span><br><span class="line">j1 start job.... 2020-03-21 17:09:39</span><br><span class="line">j1 start job.... 2020-03-21 17:09:42</span><br><span class="line">j1 start job.... 2020-03-21 17:09:45</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>初步完成了crontab的基础功能，这篇文章默认，你们都比较懂crontab语法和go开发了，如果不懂就请期待下一篇，实现crontab语法自动生成和自动加载任务吧。</p>
+
+    </div>
+    
+    <div class="post-footer">
+        <div>
+            
+            转载声明：
+            商业转载请联系作者获得授权,非商业转载请注明出处 © <a href="" target="_blank">Yemilice</a>
+            
+            
+        </div>
+        <div>
+            
+        </div>
+    </div>
+</article>
+<div class="article-nav prev-next-wrap clearfix">
+    
+    <a href="/2020/03/23/Golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-Crontab%E5%AE%9A%E6%97%B6%E5%99%A8%EF%BC%882%EF%BC%89/" class="pre-post btn btn-default" title='Golang 完成一个 Crontab定时器（2）'>
+        <i class="fa fa-angle-left fa-fw"></i><span class="hidden-lg">上一篇</span>
+        <span class="hidden-xs">
+            Golang 完成一个 Crontab定时器（2）</span>
+    </a>
+    
+    
+    <a href="/2020/03/20/Golang%E5%88%A9%E7%94%A8context%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E4%BB%BB%E5%8A%A1%E5%B9%B6%E5%8F%91%E6%A1%86%E6%9E%B6/" class="next-post btn btn-default" title='Golang利用context实现一个任务并发框架'>
+        <span class="hidden-lg">下一篇</span>
+        <span class="hidden-xs">
+            Golang利用context实现一个任务并发框架</span><i class="fa fa-angle-right fa-fw"></i>
+    </a>
+    
+</div>
+
+<div id="comments">
+    
+<p>评论系统未开启，无法评论！</p>
+
+</div>
+
+                </main>
+                
+                    <aside id="article-toc" role="navigation" class="col-md-4">
+    <div class="widget">
+        <h3 class="title">
+            Table of Contents
+        </h3>
+        
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#需求分析"><span class="toc-text">需求分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#robfig-cron-包的使用"><span class="toc-text">robfig/cron 包的使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#安装robfig-cron包"><span class="toc-text">安装robfig/cron包</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#robfig-cron的使用举例"><span class="toc-text">robfig/cron的使用举例</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#支持crontab任务到秒级"><span class="toc-text">支持crontab任务到秒级</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li></ol>
+        
+    </div>
+</aside>
+                
+            </div>
+        </div>
+    </section>
+    <footer class="main-footer">
+    <div class="container">
+        <div class="row">
+        </div>
+    </div>
+</footer>
+<a id="back-to-top" class="icon-btn hide">
+    <i class="fa fa-chevron-up"></i>
+</a>
+    <div class="copyright">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="busuanzi">
+    
+    Total:
+    <strong id="busuanzi_value_site_pv">
+        <i class="fa fa-spinner fa-spin"></i>
+    </strong>
+    &nbsp; | &nbsp;
+    Visitors:
+    <strong id="busuanzi_value_site_uv">
+        <i class="fa fa-spinner fa-spin"></i>
+    </strong>
+    
+</div>
+            </div>
+            <div class="col-sm-12">
+                <span>Copyright &copy;
+                    2019
+                    
+                </span> |
+                <span>
+                    Powered by <a href="//hexo.io" class="copyright-links" target="_blank" rel="nofollow">Hexo</a>
+                </span> |
+                <span>
+                    Theme by <a href="//github.com/shenliyang/hexo-theme-snippet.git" class="copyright-links" target="_blank" rel="nofollow">Snippet</a>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script src="/js/app.js?rev=@@hash"></script>
+</body>
+</html>

@@ -1,0 +1,322 @@
+<!DOCTYPE HTML>
+<html lang="cn">
+
+<head>
+    <!--Setting-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Cache-Control" content="no-siteapp">
+    <meta http-equiv="Cache-Control" content="no-transform">
+    <meta name="renderer" content="webkit|ie-comp|ie-stand">
+    <meta name="apple-mobile-web-app-capable" content="Yemilice">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no,email=no,adress=no">
+    <meta name="browsermode" content="application">
+    <meta name="screen-orientation" content="portrait">
+    <meta name="theme-version" content="1.2.3">
+    <meta name="root" content="/">
+    <link rel="dns-prefetch" href="https://yemilice.com">
+    <!--SEO-->
+
+<meta name="keywords" content="前后端" />
+
+
+<meta name="description" content="Golang利用context实现一个任务并发框架消失这么久的原因疫情太严重，哥们本来打算在新疆滑雪+吃烤肉度过一个美好的假期，结果没成想给困那里了，这不就尴尬了么，这不，博客没更新，现在我又回..." />
+
+
+<meta name="robots" content="all" />
+<meta name="google" content="all" />
+<meta name="googlebot" content="all" />
+<meta name="verify" content="all" />
+    <!--Title-->
+
+<title>
+    
+    Golang利用context实现一个任务并发框架 |
+    
+    Yemilice
+</title>
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+
+
+<link rel="icon" href="/favicon.ico">
+
+    
+
+<link rel="stylesheet" href="/css/bootstrap.min.css?rev=3.3.7">
+<link rel="stylesheet" href="/css/font-awesome.min.css?rev=4.7.0">
+<link rel="stylesheet" href="/css/style.css?rev=@@hash">
+    
+<div class="hide">
+    <script type="text/javascript">
+    var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+    document.write(unescape("%3Cspan class='cnzz_stat_icon_1263868967 hide' %3E%3Cscript%20src%3D%22https%3A%2F%2Fs95.cnzz.com%2Fz_stat.php%3Fweb_id%3D1272564536%22%3E%3C%2Fscript%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s19.cnzz.com/z_stat.php%3Fid%3D1263868967%26show%3Dpic1' type='text/javascript'%3E%3C/script%3E"));
+    </script>
+</div>
+
+
+
+
+    
+
+</head>
+<!--[if lte IE 8]>
+<style>
+    html{ font-size: 1em }
+</style>
+<![endif]-->
+<!--[if lte IE 9]>
+<div style="ie">你使用的浏览器版本过低，为了你更好的阅读体验，请更新浏览器的版本或者使用其他现代浏览器，比如Chrome、Firefox、Safari等。</div>
+<![endif]-->
+<body>
+    <header class="main-header"  style="background-image:url(
+    /./img/1.jpg)"
+     >
+    <div class="main-header-box">
+        <a class="header-avatar" href="/" title='Yemilice lau'>
+            <img src="/img/avatar.jpg" alt="logo头像" class="img-responsive center-block">
+        </a>
+        <div class="branding">
+            <!--<h2 class="text-hide">Snippet主题,从未如此简单有趣</h2>-->
+            
+            <img src="/img/branding.png" alt="Snippet 博客主题" class="img-responsive center-block">
+            
+        </div>
+    </div>
+</header>
+    <nav class="main-navigation">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="navbar-header"><span class="nav-toggle-button collapsed pull-right" data-toggle="collapse" data-target="#main-menu" id="mnav">
+                        <span class="sr-only"></span>
+                        <i class="fa fa-bars"></i>
+                    </span>
+                    <a class="navbar-brand" href="https://yemilice.com">
+                        Yemilice</a>
+                </div>
+                <div class="collapse navbar-collapse" id="main-menu">
+                    <ul class="menu">
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/"><i class="fa "></i>
+                                Home</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/安全/"><i class="fa "></i>
+                                安全</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/前后端/"><i class="fa "></i>
+                                前后端</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/算法/"><i class="fa "></i>
+                                算法</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/其他技术/"><i class="fa "></i>
+                                其他技术</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/tags/杂七杂八/"><i class="fa "></i>
+                                杂七杂八</a>
+                        </li>
+                        
+                        <li role="presentation" class="text-center">
+                            <a href="/archives/"><i class="fa "></i>
+                                时间轴</a>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+    <section class="content-wrap">
+        <div class="container">
+            <div class="row">
+                <main class="col-md-8 main-content m-post">
+                    <p id="process"></p>
+<article class="post">
+    <div class="post-head">
+        <h1 id="Golang利用context实现一个任务并发框架">
+            
+            Golang利用context实现一个任务并发框架
+            
+        </h1>
+        <div class="post-meta">
+    
+    <span class="categories-meta fa-wrap">
+        <i class="fa fa-folder-open-o"></i>
+        
+    </span>
+    
+    
+    <span class="fa-wrap">
+        <i class="fa fa-tags"></i>
+        <span class="tags-meta">
+            
+            <a class="tag-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a>
+            
+        </span>
+    </span>
+    
+    
+    
+    <span class="fa-wrap">
+        <i class="fa fa-clock-o"></i>
+        <span class="date-meta">
+            2020/03/20</span>
+    </span>
+    
+    <span class="fa-wrap">
+        <i class="fa fa-eye"></i>
+        <span id="busuanzi_value_page_pv"></span>
+    </span>
+    
+    
+</div>
+        
+        
+    </div>
+    
+    <div class="post-body post-content">
+        <h1 id="Golang利用context实现一个任务并发框架"><a href="#Golang利用context实现一个任务并发框架" class="headerlink" title="Golang利用context实现一个任务并发框架"></a>Golang利用context实现一个任务并发框架</h1><h2 id="消失这么久的原因"><a href="#消失这么久的原因" class="headerlink" title="消失这么久的原因"></a>消失这么久的原因</h2><p>疫情太严重，哥们本来打算在新疆滑雪+吃烤肉度过一个美好的假期，结果没成想给困那里了，这不就尴尬了么，这不，博客没更新，现在我又回来了，哈哈哈哈！</p>
+<h2 id="我要实现个什么玩意儿"><a href="#我要实现个什么玩意儿" class="headerlink" title="我要实现个什么玩意儿"></a>我要实现个什么玩意儿</h2><p>有一个需求，简单的说就是我要写一个任务管理框架，主要功能有任务开启，任务关闭，任务监控等等。说的抽象点，就是我要用Golang写一个任务管理的功能，任务很可能有多个，并且我想停任务就停任务，想开始任务我就开始任务！我不要你觉得，我要我觉得！</p>
+<h2 id="为什么我要用Golang"><a href="#为什么我要用Golang" class="headerlink" title="为什么我要用Golang"></a>为什么我要用Golang</h2><p>众所周知，golang这东西，有个黑科技，叫goroutine，这东西很牛逼，牛逼在哪儿呢？简单的说，快，小，短！协程切换快，占用资源少，并且，异步的，可以开多个，直接一个go 关键字就给人家打开了，多棒！  </p>
+<h2 id="实际需求分析"><a href="#实际需求分析" class="headerlink" title="实际需求分析"></a>实际需求分析</h2><p>结合我们上面的任务需求，实现一个任务开始，任务停止的逻辑，这就说明，任务肯定不只有一个，并且任务都在后台，我们该怎么去监控，或者去管理这个go任务，或者go函数呢，golang提供了很多解决办法，例如WaitGroup，context等方法。<br>思考一下，我们的这个需求，任务都是跑在后台的异步并发逻辑，这就说明不只一个任务会被启动和停止，这样对我们的任务管理是一个很大的挑战，因为任务都是在后台隐秘执行的，如果是一般逻辑，我们要停止任务，首先要找到任务的pid，然后kill任务进程，这是一个完整的结束任务的流程。<br>回到我们这个需求，基本的流程就是：  </p>
+<p>发送一个任务请求(开启任务/停止任务) -&gt; 接收到任务请求 -&gt; 执行任务请求   </p>
+<p>思考一下，如果，我们开启任务之后，任务进入后台，那么，我们在停止任务的时候，怎么保证，能够找到这个任务，精准的打击（停止）它呢？看了题目你应该就知道了，用context就好了。下面我就来介绍一下它吧。</p>
+<h2 id="主角context介绍"><a href="#主角context介绍" class="headerlink" title="主角context介绍"></a>主角context介绍</h2><p>网上很多博客介绍它，我粗粗看了一眼，非常抽象，很多人再一描述，就更麻烦更抽象了。我这里不说的太麻烦，简单描述一下，这个东西context，是干嘛呢，你们理解一下株连，连坐这两个词汇，这个东西相当于就是锁链，铁锁连舟，不进则退，说明白点，就是一个串连上下文的类似信号传递的玩意儿。每个调用链上的函数都要以它作为函数进行传递，举个例子,”株九族”这个词，是因为一个人犯罪，结果家人都因为他被砍了头，这个犯罪的人，就是父context，其他因为他被杀的人，就是子context，还可能有孙context，他被砍头了，其他人也得跟着一起死，用代码表示一波</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 这是儿子函数</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">gen</span><span class="params">(ctx context.Context)</span> &lt;-<span class="title">chan</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	dst := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line">	n := <span class="number">1</span></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">for</span> &#123;</span><br><span class="line">			<span class="keyword">select</span> &#123;</span><br><span class="line">            <span class="comment">// 接收到爹挂了的消息</span></span><br><span class="line">			<span class="keyword">case</span> &lt;-ctx.Done():</span><br><span class="line">                fmt.Println(<span class="string">"儿子被砍头了。"</span>)</span><br><span class="line">                <span class="comment">// 退出任务</span></span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			<span class="keyword">case</span> dst &lt;- n:</span><br><span class="line">				n++</span><br><span class="line">				time.Sleep(time.Second * <span class="number">1</span>)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">return</span> dst</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 这是爹函数</span></span><br><span class="line">fun test() &#123;</span><br><span class="line">    ctx, cancel := context.WithCancel(context.Background())</span><br><span class="line">	<span class="comment">// 让我造个儿子，给我儿子传个ctx</span></span><br><span class="line">    intChan := gen(ctx)</span><br><span class="line">    <span class="comment">// 我被干了，cancel是结束</span></span><br><span class="line">    <span class="keyword">defer</span> Cancel()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这下说的明白了么？其实context还有很多别的，例如timeout之类的，但是那个是我后面准备写的，这一节就不写这些了。</p>
+<h2 id="实现我们的需求"><a href="#实现我们的需求" class="headerlink" title="实现我们的需求"></a>实现我们的需求</h2><p>我们的武器context已经准备好了，大概的使用逻辑我们也明白了，现在你们可以看到，我们只要拿到主函数（爹函数）的ctx和cancel，我们就可以控制子函数（儿子函数）的死活，我们在开发当中，任务的状态是不断在变化的，一个爹对应一个儿子，但是可能有多个任务，多个任务我们该怎么管理它？<br>在一般的开发任务中，我们习惯将任务记录到数据库当中，然后在开发当中不停的遍历数据库，去判断任务的状态到底是开启还是停止，这里我们要考虑到，频繁遍历数据库，会不会带来大量的访问堆积？还是否有别的解决办法？  </p>
+<h3 id="我的解决方案"><a href="#我的解决方案" class="headerlink" title="我的解决方案"></a>我的解决方案</h3><p>这次开发中，我选择定义一个全局变量的主map，并且定义一个任务的struct类型，代码如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 全局map</span></span><br><span class="line"><span class="keyword">var</span> jobmap = <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">interface</span>&#123;&#125;)</span><br><span class="line"><span class="comment">//Job 任务</span></span><br><span class="line"><span class="keyword">type</span> Jobs <span class="keyword">struct</span> &#123;</span><br><span class="line">	ID     <span class="keyword">string</span></span><br><span class="line">	Status <span class="keyword">int</span></span><br><span class="line">	Ctx    context.Context</span><br><span class="line">	Cancel context.CancelFunc</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后我选择在任务开始的时候（创造儿子的时候），将信息填充，修改test代码如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">test</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> jobs Jobs</span><br><span class="line">    ctx, cancel := context.WithCancel(context.Background())</span><br><span class="line">    <span class="comment">// 造一个儿子</span></span><br><span class="line">    intChan := gen(ctx)</span><br><span class="line">    <span class="comment">// 任务开始了</span></span><br><span class="line">    fmt.Println(<span class="string">"start job"</span>)</span><br><span class="line">    <span class="comment">// 重要的东西传进去</span></span><br><span class="line">	jobs.Status = <span class="number">1</span></span><br><span class="line">	jobs.Cancel = cancel</span><br><span class="line">    jobs.Ctx = ctx</span><br><span class="line">    <span class="comment">// 定义一个任务id，这个可以用uuid，或者随便整个别的</span></span><br><span class="line">	jobs.ID = <span class="string">"sdads"</span></span><br><span class="line">    m1[<span class="string">"sdads"</span>] = jobs</span><br><span class="line">    <span class="comment">// 阻塞任务，假装任务执行很久</span></span><br><span class="line">	<span class="keyword">for</span> n := <span class="keyword">range</span> intChan &#123;</span><br><span class="line">		fmt.Println(n)</span><br><span class="line">		<span class="keyword">if</span> n == <span class="number">1000</span> &#123;</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<p>再然后，我选择写一个停止函数（砍头函数）</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">stopGetmi</span><span class="params">(id <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">//把任务停掉</span></span><br><span class="line">	fmt.Println(<span class="string">"stop jobs"</span>)</span><br><span class="line">    jobss := m1[id]</span><br><span class="line">    <span class="comment">//interface 转 struct</span></span><br><span class="line">    op, ok := jobss.(Jobs)</span><br><span class="line">    <span class="comment">// 调用砍头函数cancel</span></span><br><span class="line">	<span class="keyword">defer</span> op.Cancel()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>进行测试</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">go</span> test()</span><br><span class="line">	<span class="keyword">go</span> stopGetmi(<span class="string">"sdads"</span>)</span><br><span class="line">	time.Sleep(time.Second * <span class="number">200</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>发现任务执行结果<br><img src="/images/3.png" alt><br>这样你就完成了干掉老爹，也干掉儿子的素质操作。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>主要是context的基础和说明，其实context我还是推荐大家去看看原版，我这里写的太过于简单，不过这篇博客，也是我记录一下自己开发中遇到的难题，当时看网上没有类似的说明，于是写了这篇博客，希望大家多多包涵。<br>祝大家都能躲过瘟疫，我们终究会在春花花开的地方相见。</p>
+
+    </div>
+    
+    <div class="post-footer">
+        <div>
+            
+            转载声明：
+            商业转载请联系作者获得授权,非商业转载请注明出处 © <a href="" target="_blank">Yemilice</a>
+            
+            
+        </div>
+        <div>
+            
+        </div>
+    </div>
+</article>
+<div class="article-nav prev-next-wrap clearfix">
+    
+    <a href="/2020/03/23/Golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-Crontab%E5%AE%9A%E6%97%B6%E5%99%A8%EF%BC%881%EF%BC%89/" class="pre-post btn btn-default" title='Golang 完成一个 Crontab定时器（1）'>
+        <i class="fa fa-angle-left fa-fw"></i><span class="hidden-lg">上一篇</span>
+        <span class="hidden-xs">
+            Golang 完成一个 Crontab定时器（1）</span>
+    </a>
+    
+    
+    <a href="/2019/12/13/ETCD%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E9%80%89%E4%B8%BB%E6%9C%BA%E5%88%B6-Golang/" class="next-post btn btn-default" title='ETCD分布式锁实现选主机制(Golang)'>
+        <span class="hidden-lg">下一篇</span>
+        <span class="hidden-xs">
+            ETCD分布式锁实现选主机制(Golang)</span><i class="fa fa-angle-right fa-fw"></i>
+    </a>
+    
+</div>
+
+<div id="comments">
+    
+<p>评论系统未开启，无法评论！</p>
+
+</div>
+
+                </main>
+                
+                    <aside id="article-toc" role="navigation" class="col-md-4">
+    <div class="widget">
+        <h3 class="title">
+            Table of Contents
+        </h3>
+        
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Golang利用context实现一个任务并发框架"><span class="toc-text">Golang利用context实现一个任务并发框架</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#消失这么久的原因"><span class="toc-text">消失这么久的原因</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#我要实现个什么玩意儿"><span class="toc-text">我要实现个什么玩意儿</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#为什么我要用Golang"><span class="toc-text">为什么我要用Golang</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实际需求分析"><span class="toc-text">实际需求分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#主角context介绍"><span class="toc-text">主角context介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实现我们的需求"><span class="toc-text">实现我们的需求</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#我的解决方案"><span class="toc-text">我的解决方案</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li></ol></li></ol>
+        
+    </div>
+</aside>
+                
+            </div>
+        </div>
+    </section>
+    <footer class="main-footer">
+    <div class="container">
+        <div class="row">
+        </div>
+    </div>
+</footer>
+<a id="back-to-top" class="icon-btn hide">
+    <i class="fa fa-chevron-up"></i>
+</a>
+    <div class="copyright">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="busuanzi">
+    
+    Total:
+    <strong id="busuanzi_value_site_pv">
+        <i class="fa fa-spinner fa-spin"></i>
+    </strong>
+    &nbsp; | &nbsp;
+    Visitors:
+    <strong id="busuanzi_value_site_uv">
+        <i class="fa fa-spinner fa-spin"></i>
+    </strong>
+    
+</div>
+            </div>
+            <div class="col-sm-12">
+                <span>Copyright &copy;
+                    2019
+                    
+                </span> |
+                <span>
+                    Powered by <a href="//hexo.io" class="copyright-links" target="_blank" rel="nofollow">Hexo</a>
+                </span> |
+                <span>
+                    Theme by <a href="//github.com/shenliyang/hexo-theme-snippet.git" class="copyright-links" target="_blank" rel="nofollow">Snippet</a>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script src="/js/app.js?rev=@@hash"></script>
+</body>
+</html>
