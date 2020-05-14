@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://yemilice.com/2020/05/14/Golang%E5%B0%81%E8%A3%85Elasticsearch%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/</loc>
+    <lastmod>2020-05-14</lastmod>
+  </url>  <url>
     <loc>https://yemilice.com/2019/10/25/Elasticsearch-for-python-API%E6%A8%A1%E5%9D%97%E5%8C%96%E5%B0%81%E8%A3%85/</loc>
     <lastmod>2020-04-14</lastmod>
   </url>  <url>

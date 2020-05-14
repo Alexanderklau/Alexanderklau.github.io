@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    Golang封装Elasticsearch常用功能 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="/images/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-Golang封装Elasticsearch常用功能" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Golang封装Elasticsearch常用功能
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/05/14/Golang%E5%B0%81%E8%A3%85Elasticsearch%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/" class="article-date">
+  <time datetime="2020-05-14T01:45:49.000Z" itemprop="datePublished">2020-05-14</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.5k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">10 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言（为什么要写这篇文章）"><a href="#前言（为什么要写这篇文章）" class="headerlink" title="前言（为什么要写这篇文章）"></a>前言（为什么要写这篇文章）</h2><p>首先看过我博客的都应该知道，我去年发了一篇Python封装Elasticsearch的文章。但那是去年了，今年我将我的检索服务后端用Golang全部重写了一波，相当于用Go重构了以前的Python代码，不过我个人感觉Golang的效率还是高于Python的，而且我还加了一些异常判断和处理，这次的代码只会比以前更好更牛逼，为了纪念这一个多月的重构历程，我将关键功能记录下来，方便自己复习和各位兄弟姐妹查看。</p>
+<h2 id="使用的Go包"><a href="#使用的Go包" class="headerlink" title="使用的Go包"></a>使用的Go包</h2><p>我的Elasticsearch版本是6.3.2，6系列了，现在（2020-05-13）最新版本应该是7，不过新版本和旧版本应该就是少了Type，我的6版本代码，请各位自己自行斟酌使用。<br>安装指定的Go包 olivere/elastic，现在有官方驱动的包了，但是我这篇文章用的包是 olivere/elastic，所以一切的代码都是以olivere为主。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go get github.com/olivere/elastic</span><br></pre></td></tr></table></figure>
+
+<h2 id="基础的使用（Simple的使用）"><a href="#基础的使用（Simple的使用）" class="headerlink" title="基础的使用（Simple的使用）"></a>基础的使用（Simple的使用）</h2><p>接下来我举几个例子来说下这个golang 如何驱动 elasticsearch的</p>
+<h3 id="连接Elasticserach"><a href="#连接Elasticserach" class="headerlink" title="连接Elasticserach"></a>连接Elasticserach</h3><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> elasticdb</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"context"</span></span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line"></span><br><span class="line">	<span class="string">"github.com/olivere/elastic"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//连接127.0.0.1</span></span><br><span class="line">    client, err := elastic.NewClient(elastic.SetURL(<span class="string">"http://127.0.0.1:9200"</span>))</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        fmt.Println(err)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//检查健康的状况，ping指定ip，不通报错</span></span><br><span class="line">    _, _, err = client.Ping(ip).Do(context.Background())</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        fmt.Println(err)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="创建一个index索引"><a href="#创建一个index索引" class="headerlink" title="创建一个index索引"></a>创建一个index索引</h3><p>这里我默认你们都有一定的Es基础，其实你把index想成Mysql里面的表就可以了。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//indexname 你可以想成表名</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">CreateIndex</span><span class="params">(indexname <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">    client, err := elastic.NewClient(elastic.SetURL(<span class="string">"http://127.0.0.1:9200"</span>))</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        fmt.Println(err)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    client.CreateIndex(indexname).Do(context.Background())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="删除一个index索引"><a href="#删除一个index索引" class="headerlink" title="删除一个index索引"></a>删除一个index索引</h3><p>想成删除一张表</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//indexname 你可以想成表名</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">CreateIndex</span><span class="params">(indexname <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">    client, err := elastic.NewClient(elastic.SetURL(<span class="string">"http://127.0.0.1:9200"</span>))</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        fmt.Println(err)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    client.DeleteIndex(indexname).Do(context.Background())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="往指定的index当中导一条数据"><a href="#往指定的index当中导一条数据" class="headerlink" title="往指定的index当中导一条数据"></a>往指定的index当中导一条数据</h3><p>想成往一张表里面导入一条数据，在Golang中，我们可以导入json的字符串，我们也可以导入golang的struct类型，例如  </p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//结构体</span></span><br><span class="line"><span class="keyword">type</span> Task <span class="keyword">struct</span> &#123;</span><br><span class="line">    Taskid  <span class="keyword">string</span>  <span class="string">`json:"taskid"`</span></span><br><span class="line">    Taskname  <span class="keyword">string</span>  <span class="string">`json:"taskname"`</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//字符串</span></span><br><span class="line">jsonmsg := <span class="string">`&#123;"taskid":"123456", "taskname":"lwb"&#125;`</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//导入数据，你需要index名，index的type，导入的数据</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">PutData</span><span class="params">(index <span class="keyword">string</span>, typ <span class="keyword">string</span>, bodyJSON <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">    client, _ := elastic.NewClient(elastic.SetURL(<span class="string">"http://127.0.0.1:9200"</span>))</span><br><span class="line">	_, err := client.Index().</span><br><span class="line">		Index(index).</span><br><span class="line">		Type(typ).</span><br><span class="line">		BodyJson(bodyJSON).</span><br><span class="line">		Do(context.Background())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="comment">//验证是否导入成功</span></span><br><span class="line">		fmt.Sprintf(<span class="string">"&lt;Put&gt; some error occurred when put.  err:%s"</span>, err.Error())</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//json字符串导入</span></span><br><span class="line">    jsonmsg = <span class="string">`&#123;"taskid":"123456", "taskname":"hahah"&#125;`</span></span><br><span class="line">    status := PutData(<span class="string">"test"</span>, <span class="string">"doc"</span>, jsonmsg)</span><br><span class="line">    <span class="comment">//struct结构体导入</span></span><br><span class="line">    task := Task&#123;Taskid: <span class="string">"123"</span>, Taskname: <span class="string">"hahah"</span>&#125;</span><br><span class="line">    status := PutData(<span class="string">"test"</span>, <span class="string">"doc"</span>, task)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="删除一条数据"><a href="#删除一条数据" class="headerlink" title="删除一条数据"></a>删除一条数据</h3><p>删除数据需要ID，这个ID是个啥玩意儿呢。。。就是咱们不是刚导了一条数据进去么，你可以设置这数据的唯一ID，也可以让Elasticsearch帮你自动生成一个，一般没事儿干谁自己设置啊，还容易重复，一重复就报错。。我在这里把这个删除的方法教给大家，记住这个ID一定是唯一的</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">DeleteData</span><span class="params">(index, typ, id <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">    client, _ := elastic.NewClient(elastic.SetURL(<span class="string">"http://127.0.0.1:9200"</span>))</span><br><span class="line">    _, err := client.Delete().Index(index).Type(typ).Id(id).Do(context.Background())</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        fmt.Println(err)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="高阶使用（条件查询／封装等）"><a href="#高阶使用（条件查询／封装等）" class="headerlink" title="高阶使用（条件查询／封装等）"></a>高阶使用（条件查询／封装等）</h2><p>简单讲了一下增删改，现在我们来讲一下高阶用法，高级增删改查吧，其实官方的文档讲的还算是比较清楚，不过我等大中华程序狗的姿势水平。。。至少我是图样图森破，看英文也算是废了九牛二虎之力，算是捋出来了一些高阶用法，顺手自己造了个轮子，现在我就来挑几点来说下吧。</p>
+<h3 id="自动选择可用的Es节点"><a href="#自动选择可用的Es节点" class="headerlink" title="自动选择可用的Es节点"></a>自动选择可用的Es节点</h3><p>配合olivere的ping机制，可以做一个自动检测Es ip 是否可用的逻辑，这样可以增加我们put，updatge时候的稳定性</p>
+<h4 id="自动检测节点Elasticseach的IP是否可用"><a href="#自动检测节点Elasticseach的IP是否可用" class="headerlink" title="自动检测节点Elasticseach的IP是否可用"></a>自动检测节点Elasticseach的IP是否可用</h4><p>olivere的Elasticserach sdk 限定了只能用一个ip，类似“<a href="http://127.0.0.1:9200”这样，我对原本的逻辑进行了一点改造，改成支持一个ip" target="_blank" rel="noopener">http://127.0.0.1:9200”这样，我对原本的逻辑进行了一点改造，改成支持一个ip</a> list，依次检测Es ip 是否可用</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> elasticdb</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"context"</span></span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line"></span><br><span class="line">	<span class="string">"github.com/olivere/elastic"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">//Elastic es的连接，</span></span><br><span class="line"><span class="keyword">type</span> Elastic <span class="keyword">struct</span> &#123;</span><br><span class="line">	Client *elastic.Client</span><br><span class="line">	host   <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Connect 基础的连接代码</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Connect</span><span class="params">(ip <span class="keyword">string</span>)</span> <span class="params">(*Elastic, error)</span></span> &#123;</span><br><span class="line">    <span class="comment">//引入IP</span></span><br><span class="line">	client, err := elastic.NewClient(elastic.SetURL(ip))</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//Ping 的方式检查是否可用</span></span><br><span class="line">	_, _, err = client.Ping(ip).Do(context.Background())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//输出一个struct类型，可以被继承</span></span><br><span class="line">	es := &amp;Elastic&#123;</span><br><span class="line">		Client: client,</span><br><span class="line">		host:   ip,</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> es, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//InitES 初始化Es连接</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">InitES</span><span class="params">()</span> <span class="params">(*Elastic, error)</span></span> &#123;</span><br><span class="line">    <span class="comment">//host是一个列表</span></span><br><span class="line">    host := []<span class="keyword">string</span>&#123;<span class="string">"http://10.0.6.245:9200"</span>,<span class="string">"http://10.0.6.246:9200"</span>,<span class="string">"http://10.0.6.247:9200"</span>&#125;</span><br><span class="line">    <span class="comment">//统计host的数量</span></span><br><span class="line">    Eslistsnum := <span class="built_in">len</span>(host)</span><br><span class="line">    <span class="comment">//如果为零就不继续接下来的逻辑</span></span><br><span class="line">	<span class="keyword">if</span> Eslistsnum == <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">"Cluster Not Es Node"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="comment">//创建新的连接</span></span><br><span class="line">	<span class="keyword">for</span> i, ip := <span class="keyword">range</span> host &#123;</span><br><span class="line">		<span class="comment">//判断是不是最后一个节点ip</span></span><br><span class="line">		<span class="keyword">if</span> (Eslistsnum - <span class="number">1</span>) != i &#123;</span><br><span class="line">			es, err := Connect(ip)</span><br><span class="line">			<span class="comment">//如果连接出错，则跳过</span></span><br><span class="line">			<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">				fmt.Println(err)</span><br><span class="line">				<span class="keyword">continue</span></span><br><span class="line">			&#125;</span><br><span class="line">            <span class="keyword">return</span> es, <span class="literal">nil</span></span><br><span class="line">            <span class="comment">//如果是最后一个节点</span></span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            es, err := Connect(ip)</span><br><span class="line">            <span class="comment">//输出错误</span></span><br><span class="line">			<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span> es, <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span>, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>后续我们可以采用继承的方法调用Es的client的连接，这个在后面我就不详细说了，聪明的你，看代码一定能整明白，再整不明白，你就直接上Git拷贝我的代码就得了。</p>
+<h3 id="条件查询"><a href="#条件查询" class="headerlink" title="条件查询"></a>条件查询</h3><p>以前我写过一个Python的Elasticsearch Sdk，那里面的查询基本都用了query，简单来说，就是你，给Es的api发一个query，es给你返回一个查询结果。这里我会举几个常用的条件查询例子，然后用golang封装一波。<br>这里我先定义一下数据结构，假设我们的Elasticsearch中，有一个叫做Task的index(索引)，其中存储着很多task的运行日志，它们的数据格式如下:  </p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"taskid"</span>: <span class="string">"081c255b-936c-11ea-8001-000000000000"</span>,</span><br><span class="line">    <span class="attr">"starttime"</span>: <span class="string">"2020/05/13 18:38:21"</span>,</span><br><span class="line">    <span class="attr">"endtime"</span>: <span class="string">"2020/05/13 18:38:47"</span>,</span><br><span class="line">    <span class="attr">"name"</span>: <span class="string">"cifs01"</span>,</span><br><span class="line">    <span class="attr">"status"</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">"count"</span>: <span class="number">365</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们现在要做的就是围绕task这个index和其中的数据做条件查找的例子，我说的很明白了吧？开工了！</p>
+<h3 id="查询时间范围-年龄大小的条件查询方法"><a href="#查询时间范围-年龄大小的条件查询方法" class="headerlink" title="查询时间范围/年龄大小的条件查询方法"></a>查询时间范围/年龄大小的条件查询方法</h3><p>在业务需求中，我们经常会检索各种各样的数据，其中，范围查找应该是用的比较多的，所以我把它放到了最前面。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Task <span class="keyword">struct</span> &#123;</span><br><span class="line">	TaskID    <span class="keyword">string</span> <span class="string">`json:"taskid"`</span></span><br><span class="line">	StartTime <span class="keyword">string</span> <span class="string">`json:"starttime"`</span></span><br><span class="line">	EndTime   <span class="keyword">string</span> <span class="string">`json:"endtime"`</span></span><br><span class="line">	Name      <span class="keyword">string</span> <span class="string">`json:"name"`</span></span><br><span class="line">	Status    <span class="keyword">int</span>    <span class="string">`json:"status"`</span></span><br><span class="line">	Count     <span class="keyword">int</span>    <span class="string">`json:"count"`</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//查找时间范围大于2020/05/13 18:38:21，并且小于2020/05/14 18:38:21的数据</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(Es *Elastic)</span> <span class="title">FindTime</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> typ Task</span><br><span class="line">    boolQ := elastic.NewBoolQuery()</span><br><span class="line">    <span class="comment">//生成查询语句，筛选starttime字段，查找大于2020/05/13 18:38:21，并且小于2020/05/14 18:38:21的数据</span></span><br><span class="line">    boolQ.Filter(elastic.NewRangeQuery(<span class="string">"starttime"</span>).Gte(<span class="string">"2020/05/13 18:38:21"</span>), elastic.NewRangeQuery(<span class="string">"starttime"</span>).Lte(<span class="string">"2020/05/14 18:38:21"</span>))</span><br><span class="line">    res, _ := Es.Client.Search(<span class="string">"task"</span>).Type(<span class="string">"doc"</span>).Query(boolQ).Do(context.Background())</span><br><span class="line">        <span class="comment">//从搜索结果中取数据的方法</span></span><br><span class="line">        <span class="keyword">for</span> _, item := <span class="keyword">range</span> res.Each(reflect.TypeOf(typ)) &#123;</span><br><span class="line">            <span class="keyword">if</span> t, ok := item.(Task); ok &#123;</span><br><span class="line">                fmt.Println(t)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="查询包含关键字的查询方法"><a href="#查询包含关键字的查询方法" class="headerlink" title="查询包含关键字的查询方法"></a>查询包含关键字的查询方法</h3><p>我们经常遇到那种，搜那么一两个字，让你展示所有包含这一两个字的结果，就像百度，你搜个”开发”，就能搜出来例如”软件开发”,”硬件开发”等。接下来咱们也实现一个这个功能</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//查找包含"cifs"的所有数据</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(Es *Elastic)</span> <span class="title">FindKeyword</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//因为不确定cifs如何出现，可能是cifs01，也可能是01cifs，所以采用这种方法</span></span><br><span class="line">    keyword := <span class="string">"cifs"</span></span><br><span class="line">    keys := fmt.Sprintf(<span class="string">"name:*%s*"</span>, keyword)</span><br><span class="line">    boolQ.Filter(elastic.NewQueryStringQuery(keys))</span><br><span class="line">     res, _ := Es.Client.Search(<span class="string">"task"</span>).Type(<span class="string">"doc"</span>).Query(boolQ).Do(context.Background())</span><br><span class="line">        <span class="comment">//从搜索结果中取数据的方法</span></span><br><span class="line">        <span class="keyword">for</span> _, item := <span class="keyword">range</span> res.Each(reflect.TypeOf(typ)) &#123;</span><br><span class="line">            <span class="keyword">if</span> t, ok := item.(Task); ok &#123;</span><br><span class="line">                fmt.Println(t)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="多条件查询"><a href="#多条件查询" class="headerlink" title="多条件查询"></a>多条件查询</h3><p>如果说我们现在不仅仅需要找到符合时间的，也需要找到符合关键字的查询，那么就需要在查询条件上做文章。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(Es *Elastic)</span> <span class="title">FindAll</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//因为不确定cifs如何出现，可能是cifs01，也可能是01cifs，所以采用这种方法</span></span><br><span class="line">    keyword := <span class="string">"cifs"</span></span><br><span class="line">    keys := fmt.Sprintf(<span class="string">"name:*%s*"</span>, keyword)</span><br><span class="line">    boolQ.Filter(elastic.NewRangeQuery(<span class="string">"starttime"</span>).Gte(<span class="string">"2020/05/13 18:38:21"</span>), elastic.NewRangeQuery(<span class="string">"starttime"</span>).Lte(<span class="string">"2020/05/14 18:38:21"</span>), elastic.NewQueryStringQuery(keys))</span><br><span class="line">	res, err := Es.Client.Search(<span class="string">"task"</span>).Type(<span class="string">"doc"</span>).Query(boolQ).Do(context.Background())</span><br><span class="line">        <span class="comment">//从搜索结果中取数据的方法</span></span><br><span class="line">        <span class="keyword">for</span> _, item := <span class="keyword">range</span> res.Each(reflect.TypeOf(typ)) &#123;</span><br><span class="line">            <span class="keyword">if</span> t, ok := item.(Task); ok &#123;</span><br><span class="line">                fmt.Println(t)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="统计数量-多条件统计数量"><a href="#统计数量-多条件统计数量" class="headerlink" title="统计数量/多条件统计数量"></a>统计数量/多条件统计数量</h3><p>有些时候我们需要去统计符合查询条件的结果数量，做统计用，这里也有直接可用的Sdk</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(Es *Elastic)</span> <span class="title">GetTaskLogCount</span><span class="params">()</span> <span class="params">(<span class="keyword">int</span>, error)</span></span> &#123;</span><br><span class="line">	boolQ := elastic.NewBoolQuery()</span><br><span class="line">	boolQ.Filter(elastic.NewRangeQuery(<span class="string">"starttime"</span>).Gte(<span class="string">"2020/05/13 18:38:21"</span>), elastic.NewRangeQuery(<span class="string">"starttime"</span>).Lte(<span class="string">"2020/05/14 18:38:21"</span>))</span><br><span class="line">	<span class="comment">//统计count</span></span><br><span class="line">	count, err := Es.Client.Count(<span class="string">"task"</span>).Type(<span class="string">"doc"</span>).Query(boolQ).Do(context.Background())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>, <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">int</span>(count), <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>我这边完成了几个查询/导入的基础功能，当然，我的代码大部分都放置在了github当中<br>放置在: <a href="https://github.com/Alexanderklau/Go_poject/tree/master/Go-Elasticdb/Elasticsearch_sdk" target="_blank" rel="noopener">https://github.com/Alexanderklau/Go_poject/tree/master/Go-Elasticdb/Elasticsearch_sdk</a><br>最近项目比较忙，我打算月中写一篇我开发的时候使用的一些Go特性，或者高级用法。如果喜欢的话麻烦Star我！最近压力颇大，想要换一个地方生活，所以也要准备离开了。如果大家有什么问题，可以直接给我提问，我看到了就会帮助大家的。</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2020/05/14/Golang%E5%B0%81%E8%A3%85Elasticsearch%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/04/14/%E8%BF%99%E6%AC%A1%E7%BB%A9%E6%95%88%E8%80%83%E8%AF%84%E4%BC%9A%E6%88%90%E4%B8%BA%E5%8E%8B%E5%9E%AE%E6%88%91%E7%9A%84%E7%A8%BB%E8%8D%89%E4%B9%88%EF%BC%9F/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">这次绩效考评会成为压垮我的稻草么？</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2020
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['一切，都会好的', '杀不死我的，必让我强大', '时间会验证我的一切努力'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>

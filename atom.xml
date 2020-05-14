@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://yemilice.com/"/>
-  <updated>2020-04-14T02:07:17.819Z</updated>
+  <updated>2020-05-14T01:50:26.323Z</updated>
   <id>https://yemilice.com/</id>
   
   <author>
@@ -15,6 +15,31 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Golang封装Elasticsearch常用功能</title>
+    <link href="https://yemilice.com/2020/05/14/Golang%E5%B0%81%E8%A3%85Elasticsearch%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/"/>
+    <id>https://yemilice.com/2020/05/14/Golang%E5%B0%81%E8%A3%85Elasticsearch%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/</id>
+    <published>2020-05-14T01:45:49.000Z</published>
+    <updated>2020-05-14T01:50:26.323Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          
+        
+      
+    
+    </summary>
+    
+    
+    
+      <category term="前后端" scheme="https://yemilice.com/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/"/>
+    
+  </entry>
   
   <entry>
     <title>这次绩效考评会成为压垮我的稻草么？</title>
