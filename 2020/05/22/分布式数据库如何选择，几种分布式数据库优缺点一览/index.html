@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    分布式数据库如何选择，几种分布式数据库优缺点一览 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-分布式数据库如何选择，几种分布式数据库优缺点一览" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  分布式数据库如何选择，几种分布式数据库优缺点一览
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/05/22/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%EF%BC%8C%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/" class="article-date">
+  <time datetime="2020-05-22T08:16:20.000Z" itemprop="datePublished">2020-05-22</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.8k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">9 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h1 id="分布式数据库如何选择？几种分布式数据库优缺点一览"><a href="#分布式数据库如何选择？几种分布式数据库优缺点一览" class="headerlink" title="分布式数据库如何选择？几种分布式数据库优缺点一览"></a>分布式数据库如何选择？几种分布式数据库优缺点一览</h1><h2 id="为什么选择分布式数据库？"><a href="#为什么选择分布式数据库？" class="headerlink" title="为什么选择分布式数据库？"></a>为什么选择分布式数据库？</h2><p>优点如下：</p>
+<ol>
+<li>具有灵活的体系结构</li>
+<li>适应分布式的管理和控制机构</li>
+<li>经济性能优越</li>
+<li>系统的可靠性高、可用性好</li>
+<li>局部应用的响应速度快</li>
+<li>可扩展性好，易于集成现有系统。</li>
+</ol>
+<h2 id="相关的技术概念介绍"><a href="#相关的技术概念介绍" class="headerlink" title="相关的技术概念介绍"></a>相关的技术概念介绍</h2><h3 id="什么是分布式数据库？"><a href="#什么是分布式数据库？" class="headerlink" title="什么是分布式数据库？"></a>什么是分布式数据库？</h3><p>常见的分布式系统分为，</p>
+<ol>
+<li>支持持久化存储的分布式存储系统</li>
+<li>着重计算的分布式计算框架</li>
+<li>分布式消息队列</li>
+</ol>
+<p>根据不同的应用的领域，把上述分类细化，常见分布式存储系统分为：</p>
+<ol>
+<li>分布式协同系统（分布式日志复制）</li>
+<li>分布式任务调度框架</li>
+<li>流计算框架</li>
+<li>分布式文件/对象系统</li>
+<li>分布式NoSQL存储</li>
+<li>分布式关系数据库（OLAP、OLTP）；</li>
+<li>各种消息队列mq </li>
+</ol>
+<h3 id="不同的分布式数据库如何区分？"><a href="#不同的分布式数据库如何区分？" class="headerlink" title="不同的分布式数据库如何区分？"></a>不同的分布式数据库如何区分？</h3><ol>
+<li><p>Key-value NoSQL : 例如Redis Riak等；</p>
+</li>
+<li><p>column family NoSQL(wide column store) : 典型的是Hbase Cassandra</p>
+</li>
+<li><p>document NoSQL : 典型的是mongodb</p>
+</li>
+</ol>
+<h2 id="需要什么样的数据库"><a href="#需要什么样的数据库" class="headerlink" title="需要什么样的数据库?"></a>需要什么样的数据库?</h2><ol>
+<li>支持数据持久化，数据落盘，异常备份，高并发，大数据量存储。  </li>
+<li>要支持频繁的数据读写  </li>
+<li>分布式，多节点并行 </li>
+<li>和以前的数据库不冲突  </li>
+</ol>
+<h2 id="可选的方法及其特点"><a href="#可选的方法及其特点" class="headerlink" title="可选的方法及其特点"></a>可选的方法及其特点</h2><p> 根据上述的要求，分布式数据库，符合大数据存储的，支持频繁读写的数据库有如下几个，它们的特点会简单说明。</p>
+<h3 id="Elasticsearch数据库"><a href="#Elasticsearch数据库" class="headerlink" title="Elasticsearch数据库"></a>Elasticsearch数据库</h3><h4 id="Elasticsearch简介"><a href="#Elasticsearch简介" class="headerlink" title="Elasticsearch简介"></a>Elasticsearch简介</h4><p>分布式的实时文件存储，每个字段都被索引并可被搜索，分布式的实时分析搜索引擎<br>可以扩展到上百台服务器，处理PB级结构化或非结构化数据</p>
+<h4 id="Elasticsearch应用场景"><a href="#Elasticsearch应用场景" class="headerlink" title="Elasticsearch应用场景"></a>Elasticsearch应用场景</h4><p>分布式的搜索引擎和数据分析引擎，全文检索，结构化检索，数据分析</p>
+<p>对海量数据进行近实时的处理，站内搜索（电商，招聘，门户，等等），IT系统搜索（OA，CRM，ERP，等等），数据分析</p>
+<h4 id="Elasticsearch的优缺点"><a href="#Elasticsearch的优缺点" class="headerlink" title="Elasticsearch的优缺点"></a>Elasticsearch的优缺点</h4><p>缺点：没有用户验证和权限控制，没有事务的概念，不支持回滚，误删不能恢复，需要java环境.</p>
+<p>优点：将你的文档分割到不同容器或者分片中，可以存在单个节点或多个节点复制每个分片提供数据备份，防止硬件问题导致数据丢失。</p>
+<h4 id="Elasticsearch的持久化方案"><a href="#Elasticsearch的持久化方案" class="headerlink" title="Elasticsearch的持久化方案"></a>Elasticsearch的持久化方案</h4><p>gateway 代表 elasticsearch 索引的持久化存储方式，elasticsearch 默认是先把索引存放到内存中去，当内存满了的时候再持久化到硬盘里。当这个 elasticsearch 集群关闭或者再次重新启动时就会从 gateway 中读取索引数据。elasticsearch 支持多种类型的 gateway，有本地文件系统（默认），分布式文件系统，Hadoop 的 HDFS 和 amazon 的 s3 云存储服务。</p>
+<p>ElasticSearch是先把索引的内容保存到内存之中，当内存不够时再把索引持久化到硬盘中，同时它还有一个队列，是在系统空闲时自动把索引写到硬盘中。</p>
+<h3 id="Redis数据库"><a href="#Redis数据库" class="headerlink" title="Redis数据库"></a>Redis数据库</h3><h4 id="Redis简介"><a href="#Redis简介" class="headerlink" title="Redis简介"></a>Redis简介</h4><p>redis是开源BSD许可高级的key-value存储系统(NoSQL)，可以用来存储字符串，哈希结构，链表，集合，因此，常用来提供数据结构服务，Redis支持数据的持久化，可以将内存中的数据保存在磁盘中，重启的时候可以再次加 载进行使用。 支持简单的key-value类型的数据，同时还提供list，set，zset，hash等数据结构的存储。Redis支持数据的备份，即master-slave模式的数据备份。</p>
+<h4 id="Redis应用场景"><a href="#Redis应用场景" class="headerlink" title="Redis应用场景"></a>Redis应用场景</h4><p>A）常规计数：粉丝数，微博数</p>
+<p>B）用户信息变更</p>
+<p>C）缓存处理，作为mysql的缓存</p>
+<p>D）队列系统，建有优先级的队列系统，日志收集系统</p>
+<h4 id="Redis的优缺点"><a href="#Redis的优缺点" class="headerlink" title="Redis的优缺点"></a>Redis的优缺点</h4><h5 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h5><p>(1) 速度快，因为数据存在内存中，类似于HashMap，HashMap的优势就是查找和操作的时间复杂度都是O(1)</p>
+<p>(2) 支持丰富数据类型，支持string，list，set，sorted set，hash</p>
+<p>(3) 支持事务，操作都是原子性，所谓的原子性就是对数据的更改要么全部执行，要么全部不执行</p>
+<p>(4) 丰富的特性：可用于缓存，消息，按key设置过期时间，过期后将会自动删除</p>
+<h5 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h5><p>（1）Redis不具备自动容错和恢复功能，主机从机的宕机都会导致前端部分读写请求失败，需要等待机器重启或者手动切换前端的IP才能恢复</p>
+<p>（2）主机宕机，宕机前有部分数据未能及时同步到从机，切换IP后还会引入数据不一致的问题，降低了系统的可用性</p>
+<p>（3）redis的主从复制采用全量复制，复制过程中主机会fork出一个子进程对内存做一份快照，并将子进程的内存快照保存为文件发送给从机，这一过程需要确保主机有足够多的空余内存。若快照文件较大，对集群的服务能力会产生较大的影响，而且复制过程是在从机新加入集群或者从机和主机网络断开重连时都会进行，也就是网络波动都会造成主机和从机间的一次全量的数据复制，这对实际的系统运营造成了不小的麻烦</p>
+<p>（4）Redis较难支持在线扩容，在集群容量达到上限时在线扩容会变得很复杂。为避免这一问题，运维人员在系统上线时必须确保有足够的空间，这对资源造成了很大的浪费。</p>
+<h4 id="Redis的持久化方案"><a href="#Redis的持久化方案" class="headerlink" title="Redis的持久化方案"></a>Redis的持久化方案</h4><p>redis提供两种方式进行持久化，一种是RDB持久化（原理是将Reids在内存中的数据库记录定时dump到磁盘上的RDB持久化），另外一种是AOF（append only file）持久化（原理是将Reids的操作日志以追加的方式写入文件）。</p>
+<p>RDB持久化是指在指定的时间间隔内将内存中的数据集快照写入磁盘，实际操作过程是fork一个子进程，先将数据集写入临时文件，写入成功后，再替换之前的文件，用二进制压缩存储。  </p>
+<h3 id="Mongodb数据库"><a href="#Mongodb数据库" class="headerlink" title="Mongodb数据库"></a>Mongodb数据库</h3><h4 id="Mongodb简介"><a href="#Mongodb简介" class="headerlink" title="Mongodb简介"></a>Mongodb简介</h4><p>MongoDB本身是一种非关系型数据库。它的每一条记录是一个Document，每个Document有一组键值对组成。MongoDB中的Document与JSON对象相似。 Document中字段的值可能包括其他Document，数组等。</p>
+<h4 id="Mongodb应用场景"><a href="#Mongodb应用场景" class="headerlink" title="Mongodb应用场景"></a>Mongodb应用场景</h4><p>mongodb的主要目标是在键/值存储方式（提供了高性能和高度伸缩性）以及传统的RDBMS系统（丰富的功能）架起一座桥梁，集两者的优势于一身。mongo适用于以下场景：</p>
+<p>a.网站数据：mongo非常适合实时的插入，更新与查询，并具备网站实时数据存储所需的复制及高度伸缩性。</p>
+<p>b.缓存：由于性能很高，mongo也适合作为信息基础设施的缓存层。在系统重启之后，由mongo搭建的持久化缓存可以避免下层的数据源过载。</p>
+<p>c.大尺寸、低价值的数据：使用传统的关系数据库存储一些数据时可能会比较贵，在此之前，很多程序员往往会选择传统的文件进行存储。</p>
+<p>d.高伸缩性的场景：mongo非常适合由数十或者数百台服务器组成的数据库。</p>
+<p>e.用于对象及JSON数据的存储：mongo的BSON数据格式非常适合文档格式化的存储及查询。</p>
+<h4 id="Mongodb的优缺点"><a href="#Mongodb的优缺点" class="headerlink" title="Mongodb的优缺点"></a>Mongodb的优缺点</h4><p>优点：</p>
+<p>  (1) 弱一致性（最终一致），更能保证用户的访问速度</p>
+<p>  (2) 文档结构的存储方式，能够更便捷的获取数据</p>
+<p>  (3) 内置GridFS，支持大容量的存储</p>
+<p>  (4) 在使用场合下，千万级别的文档对象，近10G的数据，对有索引的ID的查询不会比mysql慢，而对非索引字段的查询，则是全面胜出。</p>
+<p>缺点：</p>
+<p>（1）不支持事物</p>
+<p>（2）占用空间过大，会造成磁盘浪费</p>
+<p>（3）单机可靠性比较差</p>
+<p>（4）大数据量持续插入，写入性能有较大波动</p>
+<h4 id="Mongodb的持久化方案-异常处理"><a href="#Mongodb的持久化方案-异常处理" class="headerlink" title="Mongodb的持久化方案/异常处理"></a>Mongodb的持久化方案/异常处理</h4><p>当执行写操作时，MongoDB创建一个journal来包含确切磁盘位置和改变的字节。因此，如果服务器突然崩溃，启动时，journal会重放崩溃前并没有刷新到磁盘上的任何写操作。</p>
+<p>数据文件每隔60s刷新到磁盘上，默认情况下，因此journal只需要持有60s内的写入数据。journal预分配了几个空文件用于此目的，位于/data/db/journal，命名为_j.0,j.1等等。</p>
+<p>MongoDB运行很长时间情况下，在journal目录下，你会看到类似于_j.6217,_j.6218和_j.6219文件。这些文件是当前的journal文件，如果MongoDB一直运行，这些数字会持续增加。当正常关闭MongoDB时，这些文件将被清除，因为正常关机不在需要这些日志的。</p>
+<p>如果服务器崩溃或kill -9, mongodb再次启动时，会重放journal文件，会输出冗长难懂的检验行，这表明在正常的恢复。</p>
+<h3 id="Mysql分布式集群"><a href="#Mysql分布式集群" class="headerlink" title="Mysql分布式集群"></a>Mysql分布式集群</h3><h4 id="Mysql分布式集群简介"><a href="#Mysql分布式集群简介" class="headerlink" title="Mysql分布式集群简介"></a>Mysql分布式集群简介</h4><p>MySQL集群是一个无共享的(shared-nothing)、分布式节点架构的存储方案，其目的是提供容错性和高性能。</p>
+<p>数据更新使用读已提交隔离级别（read-committedisolation)来保证所有节点数据的一致性，使用两阶段提交机制（two-phasedcommit)保证所有节点都有相同的数据(如果任何一个写操作失败，则更新失败）。</p>
+<p>无共享的对等节点使得某台服务器上的更新操作在其他服务器上立即可见。传播更新使用一种复杂的通信机制，这一机制专用来提供跨网络的高吞吐量。</p>
+<p>通过多个MySQL服务器分配负载，从而最大程序地达到高性能，通过在不同位置存储数据保证高可用性和冗余。</p>
+<h4 id="Mysql分布式集群应用场景"><a href="#Mysql分布式集群应用场景" class="headerlink" title="Mysql分布式集群应用场景"></a>Mysql分布式集群应用场景</h4><p>解决海量存储问题，比如京东B2B就用的Mysql分布式集群。</p>
+<p>适用几十亿的PV对DB的访问。</p>
+<h4 id="Mysql分布式集群的优缺点"><a href="#Mysql分布式集群的优缺点" class="headerlink" title="Mysql分布式集群的优缺点"></a>Mysql分布式集群的优缺点</h4><p>优点：</p>
+<p>a) 高可用性</p>
+<p>b)快速的自动失效切换</p>
+<p>c)灵活的分布式体系结构，没有单点故障</p>
+<p>d)高吞吐量和低延迟</p>
+<p>e)可扩展性强，支持在线扩容</p>
+<p>缺点：</p>
+<p>a)存在很多限制，比如：不支持外键</p>
+<p>b)部署、管理、配置很复杂</p>
+<p>c)占用磁盘空间大，内存大</p>
+<p>d)备份和恢复不方便</p>
+<p>e)重启的时候，数据节点将数据load到内存需要很长时间</p>
+<h4 id="Mysql分布式集群的持久化方案"><a href="#Mysql分布式集群的持久化方案" class="headerlink" title="Mysql分布式集群的持久化方案"></a>Mysql分布式集群的持久化方案</h4><p>负载均衡。</p>
+<p>管理节点备份。</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2020/05/22/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%EF%BC%8C%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/" rel="tag">其他技术</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/05/22/%E5%BC%80%E5%8F%91%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84Golang%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">开发中常用的Golang高级用法</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2020
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['一切，都会好的', '杀不死我的，必让我强大', '时间会验证我的一切努力'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
