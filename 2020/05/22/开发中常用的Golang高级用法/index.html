@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    开发中常用的Golang高级用法 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-开发中常用的Golang高级用法" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  开发中常用的Golang高级用法
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/05/22/%E5%BC%80%E5%8F%91%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84Golang%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/" class="article-date">
+  <time datetime="2020-05-22T06:37:09.000Z" itemprop="datePublished">2020-05-22</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.3k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">10 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h1 id="开发中常用的Golang高级用法"><a href="#开发中常用的Golang高级用法" class="headerlink" title="开发中常用的Golang高级用法"></a>开发中常用的Golang高级用法</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>忙碌了两个月，这次开发终于要结束了，今天下午公司在重组集群机器，也没办法干活儿了，就写一些东西，相当于，留住一些东西，来纪念这辛苦的两个月吧。做一个纪念，也是为了方便以后自己去查看。在这次开发中，学习了不少Golang的高级特性，并且付诸于实现，也踩了不少坑，留下这篇文字，也是方便其他人能够查看，或者借鉴，如果帮到你，那么我也会很开心你。</p>
+<h2 id="开发常遇到的问题"><a href="#开发常遇到的问题" class="headerlink" title="开发常遇到的问题"></a>开发常遇到的问题</h2><h3 id="Golang判断一个元素在不在切片-列表当中"><a href="#Golang判断一个元素在不在切片-列表当中" class="headerlink" title="Golang判断一个元素在不在切片/列表当中"></a>Golang判断一个元素在不在切片/列表当中</h3><p>在Python中，我们可以直接用 in 的方式去判断，例如</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> <span class="string">"i"</span> <span class="keyword">in</span> lists</span><br></pre></td></tr></table></figure>
+
+<p>但是在Golang中，没有这种语法糖或者是关键字可以帮助我们处理这种问题，所以还是只能靠循环去处理这种问题，为此我封装了一个Golang函数，函数如下  </p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//FindType 循环对比，匹配到返回true，不匹配返回false</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">FindType</span><span class="params">(a <span class="keyword">string</span>, typelist []<span class="keyword">string</span>)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, b := <span class="keyword">range</span> typelist &#123;</span><br><span class="line">		<span class="keyword">if</span> b == a &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Golang获取文件的详细信息"><a href="#Golang获取文件的详细信息" class="headerlink" title="Golang获取文件的详细信息"></a>Golang获取文件的详细信息</h3><p>Golang获取文件信息的方法相对来说容易一些，都已经有了对应的package，我这里只是把怎么用展示出来  </p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//timespecToTime 转换</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">timespecToTime</span><span class="params">(ts syscall.Timespec)</span> <span class="title">time</span>.<span class="title">Time</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> time.Unix(<span class="keyword">int64</span>(ts.Sec), <span class="keyword">int64</span>(ts.Nsec))</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//GetFileinfo 获取文件信息</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">GetFileinfo</span><span class="params">(path <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	fileInfo, err := os.Stat(path)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//文件大小</span></span><br><span class="line">    filesize := fileInfo.Size()</span><br><span class="line">    <span class="comment">//文件创建时间</span></span><br><span class="line">    stat_ts := fileInfo.Sys().(*syscall.Stat_t)</span><br><span class="line">    Ctime := timespecToTime(stat_ts.Ctim).Format(<span class="string">"2006/01/02"</span>)</span><br><span class="line">    <span class="comment">//文件修改时间</span></span><br><span class="line">    Mtime := timespecToTime(stat_ts.Mtim).Format(<span class="string">"2006/01/02"</span>)</span><br><span class="line">    <span class="comment">//文件访问时间</span></span><br><span class="line">    Attim := timespecToTime(stat_ts.Atim).Format(<span class="string">"2006/01/02"</span>)</span><br><span class="line">    <span class="comment">//获取文件所有者</span></span><br><span class="line">    stat_ts := fileInfo.Sys().(*syscall.Stat_t)</span><br><span class="line">	uid := strconv.Itoa(<span class="keyword">int</span>(stat_ts.Uid))</span><br><span class="line">    usrs, err := user.LookupId(<span class="keyword">string</span>(uid))</span><br><span class="line">    username := usrs.Username</span><br><span class="line">    <span class="comment">//获取文件名</span></span><br><span class="line">    filename := fileInfo.Name()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Golang比较两个list-切片的不同之处（差集）"><a href="#Golang比较两个list-切片的不同之处（差集）" class="headerlink" title="Golang比较两个list/切片的不同之处（差集）"></a>Golang比较两个list/切片的不同之处（差集）</h3><p>在开发中，我需要比较两个list，然后取出他们之中不同的部分，这里Golang也没有合适的法子，一般的方法就是转map进行处理</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//difference 进行比对，输出不同的[]string</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">difference</span><span class="params">(slice1, slice2 []<span class="keyword">string</span>)</span> []<span class="title">string</span></span> &#123;</span><br><span class="line">	m := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">int</span>)</span><br><span class="line">	nn := <span class="built_in">make</span>([]<span class="keyword">string</span>, <span class="number">0</span>)</span><br><span class="line">	inter := intersect(slice1, slice2)</span><br><span class="line">	<span class="keyword">for</span> _, v := <span class="keyword">range</span> inter &#123;</span><br><span class="line">		m[v]++</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> _, value := <span class="keyword">range</span> slice1 &#123;</span><br><span class="line">		times, _ := m[value]</span><br><span class="line">		<span class="keyword">if</span> times == <span class="number">0</span> &#123;</span><br><span class="line">			nn = <span class="built_in">append</span>(nn, value)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> nn</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//intersect 把两个对比的列表进行map化处理</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">intersect</span><span class="params">(slice1, slice2 []<span class="keyword">string</span>)</span> []<span class="title">string</span></span> &#123;</span><br><span class="line">	m := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">int</span>)</span><br><span class="line">	nn := <span class="built_in">make</span>([]<span class="keyword">string</span>, <span class="number">0</span>)</span><br><span class="line">	<span class="keyword">for</span> _, v := <span class="keyword">range</span> slice1 &#123;</span><br><span class="line">		m[v]++</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> _, v := <span class="keyword">range</span> slice2 &#123;</span><br><span class="line">		times, _ := m[v]</span><br><span class="line">		<span class="keyword">if</span> times == <span class="number">1</span> &#123;</span><br><span class="line">			nn = <span class="built_in">append</span>(nn, v)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> nn</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    infinode := []<span class="keyword">string</span>&#123;<span class="string">"10.0.9.1"</span>,<span class="string">"10.0.9.2"</span>&#125;</span><br><span class="line">    syncnodes := []<span class="keyword">string</span>&#123;<span class="string">"10.0.9.1"</span>,<span class="string">"10.0.9.2"</span>, <span class="string">"10.0.9.3"</span>&#125;</span><br><span class="line">    ips := difference(infinode, syncnodes)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Golang格式化时间"><a href="#Golang格式化时间" class="headerlink" title="Golang格式化时间"></a>Golang格式化时间</h3><p>golang 一般都可以通过Format的方法进行时间格式化，一般你可以直接调format，例如</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fmt.Println(time.Now().Format(<span class="string">"2006-01-02 15:04:05"</span>))</span><br></pre></td></tr></table></figure>
+
+<p>有些时候是他娘的时间戳  </p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fmt.Println(time.Unix(<span class="number">1389028339</span>, <span class="number">0</span>).Format(<span class="string">"2006-01-02 15:04:05"</span>))</span><br></pre></td></tr></table></figure>
+
+<p>有些时候会让你搞成别的样子，比如”2006/01/02 15:04:05”</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fmt.Println(time.Now().Format(<span class="string">"2006/01/02 15:04:05"</span>))</span><br></pre></td></tr></table></figure>
+
+<p>有些时候会让你比较个时间大小，例如</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//比对时间，看看它在不在开始时间/结束时间的范围内</span></span><br><span class="line">starttime := <span class="string">"2020-05-12"</span></span><br><span class="line">endtime := <span class="string">"2020-05-20"</span></span><br><span class="line">ctime := <span class="string">"2020-05-15"</span></span><br><span class="line">ft, err := time.Parse(<span class="string">"2006-01-02"</span>, ctime)</span><br><span class="line">st, err := time.Parse(<span class="string">"2006-01-02"</span>, starttime)</span><br><span class="line">et, err := time.Parse(<span class="string">"2006-01-02"</span>, endtime)</span><br><span class="line"><span class="keyword">if</span> ft.After(et) &amp;&amp; ft.Before(st) &#123;</span><br><span class="line">    fmt.Println(<span class="string">"在里面儿！"</span>)</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">     fmt.Println(<span class="string">"不在里面儿！"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Golang并发循环的使用"><a href="#Golang并发循环的使用" class="headerlink" title="Golang并发循环的使用"></a>Golang并发循环的使用</h3><p>我们处理循环的时候，在Python中，我举个例子  </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">lists = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>]</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> lists:</span><br><span class="line">    <span class="keyword">print</span> i</span><br></pre></td></tr></table></figure>
+
+<p>这里打印的话是 </p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span></span><br><span class="line"><span class="number">2</span></span><br><span class="line"><span class="number">3</span></span><br><span class="line"><span class="number">4</span></span><br></pre></td></tr></table></figure>
+
+<p>Golang有个黑科技是并发循环，简单说，就是能一下给你把这四个都给你打印出来，不是一条条循环，也不用等上一个循环的结果返回，也可以选择略过错误。我在这里简单实现一个</p>
+<h4 id="直接并发循环（无需考虑错误）"><a href="#直接并发循环（无需考虑错误）" class="headerlink" title="直接并发循环（无需考虑错误）"></a>直接并发循环（无需考虑错误）</h4><p>这里不考虑error的情况，具体代码如下</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">ips := []<span class="keyword">string</span>&#123;<span class="string">"10.0.9.1"</span>,<span class="string">"10.0.9.2"</span>&#125;</span><br><span class="line">ch := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;)</span><br><span class="line"><span class="comment">//并发循环ip</span></span><br><span class="line"><span class="keyword">for</span> _, ip := <span class="keyword">range</span> ips &#123;</span><br><span class="line">    <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(ip <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">        <span class="comment">//模拟一个展示ip</span></span><br><span class="line">        fmt.Println(ip)</span><br><span class="line">        ch &lt;- <span class="keyword">struct</span>&#123;&#125;&#123;&#125;</span><br><span class="line">    &#125;(ip)</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">for</span> <span class="keyword">range</span> ips &#123;</span><br><span class="line">    &lt;-ch</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="输出错误的并发循环-考虑错误"><a href="#输出错误的并发循环-考虑错误" class="headerlink" title="输出错误的并发循环(考虑错误)"></a>输出错误的并发循环(考虑错误)</h4><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">ips := []<span class="keyword">string</span>&#123;<span class="string">"10.0.9.1"</span>,<span class="string">"10.0.9.2"</span>&#125;</span><br><span class="line"><span class="comment">//定义一个error</span></span><br><span class="line">errors := <span class="built_in">make</span>(<span class="keyword">chan</span> error)</span><br><span class="line"><span class="keyword">for</span> _, ip := <span class="keyword">range</span> ips &#123;</span><br><span class="line">    <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(ip <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">        _, err := test(ip)</span><br><span class="line">        errors &lt;- err</span><br><span class="line">    &#125;(ip)</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">for</span> <span class="keyword">range</span> ips &#123;</span><br><span class="line">    <span class="keyword">if</span> err := &lt;-errors; err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Golang做一个不退出的无限循环"><a href="#Golang做一个不退出的无限循环" class="headerlink" title="Golang做一个不退出的无限循环"></a>Golang做一个不退出的无限循环</h3><p>有些时候我们希望一个服务/脚本/函数不断运行，或者每隔一段时间来一发（运行一次），这时候我们就需要定义无限循环</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">for</span> &#123;</span><br><span class="line">        <span class="comment">//每隔1s打印一次start work</span></span><br><span class="line">        time.Sleep(time.Second * <span class="number">1</span>)</span><br><span class="line">		fmt.Println(<span class="string">"Start work......"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Golang实现一个遇到错误的重试机制"><a href="#Golang实现一个遇到错误的重试机制" class="headerlink" title="Golang实现一个遇到错误的重试机制"></a>Golang实现一个遇到错误的重试机制</h3><p>当我们最开发的时候，有些时候遇到错误，需要进行重试，这时候我们就需要进行错误捕获和函数重载</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Retry 重试逻辑</span></span><br><span class="line"><span class="comment">//传入函数，如果捕获到错误，则重载函数，重新来一次执行，直到没错误为止</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Retry</span><span class="params">(fn <span class="keyword">func</span>()</span> <span class="title">error</span>) <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> err := fn(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> s, ok := err.(stop); ok &#123;</span><br><span class="line">			<span class="keyword">return</span> s.error</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> Retry(fn)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//TestWork 测试函数，无意义</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestWork</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">    <span class="comment">//测试函数，这里是伪代码。</span></span><br><span class="line">    _, err := GetIpNode()</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">go</span> Retry(TestWork)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Golang执行Linux命令"><a href="#Golang执行Linux命令" class="headerlink" title="Golang执行Linux命令"></a>Golang执行Linux命令</h3><p>有些时候我们需要执行linux相关命令，Golang封装了相应的包，但是少部分时候我们需要控制一些很久不返回结果的命令，所以我加了一个超时时间，代码如下</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> (</span><br><span class="line">    <span class="comment">//这里我写死了，你可以自己定义，更灵活一些</span></span><br><span class="line">	Timeout = <span class="number">60</span> * time.Second</span><br><span class="line">)</span><br><span class="line"><span class="comment">//Command 执行shell</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Command</span><span class="params">(arg <span class="keyword">string</span>)</span> <span class="params">([]<span class="keyword">byte</span>, error)</span></span> &#123;</span><br><span class="line">	ctxt, cancel := context.WithTimeout(context.Background(), Timeout)</span><br><span class="line">	<span class="keyword">defer</span> cancel()</span><br><span class="line"></span><br><span class="line">	cmd := exec.CommandContext(ctxt, <span class="string">"/bin/bash"</span>, <span class="string">"-c"</span>, arg)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> buf bytes.Buffer</span><br><span class="line">	cmd.Stdout = &amp;buf</span><br><span class="line">	cmd.Stderr = &amp;buf</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err := cmd.Start(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> buf.Bytes(), err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> err := cmd.Wait(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> buf.Bytes(), err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> buf.Bytes(), <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    _, err := Command(<span class="string">"ls"</span>)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        fmt.Println(err)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Golang-简单的日志逻辑"><a href="#Golang-简单的日志逻辑" class="headerlink" title="Golang 简单的日志逻辑"></a>Golang 简单的日志逻辑</h3><p>这边贡献一个简单的日志实现代码，往文件里面写，可以自己定义格式，代码如下</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"os"</span></span><br><span class="line"></span><br><span class="line">	<span class="string">"github.com/op/go-logging"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Monlog</span><span class="params">()</span> <span class="params">(logs *logging.Logger)</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> log = logging.MustGetLogger(<span class="string">"monlog"</span>)</span><br><span class="line">    <span class="comment">//定义格式 时间 go文件 行数 等级 错误信息</span></span><br><span class="line">	<span class="keyword">var</span> format = logging.MustStringFormatter(</span><br><span class="line">		<span class="string">`%&#123;time:2006-01-02T15:04:05&#125; %&#123;shortfile&#125; %&#123;shortfunc&#125; %&#123;level&#125; %&#123;message&#125;`</span>)</span><br><span class="line">    <span class="comment">//文件的写入位置 追加模式/没有自动创建</span></span><br><span class="line">	logFile, err := os.OpenFile(<span class="string">"/var/log/monlog.log"</span>, os.O_WRONLY|os.O_APPEND|os.O_CREATE, <span class="number">0666</span>)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(fmt.Sprintf(<span class="string">"Open faile error!"</span>))</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//头相关, 具体意思就是支持追加，然后格式化，且按照那个格式往里面写</span></span><br><span class="line">	backend1 := logging.NewLogBackend(logFile, <span class="string">""</span>, <span class="number">0</span>)</span><br><span class="line">	backend2 := logging.NewLogBackend(os.Stderr, <span class="string">""</span>, <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">	backend2Formatter := logging.NewBackendFormatter(backend2, format)</span><br><span class="line">	backend1Formatter := logging.NewBackendFormatter(backend1, format)</span><br><span class="line">	backend1Leveled := logging.AddModuleLevel(backend1Formatter)</span><br><span class="line">	backend1Leveled.SetLevel(logging.INFO, <span class="string">""</span>)</span><br><span class="line">	logging.SetBackend(backend1Leveled, backend2Formatter)</span><br><span class="line">	<span class="keyword">return</span> log</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    log := Monlog()</span><br><span class="line">    log.Info(<span class="string">"info"</span>)</span><br><span class="line"> 	log.Notice(<span class="string">"notice"</span>)</span><br><span class="line"> 	log.Warning(<span class="string">"warning"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Golang-使用-Aws-sdk-获取到指定bucket中全部的item"><a href="#Golang-使用-Aws-sdk-获取到指定bucket中全部的item" class="headerlink" title="Golang 使用 Aws-sdk 获取到指定bucket中全部的item"></a>Golang 使用 Aws-sdk 获取到指定bucket中全部的item</h3><p>我前阵子写过一篇文章，是Golang 调用 s3对象存储的，使用指定的api可以获取其中的item，但是人家限定100条，估摸着怕撑爆内存，但是如果我们想要获取到所有的item，这个该怎么做呢？其实循环获取就好了，但是我还是徒手实现一下吧，大家抄抄得了。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">GetRgwItem3</span><span class="params">(buckets <span class="keyword">string</span>)</span> <span class="params">([]*s3.Object, error)</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> items []*s3.Object</span><br><span class="line">    sess, err := session.NewSession(&amp;aws.Config&#123;</span><br><span class="line">		Credentials:      credentials.NewStaticCredentials(ak, sk, <span class="string">""</span>),</span><br><span class="line">		Endpoint:         aws.String(endpoint + <span class="string">":7480"</span>),</span><br><span class="line">		Region:           aws.String(<span class="string">"us-east-1"</span>),</span><br><span class="line">		DisableSSL:       aws.Bool(<span class="literal">true</span>),</span><br><span class="line">		S3ForcePathStyle: aws.Bool(<span class="literal">false</span>), <span class="comment">//virtual-host style方式，不要修改</span></span><br><span class="line">	&#125;)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">	svc := s3.New(sess)</span><br><span class="line">	err := svc.ListObjectsPages(&amp;s3.ListObjectsInput&#123;</span><br><span class="line">		Bucket: &amp;buckets,</span><br><span class="line">	&#125;, <span class="function"><span class="keyword">func</span><span class="params">(p *s3.ListObjectsOutput, last <span class="keyword">bool</span>)</span> <span class="params">(shouldContinue <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">		<span class="keyword">for</span> _, obj := <span class="keyword">range</span> p.Contents &#123;</span><br><span class="line">			items = <span class="built_in">append</span>(items, obj)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">	&#125;)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> items, err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> items, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我这里没毛病啊，万一你有问题你就咨询我</p>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>暂时先更这么多，这也不少了，大部分代码我都给出了具体实现，要是还不会就留言给我或者发邮件。   </p>
+<p>其实我特想对那些写几个爬虫在那里爬我博客的人说，你偷博客没所谓，复制也没所谓，不加名字说转载就很说不过去了，还TM标<br>榜你是原创，脸呢？cnblog我会逐渐弃掉，因为我有我自己的博客了，我也在逐渐搞迁移，把我原来写的博客都迁移到我自己的博客上去，未来我的cnblog博客将逐渐少更或者停更，就算更我也会用英语/日语双更，我让你TM抄我东西不说，fuck off bitch。</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2020/05/22/%E5%BC%80%E5%8F%91%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84Golang%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/05/14/Golang%E5%B0%81%E8%A3%85Elasticsearch%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Golang封装Elasticsearch常用功能</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2020
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['一切，都会好的', '杀不死我的，必让我强大', '时间会验证我的一切努力'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>

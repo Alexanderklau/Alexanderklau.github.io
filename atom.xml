@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://yemilice.com/"/>
-  <updated>2020-05-14T01:50:26.323Z</updated>
+  <updated>2020-05-22T08:04:26.123Z</updated>
   <id>https://yemilice.com/</id>
   
   <author>
@@ -15,6 +15,31 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>开发中常用的Golang高级用法</title>
+    <link href="https://yemilice.com/2020/05/22/%E5%BC%80%E5%8F%91%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84Golang%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/"/>
+    <id>https://yemilice.com/2020/05/22/%E5%BC%80%E5%8F%91%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84Golang%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/</id>
+    <published>2020-05-22T06:37:09.000Z</published>
+    <updated>2020-05-22T08:04:26.123Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          
+        
+      
+    
+    </summary>
+    
+    
+    
+      <category term="前后端" scheme="https://yemilice.com/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/"/>
+    
+  </entry>
   
   <entry>
     <title>Golang封装Elasticsearch常用功能</title>
