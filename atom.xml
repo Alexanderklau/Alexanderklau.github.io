@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://yemilice.com/"/>
-  <updated>2020-05-22T08:29:46.945Z</updated>
+  <updated>2020-05-25T11:35:48.737Z</updated>
   <id>https://yemilice.com/</id>
   
   <author>
@@ -15,6 +15,31 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Golang中Channel使用的一点随想</title>
+    <link href="https://yemilice.com/2020/05/25/Golang%E4%B8%ADChannel%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/"/>
+    <id>https://yemilice.com/2020/05/25/Golang%E4%B8%ADChannel%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</id>
+    <published>2020-05-25T10:25:38.000Z</published>
+    <updated>2020-05-25T11:35:48.737Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          
+        
+      
+    
+    </summary>
+    
+    
+    
+      <category term="前后端" scheme="https://yemilice.com/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/"/>
+    
+  </entry>
   
   <entry>
     <title>分布式数据库如何选择，几种分布式数据库优缺点一览</title>
