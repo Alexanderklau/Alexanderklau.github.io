@@ -2,9 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://yemilice.com/2020/06/01/Golang%25E4%25B8%25ADContext%25E4%25BD%25BF%25E7%2594%25A8%25E7%259A%2584%25E4%25B8%2580%25E7%2582%25B9%25E9%259A%258F%25E6%2583%25B3/</loc>
+    
+    <lastmod>2020-06-01T02:20:05.151Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://yemilice.com/2020/05/26/Golang%25E4%25B8%25ADWaitGroup%25E4%25BD%25BF%25E7%2594%25A8%25E7%259A%2584%25E4%25B8%2580%25E7%2582%25B9%25E9%259A%258F%25E6%2583%25B3/</loc>
+    
+    <lastmod>2020-06-01T02:17:04.495Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://yemilice.com/2020/05/25/Golang%25E4%25B8%25ADChannel%25E4%25BD%25BF%25E7%2594%25A8%25E7%259A%2584%25E4%25B8%2580%25E7%2582%25B9%25E9%259A%258F%25E6%2583%25B3/</loc>
     
-    <lastmod>2020-05-25T11:35:48.737Z</lastmod>
+    <lastmod>2020-05-25T11:37:10.053Z</lastmod>
     
   </url>
   

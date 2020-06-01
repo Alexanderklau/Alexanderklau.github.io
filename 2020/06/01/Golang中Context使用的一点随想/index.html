@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    Golang中Context使用的一点随想 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-Golang中Context使用的一点随想" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Golang中Context使用的一点随想
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/06/01/Golang%E4%B8%ADContext%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/" class="article-date">
+  <time datetime="2020-06-01T02:18:36.000Z" itemprop="datePublished">2020-06-01</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.2k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">8 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h1 id="Golang中Context使用的一点随想"><a href="#Golang中Context使用的一点随想" class="headerlink" title="Golang中Context使用的一点随想"></a>Golang中Context使用的一点随想</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这一篇是三巨头最后一篇了，前两篇介绍了channel，waitgroup，今天这篇来介绍一下context，相比于其他两种，我倒是更推荐context（上下文）这种控制goroutine的方法，为什呢，下面我就来详细的说一说吧。</p>
+<h2 id="什么是Context（逻辑上下文）"><a href="#什么是Context（逻辑上下文）" class="headerlink" title="什么是Context（逻辑上下文）"></a>什么是Context（逻辑上下文）</h2><p>Context是一种链式的调用逻辑，一般是用来控制goroutine，例如说，控制goroutine的启动，停止，暂停，取消等等。 我这里举一个简单的例子来说明Context怎么用</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">//WorkDir 定义一个遍历目录逻辑，假设这个目录很大，但是咱们需要随时把它结束掉</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WorkDir</span><span class="params">(ctx context.Context, name <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">    <span class="comment">//假装这是一个大列表，很大很大那种</span></span><br><span class="line">    filePathList := []<span class="keyword">string</span>&#123;........&#125;</span><br><span class="line">    <span class="keyword">for</span> _, file := <span class="keyword">range</span>(filePathList) &#123;</span><br><span class="line">        <span class="comment">//假装这里处理一下目录, 打印一下目录</span></span><br><span class="line">        fmt.Println(file)</span><br><span class="line">        <span class="keyword">select</span> &#123;</span><br><span class="line">        <span class="comment">//检测到ctx发生了变化</span></span><br><span class="line">        <span class="keyword">case</span> &lt;-ctx.Done():</span><br><span class="line">            fmt.Println(name,<span class="string">"任务退出，骨灰都给你扬了"</span>)</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        <span class="comment">//否则什么都不做</span></span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//定义一个waitcancel</span></span><br><span class="line">    ctx, cancel := context.WithCancel(context.Background())</span><br><span class="line">    <span class="comment">//将ctx作为参数传入函数当中</span></span><br><span class="line">    <span class="keyword">go</span> WorkDir(ctx, <span class="string">"三秒之内撒了你"</span>)</span><br><span class="line">    <span class="comment">//让程序跑个几秒</span></span><br><span class="line">    time.Sleep(<span class="number">3</span> * time.Second)</span><br><span class="line">    fmt.Println(<span class="string">"该杀任务了"</span>)</span><br><span class="line">    <span class="comment">//杀任务操作</span></span><br><span class="line">    cancel()</span><br><span class="line">    <span class="comment">//没有监控输出，就表示停止</span></span><br><span class="line">    time.Sleep(<span class="number">2</span> * time.Second)</span><br><span class="line">    fmt.Println(<span class="string">"任务让我杀了"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>怎么样，是不是很简单，简单来说，ctx就是传递的信号，你给每一层传递的ctx，不管传的再多，都只有一个爹  </p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ctx, cancel := context.WithCancel(context.Background())</span><br></pre></td></tr></table></figure>
+
+<p>cancel是来通知goroutine结束的，当爹ctx执行了cancel之后，就表示，我死了，你们得和我一起被株连，大家一起完蛋。</p>
+<p><strong>链式</strong>的意思就是，爹ctx是母体，它可以不断的继续下发产生多个子ctx，当cancel通知母体死亡的时候，子ctx也要跟着一起完蛋，所以链式就是，一荣俱荣，一关俱关的，cancel就是丧钟，调用就会释放所有的被感染（ctx下发）的goroutine。</p>
+<h2 id="Context的几个重要方法"><a href="#Context的几个重要方法" class="headerlink" title="Context的几个重要方法"></a>Context的几个重要方法</h2><h3 id="WithCancel方法"><a href="#WithCancel方法" class="headerlink" title="WithCancel方法"></a>WithCancel方法</h3><p>WithCancel方法的接口</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WithCancel</span><span class="params">(parent Context)</span> <span class="params">(ctx Context, cancel CancelFunc)</span></span></span><br></pre></td></tr></table></figure>
+<p>这里会返回一个ctx和cancel，ctx是一个可以被拷贝的context，这个context可以作为父节点继续向下传递，cancel则是通知ctx退出的信号，调用CancelFunc的时候，关闭c.done()，直接退出goroutine。 举个简单的例子，算了我偷个懒，用上面的例子，ctrl c ctrl v一波</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//WorkDir 定义一个遍历目录逻辑，假设这个目录很大，但是咱们需要随时把它结束掉</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WorkDir</span><span class="params">(ctx context.Context, name <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">    <span class="comment">//假装这是一个大列表，很大很大那种</span></span><br><span class="line">    filePathList := []<span class="keyword">string</span>&#123;........&#125;</span><br><span class="line">    <span class="keyword">for</span> _, file := <span class="keyword">range</span>(filePathList) &#123;</span><br><span class="line">        <span class="comment">//假装这里处理一下目录, 打印一下目录</span></span><br><span class="line">        fmt.Println(file)</span><br><span class="line">        <span class="keyword">select</span> &#123;</span><br><span class="line">        <span class="comment">//检测到ctx发生了变化</span></span><br><span class="line">        <span class="keyword">case</span> &lt;-ctx.Done():</span><br><span class="line">            fmt.Println(name,<span class="string">"任务退出，骨灰都给你扬了"</span>)</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        <span class="comment">//否则什么都不做</span></span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//定义一个waitcancel</span></span><br><span class="line">    ctx, cancel := context.WithCancel(context.Background())</span><br><span class="line">    <span class="comment">//将ctx作为参数传入函数当中</span></span><br><span class="line">    <span class="keyword">go</span> WorkDir(ctx, <span class="string">"三秒之内撒了你"</span>)</span><br><span class="line">    <span class="comment">//让程序跑个几秒</span></span><br><span class="line">    time.Sleep(<span class="number">3</span> * time.Second)</span><br><span class="line">    fmt.Println(<span class="string">"该杀任务了"</span>)</span><br><span class="line">    <span class="comment">//杀任务操作</span></span><br><span class="line">    cancel()</span><br><span class="line">    <span class="comment">//没有监控输出，就表示停止</span></span><br><span class="line">    time.Sleep(<span class="number">2</span> * time.Second)</span><br><span class="line">    fmt.Println(<span class="string">"任务让我杀了"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="WithDeadline方法"><a href="#WithDeadline方法" class="headerlink" title="WithDeadline方法"></a>WithDeadline方法</h3><p>WithDeadline方法的接口</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WithDeadline</span><span class="params">(parent Context, deadline time.Time)</span> <span class="params">(Context, CancelFunc)</span></span></span><br></pre></td></tr></table></figure>
+<p>这下机制出现了变化，cancel换成了deadline，参数也换了，换成了time，聪明的你应该想到了什么吧，这个函数其实是设置一个具体的死亡时间（deadline），当到达了指定的deadline时间之后，将所有的goroutine进行退出。咱们简单点儿，告诉你，就是到点儿退出。这里咱们照旧，举个例子，用例子来个详细说明。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WorkDir</span><span class="params">(ctx context.Context, name <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">    <span class="comment">//假装这是一个大列表，很大很大那种</span></span><br><span class="line">    filePathList := []<span class="keyword">string</span>&#123;........&#125;</span><br><span class="line">    <span class="keyword">for</span> _, file := <span class="keyword">range</span>(filePathList) &#123;</span><br><span class="line">        <span class="comment">//假装这里处理一下目录, 打印一下目录</span></span><br><span class="line">        fmt.Println(file)</span><br><span class="line">        <span class="keyword">select</span> &#123;</span><br><span class="line">        <span class="comment">//检测到ctx发生了变化</span></span><br><span class="line">        <span class="keyword">case</span> &lt;-ctx.Done():</span><br><span class="line">            fmt.Println(name,<span class="string">"任务超时了，骨灰都给你扬了"</span>)</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        <span class="keyword">case</span> &lt;-time.After(<span class="number">1</span> * time.Second):</span><br><span class="line">            fmt.Println(<span class="string">"我还在......"</span>)</span><br><span class="line">        <span class="comment">//否则什么都不做</span></span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//定义一个WithDeadline，这里定义了一个具体的时间点</span></span><br><span class="line">	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(<span class="number">10</span> *  time.Second))</span><br><span class="line">    <span class="comment">//将ctx作为参数传入函数当中</span></span><br><span class="line">    <span class="keyword">go</span> WorkDir(ctx, <span class="string">"从现在开始计时，10s之后撒了你"</span>)</span><br><span class="line">    <span class="comment">//让程序跑个几秒</span></span><br><span class="line">    time.Sleep(<span class="number">3</span> * time.Second)</span><br><span class="line">    fmt.Println(<span class="string">"该杀任务了"</span>)</span><br><span class="line">    <span class="comment">//杀任务操作</span></span><br><span class="line">    cancel()</span><br><span class="line">    <span class="comment">//没有监控输出，就表示停止</span></span><br><span class="line">    time.Sleep(<span class="number">2</span> * time.Second)</span><br><span class="line">    fmt.Println(<span class="string">"任务让我杀了"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>千万注意，后面还有个方法叫WithTimeout，它们两个说一样也不一样，WithTimeout是设置一个超时时间，WithDeadline是设定一个具体时间点，比如我上面那个，10s之内撒了goroutine，这个较为抽象，后面WithTimeout讲解的时候我会多费点功夫的。</p>
+<h3 id="WithTimeout方法"><a href="#WithTimeout方法" class="headerlink" title="WithTimeout方法"></a>WithTimeout方法</h3><p>WithTimeout方法的接口</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WithTimeout</span><span class="params">(parent Context, timeout time.Duration)</span> <span class="params">(Context, CancelFunc)</span></span></span><br></pre></td></tr></table></figure>
+<p>对比一下上面那个WithDeadline，看到没，都需要传入一个时间变量，但是还是那句话，上面的WithDeadline需要的是具体时间，下面的WithTimeout就简单多了，就需要一个时间就行了，说简单点，上面的WithDeadline，要的是一个具体时间，例如 “2020-01-01 12:00:00”，</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">time.Now().Add(<span class="number">5</span>*time.Second)</span><br></pre></td></tr></table></figure>
+<p>但是下面的WithTimeout，就很简单，就要一个超时时间就好了，例如5s  </p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">timeout := <span class="number">3</span> * time.Second</span><br></pre></td></tr></table></figure>
+<p>类似crontab的用法。好了，继续举个例子</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WorkDir</span><span class="params">(ctx context.Context, name <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">    <span class="comment">//假装这是一个大列表，很大很大那种</span></span><br><span class="line">    filePathList := []<span class="keyword">string</span>&#123;........&#125;</span><br><span class="line">    <span class="keyword">for</span> _, file := <span class="keyword">range</span>(filePathList) &#123;</span><br><span class="line">        <span class="comment">//假装这里处理一下目录, 打印一下目录</span></span><br><span class="line">        fmt.Println(file)</span><br><span class="line">        <span class="keyword">select</span> &#123;</span><br><span class="line">        <span class="comment">//检测到ctx发生了变化</span></span><br><span class="line">        <span class="keyword">case</span> &lt;-ctx.Done():</span><br><span class="line">            fmt.Println(name,<span class="string">"任务超时了，骨灰都给你扬了"</span>)</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        <span class="keyword">case</span> &lt;-time.After(<span class="number">1</span> * time.Second):</span><br><span class="line">            fmt.Println(<span class="string">"我还在......"</span>)</span><br><span class="line">        <span class="comment">//否则什么都不做</span></span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//定义一个WithDeadline，这里定义了一个具体的时间点</span></span><br><span class="line">	ctx, cancel:= context.WithTimeout(context.Background(), <span class="number">5</span> * time.Second)</span><br><span class="line">    <span class="comment">//将ctx作为参数传入函数当中</span></span><br><span class="line">    <span class="keyword">go</span> WorkDir(ctx, <span class="string">"不管怎么样，没返回，5s之后撒了你"</span>)</span><br><span class="line">    <span class="comment">//让程序跑个几秒</span></span><br><span class="line">    time.Sleep(<span class="number">20</span> * time.Second)</span><br><span class="line">    fmt.Println(<span class="string">"该杀任务了"</span>)</span><br><span class="line">    <span class="comment">//杀任务操作</span></span><br><span class="line">    cancel()</span><br><span class="line">    <span class="comment">//没有监控输出，就表示停止</span></span><br><span class="line">    time.Sleep(<span class="number">2</span> * time.Second)</span><br><span class="line">    fmt.Println(<span class="string">"任务让我杀了"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其实这两个用法都差不多，就是一个要求指定时间，一个随机时间，都是可以自己定义的.</p>
+<h3 id="WithValue方法"><a href="#WithValue方法" class="headerlink" title="WithValue方法"></a>WithValue方法</h3><p>WithValue方法的接口</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WithValue</span><span class="params">(parent Context, key <span class="keyword">interface</span>&#123;&#125;, val <span class="keyword">interface</span>&#123;&#125;)</span> <span class="params">(Context)</span></span></span><br></pre></td></tr></table></figure>
+
+<p>这个看一下人家的传入，一个context，一个key, 一个接口interface，这明显就是一个key value类型的参数，这个方法的主要功能就是传递消息用，传递的元数据一般都是在子ctx中要使用到的，这个函数其实我用的不多，我参考了一下其他老哥的写法，总结了一下，具体的例子如下</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//定义一个key</span></span><br><span class="line"><span class="keyword">var</span> key <span class="keyword">string</span> = <span class="string">"keywork"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	ctx, cancel := context.WithCancel(context.Background())</span><br><span class="line">	<span class="comment">//附加值</span></span><br><span class="line">	valueCtx := context.WithValue(ctx, key, <span class="string">"【监控1】"</span>)</span><br><span class="line">	<span class="keyword">go</span> watch(valueCtx)</span><br><span class="line">	time.Sleep(<span class="number">10</span> * time.Second)</span><br><span class="line">	fmt.Println(<span class="string">"可以了，通知监控停止"</span>)</span><br><span class="line">	cancel()</span><br><span class="line">	<span class="comment">//为了检测监控过是否停止，如果没有监控输出，就表示停止了</span></span><br><span class="line">	time.Sleep(<span class="number">5</span> * time.Second)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">watch</span><span class="params">(ctx context.Context)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> &lt;-ctx.Done():</span><br><span class="line">		<span class="comment">//取出值</span></span><br><span class="line">			fmt.Println(ctx.Value(key), <span class="string">"监控退出，停止了..."</span>)</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		<span class="keyword">default</span>:</span><br><span class="line">		<span class="comment">//取出值</span></span><br><span class="line">			fmt.Println(ctx.Value(key), <span class="string">"goroutine监控中..."</span>)</span><br><span class="line">			time.Sleep(<span class="number">2</span> * time.Second)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Context的使用注意事项"><a href="#Context的使用注意事项" class="headerlink" title="Context的使用注意事项"></a>Context的使用注意事项</h2><ol>
+<li>Context 始终要以参数的形式进行传递，整个结构体是不太行的，当然，利用map存储进行设计管理还是可以的。</li>
+<li>Context 做参数你得永远把它放第一位，无论什么情况都切记</li>
+<li>Context 可以在多个goroutine中进行传递，无需担心，它是线程安全的。</li>
+</ol>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>两天终于把这个系列整完了，其实相当于自己复习了一下，也借鉴了一些别人的代码，value那个转手是在太多，我找不着原作者了，要是谁看到说是你写的，马上邮件我啊，我加上你的名字。</p>
+<p>下一步我要开个大坑，我要用Golang 整个大活儿，爬虫之类的我都不想写了，我现在打算用Golang复写我的一些安全工具，或者是写一个Elasticsearch相关的东西，期待吧！</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2020/06/01/Golang%E4%B8%ADContext%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/05/26/Golang%E4%B8%ADWaitGroup%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Golang中WaitGroup使用的一点随想</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2020
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['一切，都会好的', '杀不死我的，必让我强大', '时间会验证我的一切努力'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
