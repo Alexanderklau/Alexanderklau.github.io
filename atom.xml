@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://yemilice.com/"/>
-  <updated>2020-06-01T02:20:05.151Z</updated>
+  <updated>2020-06-02T02:26:32.505Z</updated>
   <id>https://yemilice.com/</id>
   
   <author>
@@ -15,6 +15,31 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Python写一个自动点餐程序</title>
+    <link href="https://yemilice.com/2020/06/02/Python%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%8A%A8%E7%82%B9%E9%A4%90%E7%A8%8B%E5%BA%8F/"/>
+    <id>https://yemilice.com/2020/06/02/Python%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%8A%A8%E7%82%B9%E9%A4%90%E7%A8%8B%E5%BA%8F/</id>
+    <published>2020-06-02T02:17:12.000Z</published>
+    <updated>2020-06-02T02:26:32.505Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          
+        
+      
+    
+    </summary>
+    
+    
+    
+      <category term="前后端" scheme="https://yemilice.com/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/"/>
+    
+  </entry>
   
   <entry>
     <title>Golang中Context使用的一点随想</title>
