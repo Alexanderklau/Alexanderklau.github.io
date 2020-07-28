@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://yemilice.com/2020/07/28/Grow-Up/</loc>
+    <lastmod>2020-07-28</lastmod>
+  </url>  <url>
     <loc>https://yemilice.com/2020/07/07/%E4%BD%BF%E7%94%A8Golang%E7%9A%84gRPC%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</loc>
     <lastmod>2020-07-07</lastmod>
   </url>  <url>
