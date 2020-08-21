@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    中文分词的算法分析 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-中文分词的算法分析" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  中文分词的算法分析
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/08/21/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/" class="article-date">
+  <time datetime="2020-08-21T01:57:46.000Z" itemprop="datePublished">2020-08-21</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.9k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">10 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>起因是一次电话面试，面一个技术比较好的公司，我认为自己玩Elasticsearch还是比较久了，还是能交锋几个回合吧，结果人家一问，中文分词的算法，你有了解吗？</p>
+<p>纳尼？中文分词，不就是调一下中文分词器做index嘛，我说了调用IK分词器，人家让我说一下中文分词的算法，或者你有没有了解过，我只有老实的说，我没。</p>
+<p>后来当然是有点凉，我觉得我需要去详细看一下这方面的东西。所以这两天除了看房子，我也具体看了一下Elasticsearch和其他的，例如tika，fscrawler之类的分词逻辑，加上网上的一些资料，还是有一些收获，这里做个记录，也是未来的博客文章从基础转向高级的一个转折点吧。</p>
+<h2 id="分词是什么？什么是分词？它能干嘛？"><a href="#分词是什么？什么是分词？它能干嘛？" class="headerlink" title="分词是什么？什么是分词？它能干嘛？"></a>分词是什么？什么是分词？它能干嘛？</h2><p>首先三连，这个我认为比较基础，简单的说，在我们搭建检索引擎或者设计搜索的时候，为了方便能更加简便的搜索出我们想要的东西，首先听一个术语，叫做<strong>分词粒度</strong>，例如，我们搜索 “我是吴彦祖”，下面是不同的粒度的分析划分。</p>
+<ol>
+<li>我，是，吴彦祖 <strong>最细粒度</strong></li>
+<li>我是，吴彦祖 <strong>正常粒度</strong></li>
+<li>我，我是，我是吴，吴彦祖，是吴彦祖 <strong>混合粒度</strong></li>
+</ol>
+<p>你可以看见，不同的分词效果，带来的分词结果不同，举个例子，我们如果根据正常粒度，搜索 “我”，这时就搜索不出来，但是根据混合粒度，我们搜索 “我”，就能得到 “我是吴彦祖” 的搜索结果，所以，良好的分词，是增加搜索效率和搜索结果的重要因素，同理，分词也是一个搜索引擎的老大部分，这次咱们不说屁股的事儿，咱们光说中文，中文的分词算法组成到底有哪些，您往下看。</p>
+<h2 id="中文分词的几个算法解析"><a href="#中文分词的几个算法解析" class="headerlink" title="中文分词的几个算法解析"></a>中文分词的几个算法解析</h2><p>根据我查询的一些资料，和阅读一些技术文档，我总结出了如下几个搜索算法</p>
+<h3 id="词典类分词法"><a href="#词典类分词法" class="headerlink" title="词典类分词法"></a>词典类分词法</h3><p>这个大类其实比较好理解，现在大部分的搜索引擎都是根据中文字典作为分词的方法，它首先是基于中文字典，然后根据算法做分词，具体的算法如下</p>
+<h4 id="最大匹配算法（Maximum-Matching）"><a href="#最大匹配算法（Maximum-Matching）" class="headerlink" title="最大匹配算法（Maximum Matching）"></a>最大匹配算法（Maximum Matching）</h4><p>这里分为两种，一种是正向最大匹配，一种是逆向最大匹配，这里我主要说一下正向最大匹配方法，下面我都用MM来代替算法名，后面也都一样。</p>
+<h5 id="正向最大匹配算法"><a href="#正向最大匹配算法" class="headerlink" title="正向最大匹配算法"></a>正向最大匹配算法</h5><p>MM正向算法的原理，其实就是将等待分词的文本和字典进行匹配，遵循的是从左往右匹配的原则，如果匹配上了，切分出一个词汇，举个简单的例子</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 等待分词的列表</span></span><br><span class="line">wait_seg_word = [<span class="string">"我"</span>,<span class="string">"是"</span>,<span class="string">"吴"</span>,<span class="string">"彦"</span>,<span class="string">"祖"</span>]</span><br><span class="line"><span class="comment"># 词典</span></span><br><span class="line">word_dicts =&#123;<span class="string">"我是"</span>, <span class="string">"吴彦祖"</span>, <span class="string">"我"</span>, <span class="string">"是吴彦祖"</span>, <span class="string">"彦祖"</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<p>首先从wait_seg_word开始扫描</p>
+<p>wait_seg_word[0] = “我”</p>
+<p>wait_seg_word[1] = “是”</p>
+<p>这时候发现了 “我是” 已经在word_dicts中了，可以做切分了，但是我们需要做到最大匹配，所以继续切分</p>
+<p>wait_seg_word[2] = “吴”，发觉 “我是吴” 不能够组成词组，继续往下</p>
+<p>wait_seg_word[3] = “彦”, 不能组成任何词组</p>
+<p>wait_seg_word[4] = “祖”, “是吴彦祖” 匹配了词典，所以最大匹配为 “是吴彦祖”</p>
+<p>这就是基础的正向最大匹配算法</p>
+<h5 id="逆向最大匹配算法"><a href="#逆向最大匹配算法" class="headerlink" title="逆向最大匹配算法"></a>逆向最大匹配算法</h5><p>MM逆向算法其实就是MM正向算法的逆袭思维，我们简单说一下吧。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 等待分词的列表</span></span><br><span class="line">wait_seg_word = [<span class="string">"我是吴彦祖"</span>]</span><br><span class="line"><span class="comment"># 词典</span></span><br><span class="line">word_dicts =&#123;<span class="string">"我是"</span>, <span class="string">"吴彦祖"</span>, <span class="string">"我"</span>, <span class="string">"是吴彦祖"</span>, <span class="string">"彦祖"</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<p>定义一个做大分割值为 4，从右往左切分等待分词的列表</p>
+<p>取得到 “是吴彦祖”， 发觉它已经在词典中了</p>
+<p>去掉最左边第一个字，得到 “吴彦祖”</p>
+<p>以此类推，一直到无法被减去为止。</p>
+<p>然后再做一次切分，取得到 “我是吴彦”</p>
+<p>再次切分，对比。重复上述步骤。</p>
+<h5 id="双向最大匹配算法"><a href="#双向最大匹配算法" class="headerlink" title="双向最大匹配算法"></a>双向最大匹配算法</h5><p>双向最大匹配法是将正向最大匹配法得到的分词结果和逆向最大匹配法的到的结果进行比较，从而决定正确的分词方法。</p>
+<p>这个做个比较就好了，我简单说下它是干嘛的吧。</p>
+<p>双向切分算法就是使用正向切分一次、逆向切分一次。如果两次切分结果一样的话就好说了，随便选一个结果就可以。</p>
+<p>但是如果切分不一样的话使用那一次的切分结果呢？这就涉及到了结果的选取原则问题。切分词应该遵守以下原则：</p>
+<p>1：最大匹配原则：上面一直在说这个，使用这个原则的原因是词的字数越多，表示的含义越丰富、对于一条语句分出来的词也就越少，相对的，准确性也就会越高。</p>
+<p>2：词库中没有的单字词越少越好。这个原则有点依赖于词库了，至少词库中应该有一些常用的单字成词的字吧，比如：“你”、“我”、“他”、“和”、“的”、“了”等。使用这个原则的原因可以从上面提到的“我是吴彦祖”这个例子看出来：</p>
+<p>正向结果：我是、是、吴彦祖</p>
+<p>逆向结果：我是、我、是吴彦祖</p>
+<p>虽然分出来的结果单字词都是一个，但是，逆向的单字词”和“在词库中存在，所以我们选择返回逆向切分结果。</p>
+<p>其实说白了就是很依赖词库，如果没词库就是一个哑巴教一个不会说话的孩子念绕口令，纯属烧脑。。。。</p>
+<h3 id="统计类分词法"><a href="#统计类分词法" class="headerlink" title="统计类分词法"></a>统计类分词法</h3><p>统计分词是什么？其实说白了，通过相邻的字同时出现的次数越多，就越可能构成一个词，也就是出现的频率。同样的词组出现多次，被统计的概率越大，组成合理词组也就越精准，可信。因此字与字相邻出现的概率或频率能较好的反映词的可信度。</p>
+<p>根据我查询的资料和实践所得，具体有这么几种算法</p>
+<h4 id="N-gram模型算法"><a href="#N-gram模型算法" class="headerlink" title="N-gram模型算法"></a>N-gram模型算法</h4><p>这个主要运用在tika当中，tika你不会不知道吧？你不知道？后面我写个文章你瞅瞅去吧。。。。</p>
+<p>tika是我做全文检索插件的时候接触的，它的核心分词算法就是N-gram算法，这个比较重要，我会详细的说一下这个算法。</p>
+<p>首先，N-gram是一种基于统计语言模型的算法。它的基本思想是将文本里面的内容按照字节进行大小为N的滑动窗口操作，形成了长度是N的字节片段序列。（这段出自知乎）</p>
+<p>一个N-gram就是一个长度为N的词语组成的序列。</p>
+<p>简单的流程</p>
+<p>N-Gram 算法具体过程：</p>
+<ol>
+<li><p>过滤掉文本数据中的标点符号和其他特殊字符；</p>
+</li>
+<li><p>对所有单词执行小写转换，并删除单词之间的空格、换行符等标志位；</p>
+</li>
+<li><p>使用长度为 N 的窗口对文本内容执行字符级滑动取词，将结果存入有序列表。</p>
+</li>
+</ol>
+<p>这里直接借鉴了别人的代码，看的懂就行</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">text_filter</span><span class="params">(text: str)</span> -&gt; str:</span></span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">    文本过滤器：过滤掉文本数据中的标点符号和其他特殊字符</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    result = str()</span><br><span class="line">    <span class="keyword">for</span> t <span class="keyword">in</span> text:</span><br><span class="line">        <span class="keyword">if</span> t.isalnum():</span><br><span class="line">            <span class="keyword">if</span> t.isalpha():</span><br><span class="line">                t = t.lower()</span><br><span class="line">            result += str(t)</span><br><span class="line">    <span class="keyword">return</span> result</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">slide_word</span><span class="params">(text: str, l: int = <span class="number">5</span>)</span> -&gt; list:</span></span><br><span class="line">    <span class="string">"""</span></span><br><span class="line"><span class="string">    滑动取词器</span></span><br><span class="line"><span class="string">    Input: text='abcd',l=2</span></span><br><span class="line"><span class="string">    Output: ['ab','bc','cd']</span></span><br><span class="line"><span class="string">    :param text: 过滤后的文本 （只包含小写数字/字母）</span></span><br><span class="line"><span class="string">    :param l: 滑动窗口长度，默认为 5</span></span><br><span class="line"><span class="string">    :return:</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    tf = text_filter(text)</span><br><span class="line">    result = list()</span><br><span class="line">    <span class="keyword">if</span> len(tf) &lt;= l:</span><br><span class="line">        result.append(tf)</span><br><span class="line">        <span class="keyword">return</span> result</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> range(len(tf)):</span><br><span class="line">        word = tf[i:i + l]</span><br><span class="line">        <span class="keyword">if</span> len(word) &lt; l:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        result.append(word)</span><br><span class="line">    <span class="keyword">return</span> result</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line">    banner = <span class="string">'abcdefghigkLMN*^%$*   \r\n)021'</span></span><br><span class="line">    print(slide_word(banner))</span><br></pre></td></tr></table></figure>
+
+<p>返回</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[<span class="string">'abcde'</span>, <span class="string">'bcdef'</span>, <span class="string">'cdefg'</span>, <span class="string">'defgh'</span>, <span class="string">'efghi'</span>, <span class="string">'fghig'</span>, <span class="string">'ghigk'</span>, <span class="string">'higkl'</span>, <span class="string">'igklm'</span>, <span class="string">'gklmn'</span>, <span class="string">'klmn0'</span>, <span class="string">'lmn02'</span>, <span class="string">'mn021'</span>]</span><br></pre></td></tr></table></figure>
+
+<h4 id="隐马尔科夫模型算法-HMM"><a href="#隐马尔科夫模型算法-HMM" class="headerlink" title="隐马尔科夫模型算法 (HMM)"></a>隐马尔科夫模型算法 (HMM)</h4><p>通过模拟人对句子的理解，达到识别词的效果，基本思想是语义分析，句法分析，利用句法信息和语义信息对文本进行分词。自动推理，并完成对未登录词的补充是其优点。不成熟.</p>
+<p>具体概念:有限状态机\语法约束矩阵\特征词库</p>
+<p>以往的分词方法，无论是基于规则的还是基于统计的，一般都依赖于一个事先编制的词表(词典)。</p>
+<p>自动分词过程就是通过词表和相关信息来做出词语切分的决策。</p>
+<p>与此相反，基于字标注的分词方法实际上是构词方法。</p>
+<p>即把分词过程视为字在字串中的标注问题。</p>
+<p>由于每个字在构造一个特定的词语时都占据着一个确定的构词位置(即词位)，假如规定每个字最多只有四个构词位置：即B(词首)，M (词中)，E(词尾)和S(单独成词)，那么下面句子(甲)的分词结果就可以直接表示成如(乙)所示的逐字标注形式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(甲)分词结果：／上海／计划／N／本／世纪／末／实现／人均／国内／生产／总值／五千美元／</span><br><span class="line"></span><br><span class="line">(乙)字标注形式：上／B海／E计／B划／E N／S 本／s世／B 纪／E 末／S 实／B 现／E 人／B 均／E 国／B 内／E生／B产／E总／B值／E 五／B千／M 美／M 元／E 。／S</span><br></pre></td></tr></table></figure>
+<p>首先需要说明，这里说到的“字”不只限于汉字。</p>
+<p>考虑到中文真实文本中不可避免地会包含一定数量的非汉字字符，本文所说的“字”，也包括外文字母、阿拉伯数字和标点符号等字符。所有这些字符都是构词的基本单元。当然，汉字依然是这个单元集合中数量最多的一类字符。</p>
+<p>把分词过程视为字的标注问题的一个重要优势在于，它能够平衡地看待词表词和未登录词的识别问题。</p>
+<p>在这种分词技术中，文本中的词表词和未登录词都是用统一的字标注过程来实现的。</p>
+<p>在学习架构上，既可以不必专门强调词表词信息，也不用专门设计特定的未登录词(如人名、地名、机构名)识别模块。这使得分词系统的设计大大简化。</p>
+<p>在字标注过程中，所有的字根据预定义的特征进行词位特性的学习，获得一个概率模型。然后，在待分字串上，根据字与字之间的结合紧密程度，得到一个词位的标注结果。</p>
+<p>最后，根据词位定义直接获得最终的分词结果。总而言之，在这样一个分词过程中，分词成为字重组的简单过程。然而这一简单处理带来的分词结果却是令人满意的。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>我估摸着我还是要好好把这些算法过一遍，未来还有很长的路要走，算法也太难了。。。</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2020/08/21/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/" rel="tag">其他技术</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/08/17/%E4%B8%80%E6%AC%A1Golang%E6%9C%8D%E5%8A%A1%E5%8D%A0%E7%94%A8CPU%E8%BF%87%E5%A4%A7%E7%9A%84%E6%8E%92%E6%9F%A5%E7%BB%8F%E8%BF%87/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">一次Golang服务占用CPU过大的排查经过</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2020
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['AKA造梦的艺术家', '就不停在梦游', '醒来后从没人会记住他'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
