@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    读Python的协程库asyncio源码随想(1) |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-读Python的协程库asyncio源码随想" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  读Python的协程库asyncio源码随想(1)
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/08/27/%E8%AF%BBPython%E7%9A%84%E5%8D%8F%E7%A8%8B%E5%BA%93asyncio%E6%BA%90%E7%A0%81%E9%9A%8F%E6%83%B3/" class="article-date">
+  <time datetime="2020-08-27T06:39:33.000Z" itemprop="datePublished">2020-08-27</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">1.5k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">6 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>其实想了一下，Python有一阵没好好看了，这样不好，不好。前阵子看了一下Golang的协程，我寻思看了那么多协程逻辑，也该看看Python。</p>
+<p>一看Python，都更新到3.8.3了，真厉害啊！我们现在线上的项目还是2.7，迁移的代价太大了，Python现在更新了asyncio库，这个库可以傻瓜式完成协程，异步等等操作，看起来是相当牛逼，话不多说，去看看它的源码，弄明白它的运行逻辑，顺便学习一下Python官方的代码写作手段，可别到时候，代码没写好，整出一大堆格式问题呀。</p>
+<h2 id="Python中的协程是什么"><a href="#Python中的协程是什么" class="headerlink" title="Python中的协程是什么"></a>Python中的协程是什么</h2><p>前阵子我说了一下Golang的协程，现在又跳到Python的协程来了，巧了嘿，golang的协程，其实就是用一个关键字go去完成的</p>
+<p>类似</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">go</span> example()</span><br></pre></td></tr></table></figure>
+
+<p>而Python的协程是怎么表现的呢，其实就是通过一个关键字async定义，就像这样</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">async_work</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p>理论上来说，Python的协程调用类似</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">import</span> asyncio</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">main</span><span class="params">()</span>:</span></span><br><span class="line"><span class="meta">... </span>    print(<span class="string">'hello'</span>)</span><br><span class="line"><span class="meta">... </span>    <span class="keyword">await</span> asyncio.sleep(<span class="number">1</span>)</span><br><span class="line"><span class="meta">... </span>    print(<span class="string">'world'</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>asyncio.run(main())</span><br><span class="line">hello</span><br><span class="line">world</span><br></pre></td></tr></table></figure>
+
+<p>它并不像go一样，直接调用关键字就可以执行</p>
+<p>简单地调用一个协程并不会将其加入执行日程，需要用到<strong>run</strong>这个函数</p>
+<p>所以还是有不一样的。。。这属于只是有Golang那味儿，但是核心不是人家西方那一套。</p>
+<p>其实Python由于自身GIL线程全局锁，在处理一些需要高并发处理的操作时候就显得有些力不从心了，一般这种时候，在我用Python2开发的时候，我会用多进程+多线程混用操作，务必榨干Python2的所有性能，但是Python3之后引入了类似golang的关键字async，可以直接调用协程，这样不就有golang那味儿了嘛，所以我看了一下这个库的文档，也基本弄明白这东西怎么使了。</p>
+<h2 id="协程的创建（asyncio-create-task）"><a href="#协程的创建（asyncio-create-task）" class="headerlink" title="协程的创建（asyncio.create_task）"></a>协程的创建（asyncio.create_task）</h2><p>create_task函数用来并发运行作为 asyncio任务的多个协程，举个例子</p>
+<p>将 coro 协程 打包为一个 Task 排入日程准备执行。返回 Task 对象</p>
+<p>该任务会在 get_running_loop() 返回的循环中执行，如果当前线程没有在运行的循环则会引发 RuntimeError。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">coro</span><span class="params">()</span>:</span></span><br><span class="line">    worksomething...</span><br><span class="line"></span><br><span class="line">task = asyncio.create_task(coro())</span><br></pre></td></tr></table></figure>
+<p>基础使用看完了，然后呢。。。</p>
+<p>先去源码库里面看一下create_task的源码(Python的版本是3.8.3)</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">create_task</span><span class="params">(self, coro, *, name=None)</span>:</span></span><br><span class="line">    <span class="string">"""Schedule a coroutine object.</span></span><br><span class="line"><span class="string">    Return a task object.</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    self._check_closed()</span><br><span class="line">    <span class="keyword">if</span> self._task_factory <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">        task = tasks.Task(coro, loop=self, name=name)</span><br><span class="line">        <span class="keyword">if</span> task._source_traceback:</span><br><span class="line">            <span class="keyword">del</span> task._source_traceback[<span class="number">-1</span>]</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        task = self._task_factory(self, coro)</span><br><span class="line">        tasks._set_task_name(task, name)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> task</span><br></pre></td></tr></table></figure>
+<p>这里主要接受到一个协程作为参数，并且还有name</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">task = tasks.Task(coro, loop=self, name=name)</span><br></pre></td></tr></table></figure>
+
+<p>这里会新建一个task实例并且返回。</p>
+<h2 id="协程的休眠（asyncio-sleep）"><a href="#协程的休眠（asyncio-sleep）" class="headerlink" title="协程的休眠（asyncio.sleep）"></a>协程的休眠（asyncio.sleep）</h2><p>有些时候需要让协程去等待，或者阻塞指定的时间，就需要调用sleep函数，sleep一般会把任务挂起，然后不影响其他任务运行。</p>
+<p>以下协程示例运行 5 秒，每秒显示一次当前日期</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> asyncio</span><br><span class="line"><span class="keyword">import</span> datetime</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">display_date</span><span class="params">()</span>:</span></span><br><span class="line">    loop = asyncio.get_running_loop()</span><br><span class="line">    end_time = loop.time() + <span class="number">5.0</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        print(datetime.datetime.now())</span><br><span class="line">        <span class="keyword">if</span> (loop.time() + <span class="number">1.0</span>) &gt;= end_time:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        <span class="keyword">await</span> asyncio.sleep(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">asyncio.run(display_date())</span><br></pre></td></tr></table></figure>
+
+<p>看下人家的源码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="meta">@types.coroutine</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">__sleep0</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="string">"""Skip one event loop run cycle.</span></span><br><span class="line"><span class="string">    This is a private helper for 'asyncio.sleep()', used</span></span><br><span class="line"><span class="string">    when the 'delay' is set to 0.  It uses a bare 'yield'</span></span><br><span class="line"><span class="string">    expression (which Task.__step knows how to handle)</span></span><br><span class="line"><span class="string">    instead of creating a Future object.</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    <span class="keyword">yield</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">sleep</span><span class="params">(delay, result=None, *, loop=None)</span>:</span></span><br><span class="line">    <span class="string">"""Coroutine that completes after a given time (in seconds)."""</span></span><br><span class="line">    <span class="keyword">if</span> delay &lt;= <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">await</span> __sleep0()</span><br><span class="line">        <span class="keyword">return</span> result</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> loop <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">        loop = events.get_running_loop()</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        warnings.warn(<span class="string">"The loop argument is deprecated since Python 3.8, "</span></span><br><span class="line">                      <span class="string">"and scheduled for removal in Python 3.10."</span>,</span><br><span class="line">                      DeprecationWarning, stacklevel=<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">    future = loop.create_future()</span><br><span class="line">    h = loop.call_later(delay,</span><br><span class="line">                        futures._set_result_unless_cancelled,</span><br><span class="line">                        future, result)</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">await</span> future</span><br><span class="line">    <span class="keyword">finally</span>:</span><br><span class="line">        h.cancel()</span><br></pre></td></tr></table></figure>
+
+<p>这里的写法让我一瞬间想到golang，粗略说一下把，这里主要是传入一个协程等待时间delay，通过调取get_running_loop()获取事件循环，等待yield，然后暂停执行协程达到的协程阻塞效果。</p>
+<p>这里引出来一个重要概念，get_running_loop()，这个东西是干嘛的？</p>
+<h2 id="get-running-loop函数是干嘛的？"><a href="#get-running-loop函数是干嘛的？" class="headerlink" title="get_running_loop函数是干嘛的？"></a>get_running_loop函数是干嘛的？</h2><p>首先去定位一下人家的源码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">_RunningLoop</span><span class="params">(threading.local)</span>:</span></span><br><span class="line">    loop_pid = (<span class="literal">None</span>, <span class="literal">None</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">_running_loop = _RunningLoop()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_running_loop</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="string">"""Return the running event loop.  Raise a RuntimeError if there is none.</span></span><br><span class="line"><span class="string">    This function is thread-specific.</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    <span class="comment"># <span class="doctag">NOTE:</span> this function is implemented in C (see _asynciomodule.c)</span></span><br><span class="line">    loop = _get_running_loop()</span><br><span class="line">    <span class="keyword">if</span> loop <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">        <span class="keyword">raise</span> RuntimeError(<span class="string">'no running event loop'</span>)</span><br><span class="line">    <span class="keyword">return</span> loop</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_get_running_loop</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="string">"""Return the running event loop or None.</span></span><br><span class="line"><span class="string">    输出一个event loop，主要是一个循环事件的TLS</span></span><br><span class="line"><span class="string">    This is a low-level function intended to be used by event loops.</span></span><br><span class="line"><span class="string">    This function is thread-specific.</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    <span class="comment"># <span class="doctag">NOTE:</span> this function is implemented in C (see _asynciomodule.c)</span></span><br><span class="line">    running_loop, pid = _running_loop.loop_pid</span><br><span class="line">    <span class="keyword">if</span> running_loop <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span> <span class="keyword">and</span> pid == os.getpid():</span><br><span class="line">        <span class="keyword">return</span> running_loop</span><br></pre></td></tr></table></figure>
+
+<p>可以看出来一点，get_running_loop（获取事件循环）的主要功能就是返回当前 OS 线程中正在运行的事件循环，这样可能说起来抽象一点，大白话的意思就是事件循环是asyncio的核心，异步任务的运行、任务完成之后的回调、网络IO操作、子进程的运行，都是通过事件循环完成的。所以这个相当于是发动机了。</p>
+<h2 id="协程的结果（asyncio-Future）"><a href="#协程的结果（asyncio-Future）" class="headerlink" title="协程的结果（asyncio.Future）"></a>协程的结果（asyncio.Future）</h2><p>Future对象用来链接底层回调式代码和高层异步/等待式代码，一个 Future 代表一个异步运算的最终结果。</p>
+<p>负责终止 loop 的循环。</p>
+<p>在 asyncio 中需要 Future 对象以便允许通过 async/await 使用基于回调的代码。</p>
+<p>通常情况下 没有必要 在应用层级的代码中创建 Future 对象。</p>
+<p>Future 对象有时会由库和某些 asyncio API 暴露给用户，用作可等待对象:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">main</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">await</span> function_that_returns_a_future_object()</span><br><span class="line"></span><br><span class="line">    <span class="comment"># this is also valid:</span></span><br><span class="line">    <span class="keyword">await</span> asyncio.gather(</span><br><span class="line">        function_that_returns_a_future_object(),</span><br><span class="line">        some_python_coroutine()</span><br><span class="line">    )</span><br></pre></td></tr></table></figure>
+
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>这个其实还是挺。。。难懂的，我今天回家继续看一波吧。</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2020/08/27/%E8%AF%BBPython%E7%9A%84%E5%8D%8F%E7%A8%8B%E5%BA%93asyncio%E6%BA%90%E7%A0%81%E9%9A%8F%E6%83%B3/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/" rel="tag">其他技术</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/" rel="tag">杂七杂八</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/" rel="tag">黑科技</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/08/25/Golang%E8%AF%AD%E8%A8%80%E7%9A%84%E4%B8%80%E4%BA%9B%E5%9F%BA%E7%A1%80-%E9%92%88%E5%AF%B9%E9%9D%A2%E5%90%91%E5%9F%BA%E7%A1%80%E7%9A%84%E7%AC%94-%E9%9D%A2%E8%AF%95/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Golang语言的一些基础(针对面向基础的笔/面试)</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2020
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
