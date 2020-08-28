@@ -9,7 +9,7 @@
     
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>
-    读Python的协程库asyncio源码随想(1) |  Yemilice
+    读Python的协程库asyncio源码随想 |  Yemilice
   </title>
   <meta name="generator" content="hexo-theme-yilia-plus">
   
@@ -41,7 +41,7 @@
     <header class="article-header">
        
 <h1 class="article-title sea-center" style="border-left:0" itemprop="name">
-  读Python的协程库asyncio源码随想(1)
+  读Python的协程库asyncio源码随想
 </h1>
  
 
@@ -61,7 +61,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">1.5k</span>
+            <span class="post-count">1.9k</span>
         </span>
     </span>
 
@@ -70,7 +70,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">6 分钟</span>
+            <span class="post-count">7 分钟</span>
         </span>
     </span>
 </div>
@@ -95,8 +95,9 @@
       
 
       
-      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>其实想了一下，Python有一阵没好好看了，这样不好，不好。前阵子看了一下Golang的协程，我寻思看了那么多协程逻辑，也该看看Python。</p>
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>其实想了一下，Python有一阵没好好看了，这样不好。刚好前阵子看了一下Golang的协程，我寻思看了那么多协程逻辑，也该看看Python的。</p>
 <p>一看Python，都更新到3.8.3了，真厉害啊！我们现在线上的项目还是2.7，迁移的代价太大了，Python现在更新了asyncio库，这个库可以傻瓜式完成协程，异步等等操作，看起来是相当牛逼，话不多说，去看看它的源码，弄明白它的运行逻辑，顺便学习一下Python官方的代码写作手段，可别到时候，代码没写好，整出一大堆格式问题呀。</p>
+<p><strong>这是我第一次写读源码类的文章，如果写的不好，请多多包涵呀！</strong></p>
 <h2 id="Python中的协程是什么"><a href="#Python中的协程是什么" class="headerlink" title="Python中的协程是什么"></a>Python中的协程是什么</h2><p>前阵子我说了一下Golang的协程，现在又跳到Python的协程来了，巧了嘿，golang的协程，其实就是用一个关键字go去完成的</p>
 <p>类似</p>
 <figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">go</span> example()</span><br></pre></td></tr></table></figure>
@@ -108,7 +109,7 @@
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">import</span> asyncio</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">main</span><span class="params">()</span>:</span></span><br><span class="line"><span class="meta">... </span>    print(<span class="string">'hello'</span>)</span><br><span class="line"><span class="meta">... </span>    <span class="keyword">await</span> asyncio.sleep(<span class="number">1</span>)</span><br><span class="line"><span class="meta">... </span>    print(<span class="string">'world'</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>asyncio.run(main())</span><br><span class="line">hello</span><br><span class="line">world</span><br></pre></td></tr></table></figure>
 
 <p>它并不像go一样，直接调用关键字就可以执行</p>
-<p>简单地调用一个协程并不会将其加入执行日程，需要用到<strong>run</strong>这个函数</p>
+<p>简单地调用一个协程并不会将其加入执行日程，需要用到<strong>run()</strong>这个函数</p>
 <p>所以还是有不一样的。。。这属于只是有Golang那味儿，但是核心不是人家西方那一套。</p>
 <p>其实Python由于自身GIL线程全局锁，在处理一些需要高并发处理的操作时候就显得有些力不从心了，一般这种时候，在我用Python2开发的时候，我会用多进程+多线程混用操作，务必榨干Python2的所有性能，但是Python3之后引入了类似golang的关键字async，可以直接调用协程，这样不就有golang那味儿了嘛，所以我看了一下这个库的文档，也基本弄明白这东西怎么使了。</p>
 <h2 id="协程的创建（asyncio-create-task）"><a href="#协程的创建（asyncio-create-task）" class="headerlink" title="协程的创建（asyncio.create_task）"></a>协程的创建（asyncio.create_task）</h2><p>create_task函数用来并发运行作为 asyncio任务的多个协程，举个例子</p>
@@ -135,14 +136,22 @@
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">_RunningLoop</span><span class="params">(threading.local)</span>:</span></span><br><span class="line">    loop_pid = (<span class="literal">None</span>, <span class="literal">None</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">_running_loop = _RunningLoop()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_running_loop</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="string">"""Return the running event loop.  Raise a RuntimeError if there is none.</span></span><br><span class="line"><span class="string">    This function is thread-specific.</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    <span class="comment"># <span class="doctag">NOTE:</span> this function is implemented in C (see _asynciomodule.c)</span></span><br><span class="line">    loop = _get_running_loop()</span><br><span class="line">    <span class="keyword">if</span> loop <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">        <span class="keyword">raise</span> RuntimeError(<span class="string">'no running event loop'</span>)</span><br><span class="line">    <span class="keyword">return</span> loop</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_get_running_loop</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="string">"""Return the running event loop or None.</span></span><br><span class="line"><span class="string">    输出一个event loop，主要是一个循环事件的TLS</span></span><br><span class="line"><span class="string">    This is a low-level function intended to be used by event loops.</span></span><br><span class="line"><span class="string">    This function is thread-specific.</span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    <span class="comment"># <span class="doctag">NOTE:</span> this function is implemented in C (see _asynciomodule.c)</span></span><br><span class="line">    running_loop, pid = _running_loop.loop_pid</span><br><span class="line">    <span class="keyword">if</span> running_loop <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span> <span class="keyword">and</span> pid == os.getpid():</span><br><span class="line">        <span class="keyword">return</span> running_loop</span><br></pre></td></tr></table></figure>
 
 <p>可以看出来一点，get_running_loop（获取事件循环）的主要功能就是返回当前 OS 线程中正在运行的事件循环，这样可能说起来抽象一点，大白话的意思就是事件循环是asyncio的核心，异步任务的运行、任务完成之后的回调、网络IO操作、子进程的运行，都是通过事件循环完成的。所以这个相当于是发动机了。</p>
-<h2 id="协程的结果（asyncio-Future）"><a href="#协程的结果（asyncio-Future）" class="headerlink" title="协程的结果（asyncio.Future）"></a>协程的结果（asyncio.Future）</h2><p>Future对象用来链接底层回调式代码和高层异步/等待式代码，一个 Future 代表一个异步运算的最终结果。</p>
-<p>负责终止 loop 的循环。</p>
-<p>在 asyncio 中需要 Future 对象以便允许通过 async/await 使用基于回调的代码。</p>
-<p>通常情况下 没有必要 在应用层级的代码中创建 Future 对象。</p>
-<p>Future 对象有时会由库和某些 asyncio API 暴露给用户，用作可等待对象:</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">main</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">await</span> function_that_returns_a_future_object()</span><br><span class="line"></span><br><span class="line">    <span class="comment"># this is also valid:</span></span><br><span class="line">    <span class="keyword">await</span> asyncio.gather(</span><br><span class="line">        function_that_returns_a_future_object(),</span><br><span class="line">        some_python_coroutine()</span><br><span class="line">    )</span><br></pre></td></tr></table></figure>
+<h2 id="协程的结果（asyncio-Future）"><a href="#协程的结果（asyncio-Future）" class="headerlink" title="协程的结果（asyncio.Future）"></a>协程的结果（asyncio.Future）</h2><p>这里换种理解方法</p>
+<p>有些时候我们想得到协程的返回值，但是在Python的协程里面任务有些时候会执行，但有些时候不会，所以Future相当于一个最终结果，无论协程是否执行。</p>
+<p>Future是一个await（可等待）对象，await我下面会说，意思就是，它其实和Task一样，是一个可以被等待的。</p>
+<p>其实理解一下，就是Future是协程的封装函数。</p>
+<p>这部分源码太多了，我直接拿官方例子来说明</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">set_after</span><span class="params">(fut, delay, value)</span>:</span></span><br><span class="line">    <span class="comment"># 设置一个等待时间 depay是秒数</span></span><br><span class="line">    <span class="keyword">await</span> asyncio.sleep(delay)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 设置一个future的结果</span></span><br><span class="line">    fut.set_result(value)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">main</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="comment"># 来一个loop循环</span></span><br><span class="line">    loop = asyncio.get_running_loop()</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 来一个新的future</span></span><br><span class="line">    fut = loop.create_future()</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Run "set_after()" coroutine in a parallel Task.</span></span><br><span class="line">    <span class="comment"># 创建一个task，去设置future的结果</span></span><br><span class="line">    <span class="comment"># We are using the low-level "loop.create_task()" API here because</span></span><br><span class="line">    <span class="comment"># 开始</span></span><br><span class="line">    <span class="comment"># we already have a reference to the event loop at hand.</span></span><br><span class="line">    <span class="comment"># Otherwise we could have just used "asyncio.create_task()".</span></span><br><span class="line">    loop.create_task(</span><br><span class="line">        set_after(fut, <span class="number">1</span>, <span class="string">'... world'</span>))</span><br><span class="line"></span><br><span class="line">    print(<span class="string">'hello ...'</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Wait until *fut* has a result (1 second) and print it.</span></span><br><span class="line">    print(<span class="keyword">await</span> fut)</span><br><span class="line"></span><br><span class="line">asyncio.run(main())</span><br></pre></td></tr></table></figure>
 
-<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>这个其实还是挺。。。难懂的，我今天回家继续看一波吧。</p>
+<p>上面那个例子就是创建一个Future对象，创建和调度一个异步任务去设置Future结果，最后再去等待结果。这就是基础的用法。</p>
+<h2 id="协程的等待（await）"><a href="#协程的等待（await）" class="headerlink" title="协程的等待（await）"></a>协程的等待（await）</h2><p>await其实就是声明协程挂起，其实就是在执行的时候挂起某个协程函数，等待挂起条件结束后，再回来执行。</p>
+<p>它其实是一个关键字，就像async一样</p>
+<p>这里举个例子</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">import</span> asyncio</span><br><span class="line"> </span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">async</span> <span class="function"><span class="keyword">def</span> <span class="title">main</span><span class="params">()</span>:</span></span><br><span class="line"><span class="meta">... </span>    print(<span class="string">'hello'</span>)</span><br><span class="line">        <span class="comment"># 等待1s</span></span><br><span class="line"><span class="meta">... </span>    <span class="keyword">await</span> asyncio.sleep(<span class="number">1</span>)</span><br><span class="line"><span class="meta">... </span>    print(<span class="string">'world'</span>)</span><br><span class="line"> </span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>asyncio.run(main())</span><br><span class="line">hello</span><br><span class="line">world</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>这块真的好久没看了，我也是第一次写源码类文章，我估摸着写的的确不太好，不过一回生，二回熟，下次我会写的更好的，哈哈哈</p>
+<p>今天终于周五啦,好开心啊，下一步应该是继续刷算法看书了，大家有什么不懂的可以给我发邮件的。</p>
 
       
       <!-- reward -->

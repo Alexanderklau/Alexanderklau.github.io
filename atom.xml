@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://yemilice.com/"/>
-  <updated>2020-08-27T11:01:43.807Z</updated>
+  <updated>2020-08-28T07:01:48.859Z</updated>
   <id>https://yemilice.com/</id>
   
   <author>
@@ -17,11 +17,11 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>读Python的协程库asyncio源码随想(1)</title>
+    <title>读Python的协程库asyncio源码随想</title>
     <link href="https://yemilice.com/2020/08/27/%E8%AF%BBPython%E7%9A%84%E5%8D%8F%E7%A8%8B%E5%BA%93asyncio%E6%BA%90%E7%A0%81%E9%9A%8F%E6%83%B3/"/>
     <id>https://yemilice.com/2020/08/27/%E8%AF%BBPython%E7%9A%84%E5%8D%8F%E7%A8%8B%E5%BA%93asyncio%E6%BA%90%E7%A0%81%E9%9A%8F%E6%83%B3/</id>
     <published>2020-08-27T06:39:33.000Z</published>
-    <updated>2020-08-27T11:01:43.807Z</updated>
+    <updated>2020-08-28T07:01:48.859Z</updated>
     
     <summary type="html">
     
@@ -39,9 +39,9 @@
     
       <category term="前后端" scheme="https://yemilice.com/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/"/>
     
-      <category term="其他技术" scheme="https://yemilice.com/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/"/>
-    
       <category term="杂七杂八" scheme="https://yemilice.com/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/"/>
+    
+      <category term="其他技术" scheme="https://yemilice.com/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/"/>
     
       <category term="黑科技" scheme="https://yemilice.com/tags/%E9%BB%91%E7%A7%91%E6%8A%80/"/>
     
