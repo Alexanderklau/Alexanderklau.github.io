@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://yemilice.com/"/>
-  <updated>2020-08-28T07:01:48.859Z</updated>
+  <updated>2020-09-14T02:33:40.178Z</updated>
   <id>https://yemilice.com/</id>
   
   <author>
@@ -15,6 +15,33 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Python的协程知识</title>
+    <link href="https://yemilice.com/2020/09/01/Python%E7%9A%84%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/"/>
+    <id>https://yemilice.com/2020/09/01/Python%E7%9A%84%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/</id>
+    <published>2020-09-01T02:20:47.000Z</published>
+    <updated>2020-09-14T02:33:40.178Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          
+        
+      
+    
+    </summary>
+    
+    
+    
+      <category term="前后端" scheme="https://yemilice.com/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/"/>
+    
+      <category term="杂七杂八" scheme="https://yemilice.com/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/"/>
+    
+  </entry>
   
   <entry>
     <title>读Python的协程库asyncio源码随想</title>
@@ -506,31 +533,6 @@
     
     
       <category term="杂七杂八" scheme="https://yemilice.com/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Golang调用Rabbitmq消息队列和封装</title>
-    <link href="https://yemilice.com/2020/04/13/Golang%E8%B0%83%E7%94%A8Rabbitmq%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%92%8C%E5%B0%81%E8%A3%85/"/>
-    <id>https://yemilice.com/2020/04/13/Golang%E8%B0%83%E7%94%A8Rabbitmq%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%92%8C%E5%B0%81%E8%A3%85/</id>
-    <published>2020-04-13T02:11:00.000Z</published>
-    <updated>2020-04-13T02:19:34.927Z</updated>
-    
-    <summary type="html">
-    
-      
-      
-        
-        
-          
-        
-      
-    
-    </summary>
-    
-    
-    
-      <category term="前后端" scheme="https://yemilice.com/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/"/>
     
   </entry>
   
