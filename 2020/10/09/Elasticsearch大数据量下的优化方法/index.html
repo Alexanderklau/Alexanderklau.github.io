@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    Elasticsearch大数据量下的优化方法 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-Elasticsearch大数据量下的优化方法" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Elasticsearch大数据量下的优化方法
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/10/09/Elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" class="article-date">
+  <time datetime="2020-10-09T01:10:22.000Z" itemprop="datePublished">2020-10-09</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">3.1k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">11 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>十一在家待着玩了两天COD，突然想起来似乎放假前有一个Elasticsearch的问题需要处理，的确，现在距离开工也只剩下四天了，哎，假期的日子过的飞快，又到时候说拜拜，又要开始社畜的生活啦，想到心里就万分悲痛。</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/Elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/1.jpg" alt></p>
+<p>悲痛完了之后，也的确要想办法去解决问题，所以，今天（10／5），我研究了一下ElasticSearch检索／导入大文件的一些方案，并且输出了一些我个人的建议，这些基本都是实战建议，不会那么偏向理论，所以理论家们，就不要挑我的刺啦，想看理论，咱们回头去写源码解析！多多支持！</p>
+<h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>现在有个ElasticSearch做为基础的检索服务，里面存储很多文档，这些文档多种多样，有PDF，DOC等等，需要对这些文档进行全文检索，所以将这些文档的内容也导入进ElasticSearch当中，文档的内容可能会很大，导入／查询的时候出现了如下问题</p>
+<ol>
+<li>导入一些比较大的文件的时候ElasticSearch节点直接Down机，出现了内存溢出OOM的问题，如下所示  </li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java.lang.OutOfMemoryError: Java heap space</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>检索的时候，返回的比较慢，当数据量大于100w条，并且基本都要支持全文检索的时候，翻页／高亮，查询非常慢，经常转很久的菊花出不来，翻页也慢，干嘛都慢。</li>
+</ol>
+<h2 id="基础环境分析"><a href="#基础环境分析" class="headerlink" title="基础环境分析"></a>基础环境分析</h2><p>首先需要分析下我自己的干活儿环境，对症下药。</p>
+<p>ElasticSearch的集群配置</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">cluster.name:</span> <span class="string">Es_test</span></span><br><span class="line"><span class="string">node.name:</span> <span class="string">es_node1</span></span><br><span class="line"><span class="string">node.master:</span> <span class="literal">true</span></span><br><span class="line"><span class="string">node.data:</span> <span class="literal">true</span></span><br><span class="line"><span class="string">index.number_of_shards:</span> <span class="number">5</span></span><br><span class="line"><span class="string">index.number_of_replicas:</span> <span class="number">1</span></span><br><span class="line"><span class="string">network.host:</span> <span class="number">10.0</span><span class="number">.6</span><span class="number">.244</span></span><br><span class="line"><span class="string">http.port:</span> <span class="number">9200</span></span><br><span class="line"><span class="string">transport.tcp.port:</span> <span class="number">9300</span></span><br><span class="line"><span class="string">discovery.zen.ping.unicast.hosts:</span> <span class="string">["10.0.6.244"]</span></span><br><span class="line"><span class="string">discovery.zen.minimum_master_nodes:</span> <span class="number">1</span></span><br><span class="line"><span class="string">http.cors.enabled:</span> <span class="literal">true</span></span><br><span class="line"><span class="string">http.cors.allow-origin:</span> <span class="string">"*"</span></span><br><span class="line"><span class="string">network.bind_host:</span> <span class="string">"::"</span></span><br></pre></td></tr></table></figure>
+
+<p>然后就没了，算是最基础的ElasticSearch配置了</p>
+<p>jvm.options设置为</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">xms:</span> <span class="number">1</span><span class="string">g</span></span><br><span class="line"><span class="attr">xmx:</span> <span class="number">1</span><span class="string">g</span></span><br></pre></td></tr></table></figure>
+<p>基础的环境配置就是这样</p>
+<h2 id="优化查询和导入的方法"><a href="#优化查询和导入的方法" class="headerlink" title="优化查询和导入的方法"></a>优化查询和导入的方法</h2><h3 id="1-配置优化"><a href="#1-配置优化" class="headerlink" title="1. 配置优化"></a>1. 配置优化</h3><p>有一句话怎么说的来着，当一切都可以通过加钱来解决的时候，那就不是个问题嘛。</p>
+<p>你看看我那个堆内存配置，只有1个G，而且总共测试的机器内存只有8G，这个根本没办法再加，公司的默认测试机都是8G，除开这个还要跑其他服务，例如存储／web等，我想啊，本来就是拖拉机你还想当跑车开？吃肉的东西你让他吃草能行吗，所以再怎么优化，数据量上来了最终还是要沦落到加钱上好机器的最终结局。</p>
+<p>不过现在只有拼命在这个烂机器的基础上去优化了</p>
+<p>所以，需要修改一波jvm.options配置</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">xms:</span> <span class="number">4</span><span class="string">g</span></span><br><span class="line"><span class="attr">xmx:</span> <span class="number">4</span><span class="string">g</span></span><br></pre></td></tr></table></figure>
+
+<p>这里修改了过后，一般就能解决大部分问题，但如果需要支撑大规模的数据检索和近乎实时的查询任务，这个是非常不靠谱的机器配置，完全是无法支撑业务的，但是<strong>不懂技术的领导</strong>非要往里面塞这个，还要求优化到极限，我能怎么办。</p>
+<p>言归正传，第一步就是</p>
+<p><strong>调整JVM的配置</strong></p>
+<p>将JVM的配置调整为整个机器内存的一半，比如你的机器是64G内存，你设置xms和xmx就设置成32G，这个是官方推荐的，靠谱！</p>
+<h3 id="2-减少refresh-interval刷新比率"><a href="#2-减少refresh-interval刷新比率" class="headerlink" title="2. 减少refresh_interval刷新比率"></a>2. 减少refresh_interval刷新比率</h3><p>这个可能抽象一点啊，首先这个refresh_interval是干嘛的呢，这玩意儿说白了就是个刷新器，你每次导入数据到ElasticSearch中不能马上被查到，有个固定刷新间隔，也就是refresh_interval控制的，刷新成功之后，数据才能被马上查到。</p>
+<p>refresh_interval 如果不设置的话，默认是1s一次，像我们这种导入数据比较频繁的，刷新比率过高，会导致CPU／Memory就像开了氮气加速一样极速前进。。。所以把这东西设置一下，如果不是实时比率要求高的，直接改成30s刷新一次，或者1分钟刷新一次，不要害怕丢数据之类的，当你节点down机，Es自己都保不住了，还管刷新比率？</p>
+<p>修改refresh_interval刷新比率，直接在elasticsearch的配置文件修改</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">"refresh_interval":</span> <span class="string">"30s"</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-查询缓慢，响应时间长的解决方法"><a href="#3-查询缓慢，响应时间长的解决方法" class="headerlink" title="3. 查询缓慢，响应时间长的解决方法"></a>3. 查询缓慢，响应时间长的解决方法</h3><p>这里我更倾向于问题描述是从ElasticSearch获取数据比较慢，比较慢的愿意可能有哪些呢？</p>
+<ol>
+<li>文档过大，可能某个字段非常长，返回的太慢。</li>
+<li>ElasticSearch响应慢，CPU／内存占比过高</li>
+<li>网络响应慢</li>
+</ol>
+<p>我们针对这些问题一个个去解决，对症下药。</p>
+<h4 id="3-1-文档过大，某个字段大，返回慢"><a href="#3-1-文档过大，某个字段大，返回慢" class="headerlink" title="3.1 文档过大，某个字段大，返回慢"></a>3.1 文档过大，某个字段大，返回慢</h4><p>首先看看能不能把过长的字段给拆分出去，拆成另外一张表。如果不可以拆分出去，就在显示的部分想办法。</p>
+<p>首先举个例子，假设我们有个字段叫content，里面存的都是解析出来的PDF，DOC文件的文字，这种一般文字都非常多，但是我们需要进行全文检索并且返回检索到的值，Es查询到值以后就会全部返回，这样就非常慢，我们可以通过一些别的手段解决这个问题。</p>
+<p>例如，我们原本的返回字段是</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"name"</span>: <span class="string">"xxx"</span>,</span><br><span class="line">    <span class="attr">"id"</span>: <span class="string">"xxx"</span>,</span><br><span class="line">    <span class="attr">"content"</span>: <span class="string">"............"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>展示部分，不展示此字段，对此字段，也不进行返回，在ElasticSearch请求返回值的步骤时，强制性不返回Content字段（返回指定字段），减少查询压力，这样就无需等待全部字段返回了，加快查询速度。</li>
+</ol>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"_source"</span>:&#123;</span><br><span class="line">        <span class="attr">"includes"</span>:[<span class="string">"name"</span>,<span class="string">"id"</span>],</span><br><span class="line">        <span class="attr">"excludes"</span>:[<span class="string">"desc"</span>]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"name"</span>: <span class="string">"xxx"</span>,</span><br><span class="line">    <span class="attr">"id"</span>: <span class="string">"xxx"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>检索部分，当发现检索关键字的时候，进行全文检索，配置highlight高亮，返回检索结果时只返回highlight结果，只匹配第一个highlight结果，其他结果直接丢弃。加快返回的速度。</li>
+</ol>
+<p>这里我感觉我说的更抽象了，其实说白了，我们需要配置ElasticSearch的Highlight返回，指定content字段才可以高亮，当检索到匹配值的时候，Es会返回一个highlight的切片（列表），无论如何，我们只取第一个highlight结果，其他结果全部丢弃，这样可以加快检索，返回给前端的部分也有了，这样岂不是很棒？</p>
+<h3 id="4-分页部分优化"><a href="#4-分页部分优化" class="headerlink" title="4. 分页部分优化"></a>4. 分页部分优化</h3><p>ElasticSearch的分页机制有两种，第一种是From + Size的机制，这个相对来说比较简单，还可以进行控制，另一种是Scroll机制，这个就复杂一些，我下面说。</p>
+<ol>
+<li><p>From + Size 它的基础逻辑就是，它首先会确定doc的顺序，进行排序，然后再进行返回，逻辑上来说，它也需要取出所有数据，所以当数据量非常大的时候，从ElasticSearch中取出数据会占用大量CPU／内存，如果跳页过大，例如从第1页瞬间跳到第100页，就会取出第1页到第99页的所有数据，然后排序，然后进行切分，然后再展示第100页数据。。。这个又抽象了，说白了就是，这个分页比较适合一页页往后翻，你要闲的没事儿天天跳来跳去，人家谁Hold住.</p>
+</li>
+<li><p>Scroll的基础逻辑就是，首先，Scroll会维护一个游标，记录你当前读取的doc位置，而不是取出来做除法切分，这个更适合一次性拿一大堆数据出来，它其实类似一个快照，每次你查询的时候，都会记录你上次查询的位置，下次访问就直接从这个位置／快照开始，免去了拿取所有数据的步骤，有更好的检索效率，CPU／内存使用也不会那么大。</p>
+</li>
+</ol>
+<h4 id="4-1-限定分页的数量"><a href="#4-1-限定分页的数量" class="headerlink" title="4.1 限定分页的数量"></a>4.1 限定分页的数量</h4><p>首先无论如何，我们先限定死，分页的数量，最大1000页，多了不让翻。这是为了保证From + Size机制使用时，跳页数量过大，导致CPU／内存飙升导致服务OOM或者是挂掉，这个可以让前端同学强制限制一波。</p>
+<h4 id="4-2-根据数据量大小，逐步替换From-Size-翻页逻辑"><a href="#4-2-根据数据量大小，逐步替换From-Size-翻页逻辑" class="headerlink" title="4.2 根据数据量大小，逐步替换From + Size 翻页逻辑"></a>4.2 根据数据量大小，逐步替换From + Size 翻页逻辑</h4><p>如果数量过大，前面我也说了，你整From + Size肯定是不行，而且你把客户想象成熊孩子，没事儿干就乱点，乱跳页，动不动就CPU／内存暴增，那不就拉垮了嘛。所以快速切换 From + Size 为 Scroll就得了。</p>
+<h3 id="5-建表（索引）时候的优化"><a href="#5-建表（索引）时候的优化" class="headerlink" title="5. 建表（索引）时候的优化"></a>5. 建表（索引）时候的优化</h3><p>在创建表的时候，需要指定一些字段属性，这样会减少查询和检索的内存消耗或者是，这里给出几个我总结的字段优化方法</p>
+<ol>
+<li>全文检索的时候，指定的字段类型一定得是 <strong>text</strong></li>
+<li>其他检索的时候，需要检索字段完整值，需要使用 <strong>keyword</strong>，如果想做模糊匹配，需要使用wildcard或者*检索</li>
+<li>时间字段可以使用date，可以自己定义数据格式</li>
+<li>不确定数据长度，需要用long进行设置，避免以后长度超出。</li>
+<li>建表的时候，需要设置索引的压缩功能，减少存储空间占用，设置的方法就像这样，”codec”: “best_compression”。</li>
+<li>避免自定义Doc的ID，尽量用人家Es自己生成的，你自己整ID一般都是UUID时间戳，还容易重复也慢。</li>
+<li>定义分词器没必要所有字段都用，指定几个需要的字段就行了。</li>
+<li>确定不会修改的doc需要设置dynamic，禁止更新。</li>
+</ol>
+<h3 id="6-ElasticSearch存储位置的转移"><a href="#6-ElasticSearch存储位置的转移" class="headerlink" title="6. ElasticSearch存储位置的转移"></a>6. ElasticSearch存储位置的转移</h3><p>安装好ElasticSearch之后，默认的位置是在系统盘。</p>
+<p>我估摸着数据量一大，没多久你就给系统盘整崩溃了，所以，改换系统盘位置，做好数据迁移是非常有必要的。</p>
+<p>修改配置文件，手动切换存储位置, 这里举个简单例子</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">path.data:</span> <span class="string">/media/data/elasticsearch</span></span><br></pre></td></tr></table></figure>
+
+<p>迁移数据文件,修改文件夹权限</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mv /var/lib/elasticsearch/nodes /media/data/elasticsearch</span><br><span class="line"></span><br><span class="line">chown -R elasticsearch:elasticsearch *</span><br></pre></td></tr></table></figure>
+
+<h3 id="7-ElasticSearch写入性能优化"><a href="#7-ElasticSearch写入性能优化" class="headerlink" title="7. ElasticSearch写入性能优化"></a>7. ElasticSearch写入性能优化</h3><h4 id="7-1-推荐使用bulk批量写入"><a href="#7-1-推荐使用bulk批量写入" class="headerlink" title="7.1 推荐使用bulk批量写入"></a>7.1 推荐使用bulk批量写入</h4><p>其实按照我现在的使用场景，发现PDF／DOC有更新／上传到文件系统，就传入到ElasticSearch当中，其实ElasticSearch的批量写入bulk的效率比一条条写效率高多了，这里建议批量写入数据，而不是一条条传入。</p>
+<h4 id="7-2-多线程写入ElasticSearch"><a href="#7-2-多线程写入ElasticSearch" class="headerlink" title="7.2 多线程写入ElasticSearch"></a>7.2 多线程写入ElasticSearch</h4><p>多线程并发写可以利用集群的资源，我这里用Golang做了后端，直接走了一波协程 + 线程，这样可以减底层fsync开销，可以减少单个Es节点压力。</p>
+<h4 id="7-3-Translog事务日志的优化"><a href="#7-3-Translog事务日志的优化" class="headerlink" title="7.3 Translog事务日志的优化"></a>7.3 Translog事务日志的优化</h4><p>translog是用来恢复数据的。Es用“后写”的套路来加快写入速度 — 写入的索引并没有实时落盘到索引文件，而是先双写到内存和translog文件，</p>
+<p>es存储数据时，先把输出存储在内存中，等到refresh(该时间可以在设置mapping时的setting中设置intavel_refresh=xxx)时间后，才把数据存储到lucene中的segment中，清空内存缓冲区，往磁盘里写入commit point信息，文件系统的page cache(segments) fsync到磁盘，之后把translog旧日志删除掉。</p>
+<p>按照逻辑来说，如果降低translog可以提高效率，但是会降低容灾能力。</p>
+<p>修改配置，不需要每次都刷新。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">index.translog.durability:</span> <span class="string">async</span></span><br><span class="line"><span class="string">index.translog.sync_interval:</span> <span class="number">3600</span><span class="string">s</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>这次我主要开发了一个ElasticSearch的检索服务器，主要就是用apache tika去读取对象存储中的PDF／DOC等文件，解析文字，传入ElasticSearch当中，主要是全文检索，这个真的费了点功夫，因为我的服务器，实在是太烂了，只有他娘的8个G，还要跑Ceph存储等等等等，优化起来那个麻烦啊，这就相当于你开拖拉机，要我改车给你改成法拉利的速度，你这不是扯嘛。</p>
+<p>预告一下下一篇blog，TIKA提取对象存储中的PDF／DOC中的文字，有点儿绕是吧，绕就对了！哈哈哈，走你，下次见！</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2020/10/09/Elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/" rel="tag">杂七杂八</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/09/01/Python%E7%9A%84%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Python的协程知识</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2020
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
