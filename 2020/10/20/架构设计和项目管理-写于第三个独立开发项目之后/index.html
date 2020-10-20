@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    架构设计和项目管理心得-写于第三个独立开发项目之后 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-架构设计和项目管理-写于第三个独立开发项目之后" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  架构设计和项目管理心得-写于第三个独立开发项目之后
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/10/20/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%92%8C%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86-%E5%86%99%E4%BA%8E%E7%AC%AC%E4%B8%89%E4%B8%AA%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91%E9%A1%B9%E7%9B%AE%E4%B9%8B%E5%90%8E/" class="article-date">
+  <time datetime="2020-10-20T02:15:51.000Z" itemprop="datePublished">2020-10-20</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">3.7k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">12 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本月20号，我完成了我第三个独立开发项目，并且通过测试顺利交付了。</p>
+<p>首先先总结一下我这半年都干了什么吧。</p>
+<p>回想一下，从去年开始，我就被安排独立开发，从无到有，从惶恐到上手，从不知所措到游刃有余，其实还是度过了一个比较漫长的阶段，还好挺过来了。</p>
+<p>总计开发三个项目，基本从架构到设计，后端的框架/代码都是我开发的，代码量涉及10W+行，</p>
+<p>开发语言横跨Python/Golang/Java, </p>
+<p>涉及框架Flask，Django，Gin等等，</p>
+<p>后端数据库涉及Mysql，ElasticSearch，ETCD。</p>
+<p>我会通过这三个项目，总结一下自己踩坑的问题和自己的心得，做一个记录，也是对自己这半年痛苦的一个回望吧，希望明年会更好。</p>
+<p>写出来才知道自己究竟都干了些什么，不知道这阵996的日子是怎么熬过来的，写一句歌词吧。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">不知道你会不会想起未来的我</span><br><span class="line"></span><br><span class="line">在照亮你 在灯下想到现在的我</span><br><span class="line"></span><br><span class="line">我知道这封信是给你 给我的Kong</span><br><span class="line"></span><br><span class="line">2020年秋 get it</span><br></pre></td></tr></table></figure>
+
+<h2 id="第一个项目-初试牛刀"><a href="#第一个项目-初试牛刀" class="headerlink" title="第一个项目-初试牛刀"></a>第一个项目-初试牛刀</h2><p>其实怎么说呢，第一个项目算是野蛮成长的典型，我的习惯就是拿到需求的时候就要分析一下，首先还是老样子，分析需求，这边由于一些隐私相关，我会将项目的核心模糊化处理，请见谅.</p>
+<h3 id="第一个项目-需求分析"><a href="#第一个项目-需求分析" class="headerlink" title="第一个项目-需求分析"></a>第一个项目-需求分析</h3><p>你知道，在国内的开发环境里，很多时候都是老板/大领导拍脑袋提一个模棱两可的一句话需求，例如：我们要做一个xxx，大概有什么功能。</p>
+<p>这样就非常坑爹，但是如果咱们遇到了，也要咬牙给它扛了对吧，这时候就需要对接产品，要找产品去详细了解，到底是一个什么样的功能，我们到底该怎么做，这里就衍生出来第一个问题，如何正确去理解需求。</p>
+<p>其实正确理解需求，这句话说起来太容易了，但是做起来就是很难。</p>
+<p>如果有一个低水平PM（产品经理），那真的是个天大的灾难，我这几次开发都遇到了这种，只会抄竞品的，只画图的，或者画图不说清楚功能干嘛的，强行加一些完成不了的功能的，这些都是开发人员要面对的。</p>
+<p>作为独立开发人员，就算势力单薄，也要弄明白到底需求是个什么样，不能完全的盲从产品，这样会给自己带来很严重的开发问题。包括在后期的架构设计上，也会有很大问题。</p>
+<p>如何正确去理解需求呢？首先要明白功能大致是干嘛的，拿我开发这个项目来说，当时，大老板只说了一句，说：我们要做一个数据同步的系统，支持对象存储-本地文件系统互相传输同步。</p>
+<p>好了，这就是我们的所有信息，我们分析一下，首先</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">数据同步的系统，支持对象存储-本地文件系统互相传输同步</span><br></pre></td></tr></table></figure>
+<p>思考一下，数据同步，系统，互相传输，对象存储，文件系统。</p>
+<p>首先明白是一个数据同步系统，可以对象存储-文件系统同步传输，反推一下，那当然也可以文件系统-对象存储传输了，文件系统同时也分为nfs，cifs，本地文件系统等，对象存储也分为本地，远端两种，这样系统的初步雏形就出来了，为提高效率，很可能是分布式系统，分布式系统还涉及选主，日志记录等，这些都是要注意的部分。预先去准备查询一下这方面的资料，就能在开发中占到先机。</p>
+<p>开发第一条：明白你在做什么，或者说，明白你要完成的是什么样的功能</p>
+<h3 id="第一个项目-拿到PRD图和设计文档后"><a href="#第一个项目-拿到PRD图和设计文档后" class="headerlink" title="第一个项目-拿到PRD图和设计文档后"></a>第一个项目-拿到PRD图和设计文档后</h3><p>PRD图这种东西是产品画的，这东西一般就详细说明了你该干什么，做什么，做出来的东西大概什么样子，这东西就相当于，买房子时候的样板房。给你看看的。</p>
+<p>核心其实是在设计文档上，一般专业点的PM，在设计文档上会细化到每个功能是干嘛的，大概是做什么的，这个非常重要，对于开发人员来说，这个就类似结构图。</p>
+<p>这里要细细的去浏览，一定要精确到每个功能，精准到每个功能具体干嘛，因为这里你稍微不看清楚，未来就是大坑，因为如果你做一个系统，你自己都不了解自己在做什么，那真的没有做的必要了，其实我们需要跳出自己固有的技术思维，不要考虑如何去实现，是不是好实现，要在脑子里有一套完全的大概框架，或者说勾画，明白我们到底在干嘛。</p>
+<p>这里衍生出我另一个不足的地方</p>
+<p>我在拿到PRD和设计文档后，没有仔细去看设计文档，就只过了一遍PRD，然后大概知道我要做什么了就完了，这里我犯了个错，设计文档里面东西更细化，我没有注意设计文档中的细节，开发当中有些功能甚至没注意到，淦。</p>
+<h3 id="第一个项目-需求评审会上提出要求"><a href="#第一个项目-需求评审会上提出要求" class="headerlink" title="第一个项目-需求评审会上提出要求"></a>第一个项目-需求评审会上提出要求</h3><p>在你大概明白你要做什么的时候，就会召集开发人员/测试人员/产品人员/相关领导 来进行一次需求讨论，所有人都会过一遍需求，并且讨论需求是否合理。</p>
+<p>将会从测试/开发/产品/领导的多方角度进行讨论，这次会议对你来说非常重要，记住，非常重要，这可能是你唯一一次可以砍需求的部分了，如果开发进行到后期你是无法砍需求的，所有人都不会同意。</p>
+<p>如果前面你进行了铺垫，或者你了解你大概要干嘛了，这次需求会，你的核心要在需求评审上，如果有认为自己可能完成不了的需求，需要及时提出质疑，并且说出理由。</p>
+<p>淦，我第一次就掉坑了，有些东西没认真看，糊里糊涂我就答应下来了，后面真的十分痛苦。有些需求做的太难了，不过还好都hold住了。</p>
+<h3 id="第一个项目-进行业务架构设计"><a href="#第一个项目-进行业务架构设计" class="headerlink" title="第一个项目-进行业务架构设计"></a>第一个项目-进行业务架构设计</h3><p>架构这狗东西，说真的，我是被折磨够呛的，说句简单的话，你要考虑架构设计，就先抛开技术层面，首先确定业务架构和逻辑架构，技术的东西可以后面再讨论，但是具体做什么，怎么做，流程是什么样的，需要现在就讨论清楚。</p>
+<p>我的逻辑是，先根据PRD和设计文档，划分出具体的功能模块，然后对功能模块进行业务流程规划，然后把功能模块中的业务进行拆分，最后再把他们结合到一起，这就是业务架构。</p>
+<p>这里比较抽象, 举个例子，功能模块如下</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/1603164215(1).png" alt></p>
+<p>基于功能模块，业务架构如下</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/1603164229(1).png" alt></p>
+<p>具体流程如下</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/1603174718.jpg" alt></p>
+<p>这里画的比较简陋，随便看看就行了</p>
+<h3 id="第一个项目-进行技术框架设计"><a href="#第一个项目-进行技术框架设计" class="headerlink" title="第一个项目-进行技术框架设计"></a>第一个项目-进行技术框架设计</h3><p>这里就涉及到技术了，主要就是根据项目进行技术选型，数据库选型，开发框架设计，表设计等等。</p>
+<p>这个不用多说了吧，大家都是开发人员，技术可以通过多测试得到结果，太虚的东西是没有说服力的，数据库选型这里我还提出了好几个测试报告。</p>
+<h3 id="第一个项目-开发时间预估"><a href="#第一个项目-开发时间预估" class="headerlink" title="第一个项目-开发时间预估"></a>第一个项目-开发时间预估</h3><p>这部分我吃了大亏，开发时间预估，我感觉真的不好判断，因为不确定开发中到底会出现什么事儿，因为我同时还要维护一个检索服务器，或者修改一些bug，或者出差之类的。。。</p>
+<p>我个人认为，对自己得有点B数，如果是你本身比较熟悉的语言/框架，时间估计还是可以自己估摸，如果是你不确定得框架/不熟悉的语言，那这里你的时间应该要再加一半，总结一个公式，就是</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">不熟悉语言的开发时间 = （预估时间）/2 + 预估时间 + 测试时间 + 调试时间</span><br></pre></td></tr></table></figure>
+
+<p>时间要的不够，你就996吧，到时候整不完把身体整坏了，那就非常不值得了。</p>
+<h3 id="第一个项目-项目管理部分"><a href="#第一个项目-项目管理部分" class="headerlink" title="第一个项目-项目管理部分"></a>第一个项目-项目管理部分</h3><p>其实第一次开发，我印象比较深的还是项目管理部分，按理说项目管理理应产品来做，但是这次产品非常不专业，所以一切还是我自己扛下来了，终于一个人扛下了所有（狗头</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/1603165332(1).png" alt></p>
+<p>首先我拉了一个Excel表，按照开发开始-结束时间划拉了相应的表格长度，然后把日期填充上去，上面是计划，下面是今日进度，每天来公司我就写计划，回撤我就写进度，中间因为疫情在家开发我也没断过，找了个大概的图大家康康。</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/1603165487(1).jpg" alt></p>
+<p>记录每天的开发进度，并且对功能模块开发进行详细划分开发，上面已经细分了功能模块中的功能，针对每个功能去开发就好了，开发完整个模块进行一次模块调度联调，留出两天时间编写测试代码，大概就是这些。</p>
+<h3 id="第一个项目-中期遇到困难的沟通"><a href="#第一个项目-中期遇到困难的沟通" class="headerlink" title="第一个项目-中期遇到困难的沟通"></a>第一个项目-中期遇到困难的沟通</h3><p>项目开发到中期，由于一开始我的预估不足，出现了很严重的技术难题，这时候千万不要闭口不要，及时抛出问题，抛出问题的好处就是能找到一帮人来帮你解决，至少你不是单打独斗，在独立开发当中，我感觉我一直是孤独的，但是抛出问题的时候，大家伙儿还是愿意帮你解决，一起讨论，让我觉得我不是那么孤单，这样的感觉就很好啦。</p>
+<h3 id="第一个项目-项目延期的解决方法"><a href="#第一个项目-项目延期的解决方法" class="headerlink" title="第一个项目-项目延期的解决方法"></a>第一个项目-项目延期的解决方法</h3><p>项目延期是很正常的事儿，遇到延期，在预估自己可能无法正常完成的时候，需要及时和产品/管理人员沟通，提出项目无法正常完成的原因，我是因为疫情（淦</p>
+<p>大家会表示理解并且愿意给你时间去开发的，开发的质量，永远高于速度。</p>
+<h2 id="第二个项目-逐渐Dark♂化"><a href="#第二个项目-逐渐Dark♂化" class="headerlink" title="第二个项目-逐渐Dark♂化"></a>第二个项目-逐渐Dark♂化</h2><p>第一个项目做了差不多三个月，日夜不眠996下终于整完了，没休息几天，第二个项目就来了，TMD是纯粹不让我休息，我算是明白了。有了第一个项目的摧残，对第二个项目我充满信心</p>
+<h3 id="第二个项目-突发状况的处理"><a href="#第二个项目-突发状况的处理" class="headerlink" title="第二个项目-突发状况的处理"></a>第二个项目-突发状况的处理</h3><p>这项目其实一帆风顺，但是，开发到最后，遇到一个很大的事儿，被其他同事不小心给删库了！！！！</p>
+<p>你知道这意味着什么，就意味着你两个月等于白干了，996的结果等于你什么也没做，好家伙，那给我气的</p>
+<p>这次删库说明什么，很重要的就是代码管理和备份，因为疫情的原因，我只有一台树莓派，我没把代码存到本地，一直在公司的服务器开发，这就很危险了，所以未来我写了几个脚本，直接定时备份，本地-远端，多个机器一起备份，这次是不会丢了。。。。</p>
+<h3 id="第二个项目-第三方工具的调研"><a href="#第二个项目-第三方工具的调研" class="headerlink" title="第二个项目-第三方工具的调研"></a>第二个项目-第三方工具的调研</h3><p>这次开发调用了大量的第三方工具，例如tika，fscrawler等等（你不用整明白这干嘛的），在第三方工具的调用选型部分，踩了一些坑，这里我详细说一下，如果你想要调用第三方工具，你需要一个什么样的调研报告</p>
+<ol>
+<li>工具的具体介绍</li>
+<li>工具在本项目内的工作（完成什么）</li>
+<li>工具的基础使用方法</li>
+<li>工具的测试报告</li>
+</ol>
+<p>这里的测试报告很宽泛，主要就是指工具的性能，包括基础的压测，部署，和项目的耦合程度等等等等。</p>
+<h3 id="第二个项目-项目打包与项目发布"><a href="#第二个项目-项目打包与项目发布" class="headerlink" title="第二个项目-项目打包与项目发布"></a>第二个项目-项目打包与项目发布</h3><p>各位老铁的公司一般都要运维吧，可惜我这里没有，作词作曲都是老子自己，岂可修！</p>
+<p>打包这块，如果是rpm，相关的spec你要自己写，并且git拉代码自动编译的东西，你也要自己整，这个就相当麻烦，这么麻烦也不见我司给我涨钱啊，fuck。</p>
+<p>这里如果你们想听，我可以重开一篇详细说。</p>
+<h2 id="第三个项目-完全Dark♂化"><a href="#第三个项目-完全Dark♂化" class="headerlink" title="第三个项目-完全Dark♂化"></a>第三个项目-完全Dark♂化</h2><p>我已经逐渐习惯一个人干活了。。。我就是孤独猎手独行侠，每次都把很难得活儿抛给我，我真的无语，没有耕坏的地，只有累死的牛，那啥，我不要脸的求一份job可以嘛。。。。</p>
+<h3 id="第三个项目-心情控制"><a href="#第三个项目-心情控制" class="headerlink" title="第三个项目-心情控制"></a>第三个项目-心情控制</h3><p>我在开发这个项目的时候，已经非常浮躁了，因为我一直没有休息过，我想停下来安心看一下算法，或者是其他高级知识，但是繁重的项目和加班让我没有心情去准备，几个面试也失败了。所以，控制好心情很重要</p>
+<p>一个是释放压力，另一个是项目的进度加快，保证项目时时刻刻在可控的范围内，这个对我来说还是比较重要的。</p>
+<p>做表是个很好的方法，真的，你能时刻看到自己的进度，其实类似日报，不过日报这种强制写的狗屁东西，反而还不如自己的计划可控。</p>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>写的比较潦草，这是我这近半年时间收获的一些经验和接受的教训，期望可以帮助大家吧。下一篇博客应该会是Python一类的高级特性，请期待吧。</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2020/10/20/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%92%8C%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86-%E5%86%99%E4%BA%8E%E7%AC%AC%E4%B8%89%E4%B8%AA%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91%E9%A1%B9%E7%9B%AE%E4%B9%8B%E5%90%8E/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/" rel="tag">其他技术</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/10/09/Elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Elasticsearch大数据量下的优化方法</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2020
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
