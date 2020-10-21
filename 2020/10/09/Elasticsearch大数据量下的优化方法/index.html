@@ -121,7 +121,7 @@
 <p>所以，需要修改一波jvm.options配置</p>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">xms:</span> <span class="number">4</span><span class="string">g</span></span><br><span class="line"><span class="attr">xmx:</span> <span class="number">4</span><span class="string">g</span></span><br></pre></td></tr></table></figure>
 
-<p>这里修改了过后，一般就能解决大部分问题，但如果需要支撑大规模的数据检索和近乎实时的查询任务，这个是非常不靠谱的机器配置，完全是无法支撑业务的，但是<strong>不懂技术的领导</strong>非要往里面塞这个，还要求优化到极限，我能怎么办。</p>
+<p>这里修改了过后，一般就能解决大部分问题，但如果需要支撑大规模的数据检索和近乎实时的查询任务，这个是非常不靠谱的机器配置，完全是无法支撑业务的，但是领导非要往里面塞这个，还要求优化到极限，我能怎么办。</p>
 <p>言归正传，第一步就是</p>
 <p><strong>调整JVM的配置</strong></p>
 <p>将JVM的配置调整为整个机器内存的一半，比如你的机器是64G内存，你设置xms和xmx就设置成32G，这个是官方推荐的，靠谱！</p>
