@@ -121,9 +121,9 @@
 <p>这个东西应该才是Golang并发模式的核心吧，以后编写的代码，也都是遵循这种框架。</p>
 <h2 id="Golang并发的几个基础用例解析随想"><a href="#Golang并发的几个基础用例解析随想" class="headerlink" title="Golang并发的几个基础用例解析随想"></a>Golang并发的几个基础用例解析随想</h2><p>想用Golang实现并发模型，一般有几个固定的组件，例如<strong>waitgroup</strong>, <strong>context</strong>, <strong>channel</strong>等，大家都会根据自己项目的需求选择不一样的并发组件进行开发，我记得我以前针对这三种都写过对应的博客，分别是</p>
 <ol>
-<li>context：<a href="https://yemilice.com/2020/06/01/golang%E4%B8%ADcontext%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/">https://yemilice.com/2020/06/01/golang%E4%B8%ADcontext%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</a></li>
-<li>Watigroup: <a href="https://yemilice.com/2020/05/26/golang%E4%B8%ADwaitgroup%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/">https://yemilice.com/2020/05/26/golang%E4%B8%ADwaitgroup%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</a></li>
-<li>Channel: <a href="https://yemilice.com/2020/05/25/golang%E4%B8%ADchannel%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/">https://yemilice.com/2020/05/25/golang%E4%B8%ADchannel%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</a></li>
+<li><a href="https://yemilice.com/2020/06/01/golang%E4%B8%ADcontext%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/">context随想</a></li>
+<li><a href="https://yemilice.com/2020/05/26/golang%E4%B8%ADwaitgroup%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/">Watigroup随想</a></li>
+<li><a href="https://yemilice.com/2020/05/25/golang%E4%B8%ADchannel%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/">Channel随想</a></li>
 </ol>
 <p>这三篇Blog都已经大概说了最常见的几种并发模型，我这几天查了一点资料，看了一下Golang并发的几个用例，发觉遗漏了一些重要部分，这里还是继续更新一下吧。</p>
 <p>我会将基础的使用场景和用例代码贴出，并且加上我自己的解析，如果有错误，请给予我指点，感谢！</p>
@@ -162,8 +162,9 @@
 <p>超时机制的实现，是通过context实现的，首先</p>
 <figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ctxt, cancel := context.WithTimeout(context.Background(), <span class="number">1</span>*time.Second)</span><br></pre></td></tr></table></figure>
 
-<p>这句代码的意思是，设定超时时间为1s，只要时间到了，我们就能获取到一个ctx和done，这里就可以控制任务状态，控制任务完成时间或者是任务退出。这个我们下一节再详细说。</p>
-<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>并发循环这套东西，说多不多，说少不少，重头戏Context我放到下一节去写了，因为我认为那个还是需要花点功夫的，最近是年底了，学习还是不能停下来，向前吧老铁们！</p>
+<p>这句代码的意思是，设定超时时间为1s，只要时间到了，我们就能获取到一个ctx和done，这里就可以控制任务状态，控制任务完成时间或者是任务退出。这里涉及到context的一些机制，这里下一节我们再详细说。</p>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>这一节给出了几个基础并发模型，讲了一下Golang并发的哲学思维，这里其实是做了一个笔记，可以持续性发散思维解决问题。下一节我会实现一个分布式并发框架，都会用到这里面所有的东西。over。</p>
+<p>并发循环这套东西，说多不多，说少不少，重头戏Context我放到下一节去写了，因为我认为那个还是需要花点功夫的，最近是年底了，学习还是不能停下来，向前吧老铁们！</p>
 
       
       <!-- reward -->
