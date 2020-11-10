@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://yemilice.com/"/>
-  <updated>2020-11-06T04:54:49.088Z</updated>
+  <updated>2020-11-10T03:04:35.531Z</updated>
   <id>https://yemilice.com/</id>
   
   <author>
@@ -15,6 +15,31 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>完全理解Golang并发模式(2)</title>
+    <link href="https://yemilice.com/2020/11/10/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3Golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-2/"/>
+    <id>https://yemilice.com/2020/11/10/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3Golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-2/</id>
+    <published>2020-11-10T02:46:02.000Z</published>
+    <updated>2020-11-10T03:04:35.531Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          
+        
+      
+    
+    </summary>
+    
+    
+    
+      <category term="前后端" scheme="https://yemilice.com/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/"/>
+    
+  </entry>
   
   <entry>
     <title>完全理解Golang并发模式(1)</title>
@@ -512,31 +537,6 @@
     
     
       <category term="前后端" scheme="https://yemilice.com/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>分布式数据库如何选择，几种分布式数据库优缺点一览</title>
-    <link href="https://yemilice.com/2020/05/22/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%EF%BC%8C%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/"/>
-    <id>https://yemilice.com/2020/05/22/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%EF%BC%8C%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/</id>
-    <published>2020-05-22T08:16:20.000Z</published>
-    <updated>2020-05-22T08:29:46.945Z</updated>
-    
-    <summary type="html">
-    
-      
-      
-        
-        
-          
-        
-      
-    
-    </summary>
-    
-    
-    
-      <category term="其他技术" scheme="https://yemilice.com/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/"/>
     
   </entry>
   

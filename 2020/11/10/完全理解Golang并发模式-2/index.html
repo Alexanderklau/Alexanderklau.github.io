@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    完全理解Golang并发模式(2) |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-完全理解Golang并发模式-2" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  完全理解Golang并发模式(2)
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/11/10/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3Golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-2/" class="article-date">
+  <time datetime="2020-11-10T02:46:02.000Z" itemprop="datePublished">2020-11-10</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">3.7k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">15 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这几天的攻关都是在Golang并发上面，也算是有了一些收获，把一些基础的并发场景和并发模式都过了一遍，觉得自己又提升了一层楼，其实我发觉，在我的开发生涯中，总是纠结实现，却不是去看最底层的东西，任何东西，都是由简到难，或者就是从底层到核心，无论是Python还是Golang，或者是我正在狂刷算法的Java，我都是去纠结实现，但是不会钻研核心，所以我写代码都是面向搜素引擎编程。所以，也是时候该改变一些东西。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">决意想要改变</span><br><span class="line"></span><br><span class="line">心情就像离弦的箭</span><br><span class="line"></span><br><span class="line">收不回的思绪每天在反复缠绵</span><br></pre></td></tr></table></figure>
+
+<h2 id="并发的超时处理"><a href="#并发的超时处理" class="headerlink" title="并发的超时处理"></a>并发的超时处理</h2><p>如果我们在开发一个Web框架，势必在运行一个goroutine的时候，会出现运行时间过长的问题，一般这种情况，如果不进行超时控制，到最后的结果就是阻塞在那里，迟迟不返回，这样肯定是不行的，所以我们要对并发进行一个超时限制，说人话就是，<strong>加一个timeout之后自动退出或者报错</strong>。</p>
+<p>首先这里有个新东西，或者是新包，叫做”Context”，这个我的博客里面的久文章也写过了，在这不多废话。你不会还想让我介绍一下它吧！</p>
+<h3 id="Context的几个调用方法"><a href="#Context的几个调用方法" class="headerlink" title="Context的几个调用方法"></a>Context的几个调用方法</h3><p>寻思了一下，如果不介绍，很可能你们不知道我在说什么，还是讲几个基础用法吧，其实这个还是比较简单的，Golang的语法比起Rust简单多了。</p>
+<p>Context的接口如下</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Context <span class="keyword">interface</span> &#123;</span><br><span class="line"></span><br><span class="line">    Deadline() (deadline time.Time, ok <span class="keyword">bool</span>)</span><br><span class="line"></span><br><span class="line">    Done() &lt;-<span class="keyword">chan</span> <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">    Err() error</span><br><span class="line"></span><br><span class="line">    Value(key <span class="keyword">interface</span>&#123;&#125;) <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中有四个方法</p>
+<ol>
+<li>Deadline返回绑定当前context的任务被取消的截止时间；如果没有设定期限，将返回ok == false。</li>
+<li>Done 当绑定当前context的任务被取消时，将返回一个关闭的channel；如果当前context不会被取消，将返回nil。</li>
+<li>Err 如果Done返回的channel没有关闭，将返回nil;如果Done返回的channel已经关闭，将返回非空的值表示任务结束的原因。如果是context被取消，Err将返回Canceled；如果是context超时，Err将返回DeadlineExceeded。</li>
+<li>Value 返回context存储的键值对中当前key对应的值，如果没有对应的key,则返回nil。</li>
+</ol>
+<h3 id="简单的超时取消模型"><a href="#简单的超时取消模型" class="headerlink" title="简单的超时取消模型"></a>简单的超时取消模型</h3><p>咱们现在来实现一个超时的例子，其实这个直接调用context的timeout逻辑就可以了，有一张图可以明显说清楚超时处理的逻辑</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/golang%E5%B9%B6%E5%8F%912/1.png" alt></p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ctx, cancel := context.WithTimeout(context.TODO(), time.Second*<span class="number">2</span>)</span><br></pre></td></tr></table></figure>
+
+<p>看一下context.WithTimeout的源码</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WithTimeout</span><span class="params">(parent Context, timeout time.Duration)</span> <span class="params">(Context, CancelFunc)</span></span> &#123;</span><br><span class="line">    <span class="keyword">return</span> WithDeadline(parent, time.Now().Add(timeout))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个家伙传入了一个时间，并且调用了withDeadline函数，看下它的源码</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WithDeadline</span><span class="params">(parent Context, d time.Time)</span> <span class="params">(Context, CancelFunc)</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> cur, ok := parent.Deadline(); ok &amp;&amp; cur.Before(d) &#123;</span><br><span class="line">        <span class="comment">// The current deadline is already sooner than the new one.</span></span><br><span class="line">        <span class="keyword">return</span> WithCancel(parent)</span><br><span class="line">    &#125;</span><br><span class="line">    c := &amp;timerCtx&#123;</span><br><span class="line">        cancelCtx: newCancelCtx(parent),</span><br><span class="line">        deadline:  d,</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line"><span class="comment">// 监听parent的取消，或者向parent注册自身</span></span><br><span class="line">    propagateCancel(parent, c)</span><br><span class="line">    dur := time.Until(d)</span><br><span class="line">    <span class="keyword">if</span> dur &lt;= <span class="number">0</span> &#123;</span><br><span class="line">       <span class="comment">// 已经过期</span></span><br><span class="line">        c.cancel(<span class="literal">true</span>, DeadlineExceeded) <span class="comment">// deadline has already passed</span></span><br><span class="line">        <span class="keyword">return</span> c, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; c.cancel(<span class="literal">false</span>, Canceled) &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    c.mu.Lock()</span><br><span class="line">    <span class="keyword">defer</span> c.mu.Unlock()</span><br><span class="line">    <span class="keyword">if</span> c.err == <span class="literal">nil</span> &#123;</span><br><span class="line">        c.timer = time.AfterFunc(dur, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">            c.cancel(<span class="literal">true</span>, DeadlineExceeded)</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> c, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; c.cancel(<span class="literal">true</span>, Canceled) &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里输出了两个值，一个是ctx，一个是cancel</p>
+<p>你可以这么理解，ctx就是信号，cancel是阀门，ctx的信号结束时，关闭阀门（关闭goroutine）</p>
+<p><strong>写个简单的超时退出模型</strong></p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 定义一个超时时间/开始时间/信号</span></span><br><span class="line"><span class="keyword">var</span> (</span><br><span class="line">	Timeout   = <span class="number">1</span> * time.Second</span><br><span class="line">	starttime = time.Now()</span><br><span class="line">	signal    = <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">bool</span>)</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 模拟一个执行时间很长的任务</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">do_something_work_1</span><span class="params">(ctx context.Context, url <span class="keyword">string</span>)</span> <span class="title">string</span></span> &#123;</span><br><span class="line">    <span class="comment">// 执行任务</span></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="comment">// 假装阻塞在这里</span></span><br><span class="line">		time.Sleep(time.Second * <span class="number">10</span>)</span><br><span class="line">        fmt.Println(url)</span><br><span class="line">        <span class="comment">// 如果执行完，singal为true</span></span><br><span class="line">		signal &lt;- <span class="literal">true</span></span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">select</span> &#123;</span><br><span class="line">        <span class="comment">// 如果接受到关闭信号（超时）</span></span><br><span class="line">    <span class="keyword">case</span> &lt;-ctx.Done():</span><br><span class="line">		fmt.Println(<span class="string">"tomeout.........."</span>)</span><br><span class="line">        fmt.Printf(<span class="string">"%.2fs - workers(%s) killed\n"</span>, time.Since(starttime).Seconds(), url)</span><br><span class="line">        <span class="comment">// 杀掉</span></span><br><span class="line">		<span class="keyword">return</span> <span class="string">"tomeout........"</span></span><br><span class="line">    <span class="keyword">case</span> &lt;-signal:</span><br><span class="line">    <span class="comment">// 如果正常关闭，没超时</span></span><br><span class="line">        fmt.Println(<span class="string">"success"</span>)</span><br><span class="line">        <span class="comment">// 正常输出，正常杀掉</span></span><br><span class="line">		<span class="keyword">return</span> <span class="string">"success"</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="string">"success"</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">// 定义一个Timeout，超时时间为1s</span></span><br><span class="line">	ctxt, cancel := context.WithTimeout(context.Background(), Timeout)</span><br><span class="line">	<span class="keyword">defer</span> cancel()</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 开始执行goroutine</span></span><br><span class="line">	<span class="keyword">go</span> do_something_work_1(ctxt, <span class="string">"hallo"</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">//假装在做别的任务 </span></span><br><span class="line">	time.Sleep(time.Second * <span class="number">5</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 结束主程</span></span><br><span class="line">	fmt.Println(<span class="string">"END"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里的输出结果是</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">tomeout..........</span><br><span class="line">1.00s - workers(hallo) killed</span><br><span class="line">END</span><br></pre></td></tr></table></figure>
+
+<p>解析一下这个框架吧，这个框架实现了一个简单的超时功能.</p>
+<p>首先，我定义了一个假设执行时间很长的task，利用context，我给这个task定义了一个超时时间，并且通过select去监控它，当我监控到ctx有输出的时候，那么我就认为task超时，则直接输出超时并且杀死task，如果task直接run到底，那么会有一个信号signal被赋值，select接受到signal被赋值之后，将会认为任务执行成功，输出成功并且杀死task，大概的逻辑就是这样。</p>
+<h2 id="并发的取消和退出"><a href="#并发的取消和退出" class="headerlink" title="并发的取消和退出"></a>并发的取消和退出</h2><p>并发的退出，其实又回到了上面的一个例子，刚才我演示了一个叫做<strong>cancel()</strong>的东西，这个东西就相当于是杀死goroutine的侩子手。来瞅瞅这个东西到底是啥</p>
+<p>首先又回到刚那个逻辑</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ctx, cancel := context.WithTimeout(context.TODO(), time.Second*<span class="number">2</span>)</span><br></pre></td></tr></table></figure>
+<p>它输出了一个ctx，一个cancel，我们看下cancel到底是个什么东西</p>
+<p>在源码里面，它是个</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> CancelFunc <span class="function"><span class="keyword">func</span><span class="params">()</span></span></span><br></pre></td></tr></table></figure>
+
+<p>是不是很蒙蔽，这具体是个啥呢，官方文档里面说了</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">A CancelFunc tells an operation to abandon its work. A CancelFunc does not wait for the work to stop. A CancelFunc may be called by multiple goroutines simultaneously. After the first call, subsequent calls to a CancelFunc do nothing.</span><br><span class="line"></span><br><span class="line">大意就是这个参数是放弃操作用的，并不等待工作停止，多个任务可调用多个cancel，第一个任务调用cancel之后，其他调用的操作不起作用。</span><br></pre></td></tr></table></figure>
+<p>还是蒙蔽阿，瞅一眼其他调用代码，继续追踪，最后在withdeadline找到了</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *cancelCtx)</span> <span class="title">cancel</span><span class="params">(removeFromParent <span class="keyword">bool</span>, err error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> err == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(<span class="string">"context: internal error: missing cancel error"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	c.mu.Lock()</span><br><span class="line">	<span class="keyword">if</span> c.err != <span class="literal">nil</span> &#123;</span><br><span class="line">		c.mu.Unlock()</span><br><span class="line">		<span class="keyword">return</span> <span class="comment">// already canceled</span></span><br><span class="line">	&#125;</span><br><span class="line">	c.err = err</span><br><span class="line">	<span class="keyword">if</span> c.done == <span class="literal">nil</span> &#123;</span><br><span class="line">		c.done = closedchan</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="built_in">close</span>(c.done)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">for</span> child := <span class="keyword">range</span> c.children &#123;</span><br><span class="line">		<span class="comment">// <span class="doctag">NOTE:</span> acquiring the child's lock while holding parent's lock.</span></span><br><span class="line">		child.cancel(<span class="literal">false</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	c.children = <span class="literal">nil</span></span><br><span class="line">	c.mu.Unlock()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> removeFromParent &#123;</span><br><span class="line">		removeChild(c.Context, c)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这部分就相对来说清楚一些了，这里主要是用了一个互斥锁问mutex.lock，看起来是访问共享内存，保护和协调内存访问的，首先先对ctx进行加锁，然后去遍历子goroutine，执行close，没有child之后再进行锁释放，这里的代码真的值得一看。</p>
+<p><strong>并发的退出（context代码）</strong></p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 定义一个int值，这个值没啥意义，单纯就是做了一个传输，看看就得</span></span><br><span class="line"><span class="keyword">var</span> c = <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">do_something_work</span><span class="params">(ctx context.Context)</span> <span class="title">string</span></span> &#123;</span><br><span class="line">	i := <span class="number">0</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">        <span class="comment">// 接收到退出信号</span></span><br><span class="line">		<span class="keyword">case</span> &lt;-ctx.Done():</span><br><span class="line">			fmt.Println(<span class="string">"Task Exit"</span>)</span><br><span class="line">            <span class="keyword">return</span> <span class="string">"Task Exit"</span></span><br><span class="line">        <span class="comment">// 做点事儿</span></span><br><span class="line">		<span class="keyword">case</span> c &lt;- i * i:</span><br><span class="line">			i++</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="string">"Task Success"</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	ctx, cancel := context.WithCancel(context.Background())</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 开始干活儿</span></span><br><span class="line">	<span class="keyword">go</span> do_something_work(ctx)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">5</span>; i++ &#123;</span><br><span class="line">		fmt.Println(<span class="string">"Next square is"</span>, &lt;-c)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 杀掉任务</span></span><br><span class="line">    cancel()</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 假装还在干别的活儿</span></span><br><span class="line">    time.Sleep(time.Second * <span class="number">3</span>)</span><br><span class="line">    </span><br><span class="line">	fmt.Println(<span class="string">"END"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>再来一个其他模式的代码，还有一种是通过chan管道传递，其实实现的逻辑也差不多，这里也贴出来，然后给予讲解</p>
+<p><strong>chan类型退出框架</strong></p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">do_somethings</span><span class="params">(done <span class="keyword">chan</span> <span class="keyword">bool</span>, url <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">for</span> &#123;</span><br><span class="line">			<span class="keyword">select</span> &#123;</span><br><span class="line">			<span class="comment">// 接受到信号关闭</span></span><br><span class="line">			<span class="keyword">case</span> &lt;-done:</span><br><span class="line">				fmt.Println(<span class="string">"退出"</span>)</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			<span class="keyword">default</span>:</span><br><span class="line">				fmt.Println(url + <span class="string">" "</span> + <span class="string">"执行中"</span>)</span><br><span class="line">				time.Sleep(<span class="number">1</span> * time.Second)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	done := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">bool</span>)</span><br><span class="line">	<span class="comment">// 假装干个活儿</span></span><br><span class="line">	do_somethings(done, <span class="string">"hello"</span>)</span><br><span class="line">	<span class="comment">// 假装正在干别的活儿</span></span><br><span class="line">	time.Sleep(<span class="number">3</span> * time.Second)</span><br><span class="line">	<span class="comment">// 关闭</span></span><br><span class="line">	<span class="built_in">close</span>(done)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里首先定义了一个chan，通过close chan来进行协程的退出，还是老样子，每次一定要有一个select去监控chan，当执行close时，chan会有输出，当获取到chan输出时，则结束杀死任务。</p>
+<h2 id="goroutine的心跳模式"><a href="#goroutine的心跳模式" class="headerlink" title="goroutine的心跳模式"></a>goroutine的心跳模式</h2><p>有些时候，我们需要一个后台常驻任务，去做一些有的没的，但是有些时候不确定goroutine是否还活着，所以你需要每隔一段时间通知一下，报告情况，虽然存在静默状态，但是会隔固定的时间进行一次通知，这里对并发代码很有用，避免了异常挂住或者zombie的问题。</p>
+<p>一般我写心跳代码都是后台常驻的服务，比如监控服务，比如时不时跳出来的告警服务，比如前阵子我写了个网络服务，一直就后台挂着等着别人来访问，有些时候不确定啥时候来人访问，就写了个心跳代码，所以我感觉并发里面，心跳还是很有必要的，特别是分布式的系统。</p>
+<p>首先看图，心跳在Golang里怎么表现的</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/golang%E5%B9%B6%E5%8F%912/2.jpg" alt></p>
+<p>分析下心跳的实现方法</p>
+<ol>
+<li>我们建立一个空的channel，设定时间去关闭它</li>
+<li>按照时间间隔定时向空的channel发送一个值，类似定时通知机制，并且每次都能读到channel的内容</li>
+</ol>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">dowork</span><span class="params">(done &lt;-<span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;, pulseInterval time.Duration)</span> <span class="params">(&lt;-<span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;, &lt;-<span class="keyword">chan</span> time.Time)</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 设定心跳通道</span></span><br><span class="line">	heartbeat := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;) <span class="comment">//1</span></span><br><span class="line">	results := <span class="built_in">make</span>(<span class="keyword">chan</span> time.Time)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> <span class="built_in">close</span>(heartbeat)</span><br><span class="line">		<span class="keyword">defer</span> <span class="built_in">close</span>(results)</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 心跳间隔</span></span><br><span class="line">		pulse := time.Tick(pulseInterval) <span class="comment">//2</span></span><br><span class="line"></span><br><span class="line">		<span class="comment">// 工作间隔</span></span><br><span class="line">		workGen := time.Tick(<span class="number">2</span> * pulseInterval) <span class="comment">//3</span></span><br><span class="line"></span><br><span class="line">		<span class="comment">// 发送心跳</span></span><br><span class="line">		sendPulse := <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			<span class="keyword">select</span> &#123;</span><br><span class="line">			<span class="keyword">case</span> heartbeat &lt;- <span class="keyword">struct</span>&#123;&#125;&#123;&#125;:</span><br><span class="line">			<span class="keyword">default</span>: <span class="comment">//4</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 发送结果</span></span><br><span class="line">		sendResult := <span class="function"><span class="keyword">func</span><span class="params">(r time.Time)</span></span> &#123;</span><br><span class="line">			<span class="keyword">for</span> &#123;</span><br><span class="line">				<span class="keyword">select</span> &#123;</span><br><span class="line">				<span class="keyword">case</span> &lt;-done:</span><br><span class="line">					<span class="keyword">return</span></span><br><span class="line">				<span class="keyword">case</span> &lt;-pulse: <span class="comment">//5</span></span><br><span class="line">					sendPulse()</span><br><span class="line">				<span class="keyword">case</span> results &lt;- r:</span><br><span class="line">					<span class="keyword">return</span></span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 循环，如果关闭就renturn，获取pulse就续租</span></span><br><span class="line">		<span class="keyword">for</span> &#123;</span><br><span class="line">			<span class="keyword">select</span> &#123;</span><br><span class="line">			<span class="keyword">case</span> &lt;-done:</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			<span class="keyword">case</span> &lt;-pulse: <span class="comment">//5</span></span><br><span class="line">				sendPulse()</span><br><span class="line">			<span class="keyword">case</span> r := &lt;-workGen:</span><br><span class="line">				sendResult(r)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">return</span> heartbeat, results</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	done := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;)</span><br><span class="line">	time.AfterFunc(<span class="number">10</span>*time.Second, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; <span class="built_in">close</span>(done) &#125;)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">const</span> timeout = <span class="number">2</span> * time.Second</span><br><span class="line">	heartbeat, results := dowork(done, timeout/<span class="number">2</span>)</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> _, ok := &lt;-heartbeat:</span><br><span class="line">			<span class="keyword">if</span> ok == <span class="literal">false</span> &#123;</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">			fmt.Println(<span class="string">"pulse"</span>)</span><br><span class="line">		<span class="keyword">case</span> r, ok := &lt;-results:</span><br><span class="line">			<span class="keyword">if</span> ok == <span class="literal">false</span> &#123;</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">			fmt.Printf(<span class="string">"results %v\n"</span>, r)</span><br><span class="line">		<span class="comment">// 没有收到心跳</span></span><br><span class="line">		<span class="keyword">case</span> &lt;-time.After(timeout):</span><br><span class="line">			fmt.Println(<span class="string">"worker goroutine is not healthy!"</span>)</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="峰值限制（防止过大的并发请求数）"><a href="#峰值限制（防止过大的并发请求数）" class="headerlink" title="峰值限制（防止过大的并发请求数）"></a>峰值限制（防止过大的并发请求数）</h2><p>又是抽象的一B的东西，说人话就是，把系统的稳定和平衡性控制在可控范围内。举个简单的例子，如果你是一个动漫网站站长，你每天只允许100个人访问你的网站看动漫，那这个100就是你的限制，就是访问限制，如果第101个人想要看动漫，就只能阻塞在外面继续等待，等100个人中的其中几个人退出才可以继续进去。</p>
+<p>这里一般的处理方法是令牌算法</p>
+<p>令牌算法的解释如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">假设要使用资源，你必须拥有资源的访问令牌。没有令牌，请求会被拒绝。想象这些令牌存储在等待被检索以供使用的桶中。该桶的深度为d，表示它一次可以容纳d个访问令牌。</span><br><span class="line"></span><br><span class="line">现在，每次你需要访问资源时，你都会进入存储桶并删除令牌。如果你的存储桶包含五个令牌，那么您可以访问五次资源。在第六次访问时，没有访问令牌可用，那么必须将请求加入队列，直到令牌变为可用，或拒绝请求。</span><br></pre></td></tr></table></figure>
+
+<p>写个代码你看看</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">bar24x7 := <span class="built_in">make</span>(Bar, <span class="number">10</span>) <span class="comment">// 此酒吧只能同时招待10个顾客</span></span><br><span class="line"><span class="keyword">for</span> customerId := <span class="number">0</span>; ; customerId++ &#123;</span><br><span class="line">    time.Sleep(time.Second)</span><br><span class="line">    consumer := Consumer&#123;customerId&#125;</span><br><span class="line">    <span class="keyword">select</span> &#123;</span><br><span class="line">    <span class="keyword">case</span> bar24x7 &lt;- consumer: <span class="comment">// 试图进入此酒吧</span></span><br><span class="line">        <span class="keyword">go</span> bar24x7.ServeConsumer(consumer)</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">        log.Print(<span class="string">"顾客#"</span>, customerId, <span class="string">"不愿等待而离去"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个其实相对来说可能比较简单，定义一个队列就可以了，但是这不是最好的办法</p>
+<h2 id="速率限制（设定某一时刻的并发请求数）"><a href="#速率限制（设定某一时刻的并发请求数）" class="headerlink" title="速率限制（设定某一时刻的并发请求数）"></a>速率限制（设定某一时刻的并发请求数）</h2><p>和上面那个兄弟的机制没啥两样，其实一个是瞬时请求，一个是总请求，说人话就是，上面那个管全局，下面这个管某一时刻，比如在选课的时候，瞬间就有一大堆人过来抢课，这不把服务器撑爆了。所以，速率限制，常用来限制吞吐和确保在一段时间内的资源使用不会超标。</p>
+<p>写个代码你看看</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Request <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">handle</span><span class="params">(r Request)</span></span> &#123; fmt.Println(r.(<span class="keyword">int</span>)) &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> RateLimitPeriod = time.Minute</span><br><span class="line"><span class="keyword">const</span> RateLimit = <span class="number">10</span> <span class="comment">// 任何一分钟内最多处理10个请求</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">handleRequests</span><span class="params">(requests &lt;-<span class="keyword">chan</span> Request)</span></span> &#123;</span><br><span class="line">	quotas := <span class="built_in">make</span>(<span class="keyword">chan</span> time.Time, RateLimit)</span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		tick := time.NewTicker(RateLimitPeriod / RateLimit)</span><br><span class="line">		<span class="keyword">defer</span> tick.Stop()</span><br><span class="line">		<span class="keyword">for</span> t := <span class="keyword">range</span> tick.C &#123;</span><br><span class="line">			<span class="keyword">select</span> &#123;</span><br><span class="line">			<span class="keyword">case</span> quotas &lt;- t:</span><br><span class="line">			<span class="keyword">default</span>:</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">for</span> r := <span class="keyword">range</span> requests &#123;</span><br><span class="line">		&lt;-quotas</span><br><span class="line">		<span class="keyword">go</span> handle(r)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	requests := <span class="built_in">make</span>(<span class="keyword">chan</span> Request)</span><br><span class="line">	<span class="keyword">go</span> handleRequests(requests)</span><br><span class="line">	<span class="comment">// time.Sleep(time.Minute)</span></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; ; i++ &#123;</span><br><span class="line">		requests &lt;- i</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="并发最快回应机制"><a href="#并发最快回应机制" class="headerlink" title="并发最快回应机制"></a>并发最快回应机制</h2><p>有时候，一份数据可能同时从多个数据源获取。这些数据源将返回相同的数据。因为各种因素，这些数据源的回应速度参差不一，甚至某个特定数据源的多次回应速度之间也可能相差很大。同时从多个数据源获取一份相同的数据可以有效保障低延迟。我们只需采用最快的回应并舍弃其它较慢回应.</p>
+<p>写个代码你看看</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">"fmt"</span></span><br><span class="line">    <span class="string">"time"</span></span><br><span class="line">    <span class="string">"math/rand"</span></span><br><span class="line">)</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">source</span><span class="params">(c <span class="keyword">chan</span>&lt;- <span class="keyword">int32</span>)</span></span> &#123;</span><br><span class="line">    ra, rb := rand.Int31(), rand.Intn(<span class="number">3</span>) + <span class="number">1</span></span><br><span class="line">    <span class="comment">// 睡眠1秒/2秒/3秒</span></span><br><span class="line">    time.Sleep(time.Duration(rb) * time.Second)</span><br><span class="line">    c &lt;- ra</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    rand.Seed(time.Now().UnixNano())</span><br><span class="line">    startTime := time.Now()</span><br><span class="line">    c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int32</span>, <span class="number">5</span>) <span class="comment">// 必须用一个缓冲通道</span></span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="built_in">cap</span>(c); i++ &#123;</span><br><span class="line">        <span class="keyword">go</span> source(c)</span><br><span class="line">    &#125;</span><br><span class="line">    rnd := &lt;- c <span class="comment">// 只有第一个回应被使用了</span></span><br><span class="line">    fmt.Println(time.Since(startTime))</span><br><span class="line">    fmt.Println(rnd)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>差不多就是这样，这里我偷懒了一下，借用了他人的代码，他的环境是，这篇文章给了我很大的启发，感恩！</p>
+<p><a href="https://www.bookstack.cn/read/golang101/6bbafd2e243d4d07.md" target="_blank" rel="noopener">通道用例大全</a></p>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>细细看了一下，写了不少了，但是其中有一两个东西我也没整的太明白，比如goroutine的心跳之类的，这个东西实在是用的不多，所以我感觉我还是，嗯，需要持续性进步才能解决问题，我写的不那么好，如果有错，请老铁们指出来，感恩！</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">予你开心叫我宝宝</span><br><span class="line"></span><br><span class="line">予你异见上我镣铐</span><br><span class="line"></span><br><span class="line">小人以为我拿它没办法</span><br><span class="line"></span><br><span class="line">光脚不惧穿鞋我又有何怕</span><br><span class="line"></span><br><span class="line">check~</span><br></pre></td></tr></table></figure>
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2020/11/10/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3Golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-2/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/11/03/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3Golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-1/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">完全理解Golang并发模式(1)</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2020
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
