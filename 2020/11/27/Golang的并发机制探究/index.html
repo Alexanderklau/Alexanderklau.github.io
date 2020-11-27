@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    Golang的并发机制探究 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-Golang的并发机制探究" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Golang的并发机制探究
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/11/27/Golang%E7%9A%84%E5%B9%B6%E5%8F%91%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/" class="article-date">
+  <time datetime="2020-11-27T02:19:02.000Z" itemprop="datePublished">2020-11-27</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">3.4k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">12 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>虽然上两篇文章讲了几个并发示例和Goroutine的使用，但是我仔细看了一下，还是不够清楚，这次这篇文章将会是一篇纯理论的文章，主要讲一下Go的并发机制的原理还有Goroutine还有channel。</p>
+<p>至于为啥要写呢。。。。。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">朋友们好啊，我是Go开发人员Yk，刚才有个朋友问我，Y老师，发生甚么事了，我说怎么回事，给我发了一篇我的博客截图，我一看，嗷！原来是前一阵，我写了两篇Go的文章，一个Go并发，一个Go例子，他们说，唉，Y老师你这并发讲的不清楚，哎，能不能重新写一个说明白，我说行，我说你在kindle上看死书，不好用。他不服气。我说小赤佬，你一篇文章来怼我两篇，你搞不动我。他说你这没用，我说我这个有用，这是Golang精华，隔壁200多页大PDF我都看了。他非要和我试试，我说可以，我一说他就“啪”就把键盘拿起来了，很快嗷！年轻人，我劝你耗子为汁，来偷袭我20多岁的老同志，这好吗？这不好。我说你不讲码德阿，我们Golang开发人员要以和为贵，不要搞窝里斗，谢谢朋友们！</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/4.png" alt></p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/5.png" alt></p>
+<p>还是要感谢这么几本书，《Go并发编程实战》，《Go语言圣经》，《Go高级编程》，感谢这几本书的作者和译者！感谢你们！</p>
+<h2 id="Go的线程模型"><a href="#Go的线程模型" class="headerlink" title="Go的线程模型"></a>Go的线程模型</h2><p>Go的并发机制是个什么，主要就是Go有一个特有的线程模型，这个线程模型里面，有个特有的线程，叫做Goroutine，这个东西可以理解为一个可执行可并发的代码块，通过channel管道去进行状态同步或者消息传递。</p>
+<p>首先来看一下那个线程模型，术语叫做”两级线程模型”，名字其实没啥狗屁用，就听听就得了。</p>
+<p>Go的线程模型，有三个核心元素</p>
+<ol>
+<li>M：machine，代表工作线程，你想成僵尸母体就行了</li>
+<li>P：processor，上下文环境，意思就是执行Go代码的所需要的资源，或者是存储要执行的goroutine，你想成僵尸传播渠道就行了</li>
+<li>G：goroutine，Go代码片段，你要执行并发的那一块儿程序。你想象成被感染的小僵尸就行了</li>
+</ol>
+<p>他们的大致关系如下</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/2.png" alt></p>
+<p>这三个元素是互相依赖，互相依存的关系，我用僵尸传播理论来说明一下他们的关系吧。</p>
+<p>首先，G需要P和M的支持，也就是说，一个G的出现，是先有了M（僵尸母体），然后通过渠道（P），感染其他的小僵尸（G）。一个M对应一个P，P对应多个G，G也对应多个P，因为感染人数不只是一个人，所以，他们的关系就像这样</p>
+<p>如图所示</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/1.jpg" alt></p>
+<p>这么理解一波，M是内核线程，按照一般的逻辑，一个内核线程一般运行一个任务，但是，GOlang比较牛逼，通过调度器，使得M可以运行多个用户线程G，其中，P的作用是，当遇到内核线程阻塞的时候，M可以放弃P，这样，其他的G就可以被调度到其他M上，持续接力执行。</p>
+<p>类似这样</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/3.jpg" alt></p>
+<p>所以，同样配置的机器，Golang的效率就会成倍增长，并且可以迅速切换goroutine。所以这就是Go为什么比其他语言快的原因，这也是Go最核心的东西，说真的，Go这个玩意儿，比Python那套好使多了，不过不同任务不可同日而语，继续一波。</p>
+<h2 id="Go的调度器"><a href="#Go的调度器" class="headerlink" title="Go的调度器"></a>Go的调度器</h2><p>上面我讲到了调度器，什么是调度器？</p>
+<p>顾名思义，就是调度用的，相当于交通警察，看哪儿阻塞了就给你安排到不赌的路上去，这么想是不是就整明白了，但是Go里面的调度器没那么简单，它的功能相对来说复杂一点。例如空闲的M列表，空闲的P列表，需要运行的G列表等等，都属于调度器的管理部分。</p>
+<p>那么调度器是怎么把上面说的G，M，P串联起来的呢？这个翻了一大堆资料，总算弄明白了一点东西，在这里大概讲一下吧。</p>
+<p>首先，调度器调度的主要对象就是M，P，G的实例，每个M在运行的时候都会执行调度任务，看过黑社会吗，调度器就是选老大时候的邓伯那帮人，选阿乐还是选大D都是他们协调说了算的。</p>
+<p>调度器调度了个什么？寂寞吗，看看图，大概就是这样</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/6.png" alt></p>
+<p>调度器是有自己的数据结构的</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> schedt <span class="keyword">struct</span> &#123;</span><br><span class="line">    goidgen  <span class="keyword">uint64</span></span><br><span class="line">    lastpoll <span class="keyword">uint64</span></span><br><span class="line"></span><br><span class="line">    lock mutex</span><br><span class="line">    midle        muintptr <span class="comment">// idle m's waiting for work</span></span><br><span class="line">    nmidle       <span class="keyword">int32</span>    <span class="comment">// 当前等待工作的空闲 m 计数</span></span><br><span class="line">    nmidlelocked <span class="keyword">int32</span>    <span class="comment">// 当前等待工作的被 lock 的 m 计数</span></span><br><span class="line">    mnext        <span class="keyword">int64</span>    <span class="comment">// 当前预缴创建的 m 数，并且该值会作为下一个创建的 m 的 ID</span></span><br><span class="line">    maxmcount    <span class="keyword">int32</span>    <span class="comment">// 允许创建的最大的 m 数量</span></span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    pidle      puintptr <span class="comment">// 空闲 p's</span></span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 全局的可运行 g 队列</span></span><br><span class="line">    runqhead guintptr</span><br><span class="line">    runqtail guintptr</span><br><span class="line">    runqsize <span class="keyword">int32</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// dead G 的全局缓存</span></span><br><span class="line">    gflock       mutex</span><br><span class="line">    gfreeStack   *g</span><br><span class="line">    gfreeNoStack *g</span><br><span class="line">    ngfree       <span class="keyword">int32</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// sudog 结构的集中缓存</span></span><br><span class="line">    sudoglock  mutex</span><br><span class="line">    sudogcache *sudog</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 不同大小的可用的 defer struct 的集中缓存池</span></span><br><span class="line">    deferlock mutex</span><br><span class="line">    deferpool [<span class="number">5</span>]*_defer</span><br><span class="line"></span><br><span class="line">    ...忽略一些没啥必要的参数</span><br><span class="line"></span><br><span class="line">    gcwaiting  <span class="keyword">uint32</span> <span class="comment">// 是否要因为任务停止调度</span></span><br><span class="line">    stopwait   <span class="keyword">int32</span>  <span class="comment">//需要停止但仍未停止的数量</span></span><br><span class="line">    stopnote   note   <span class="comment">//停止的通知机制</span></span><br><span class="line">    sysmonwait <span class="keyword">uint32</span>  <span class="comment">//停止调度期间任务是否还在等待</span></span><br><span class="line">    sysmonnote note   <span class="comment">//sysmonnotewait 的通知机制</span></span><br><span class="line"></span><br><span class="line">    procresizetime <span class="keyword">int64</span> <span class="comment">// 上次修改 gomaxprocs 的纳秒时间</span></span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>下面说一下调度具体干了什么</p>
+<h3 id="调度的具体步骤"><a href="#调度的具体步骤" class="headerlink" title="调度的具体步骤"></a>调度的具体步骤</h3><p>调度器结构体里面有几个重要参数，我先在这里整出来，后面你们方便看</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/8.jpg" alt></p>
+<p>调度器的具体流程这里整了一个图，大家凑合着看一下吧。图的来源是<a href="https://www.infoq.cn/article/r6wzs7bvq2er9kuelbqb，很感谢他！" target="_blank" rel="noopener">https://www.infoq.cn/article/r6wzs7bvq2er9kuelbqb，很感谢他！</a></p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/7.jpg" alt></p>
+<p>看一下逻辑，首先将其分为四个阶段，<strong>绑定，创建，执行，释放</strong>。调度在其中的作用体现在了这里</p>
+<p>首先第一个步骤绑定开始，这里也是M启动的过程，首先从空闲的P列表里面拿取一个P，然后绑定在M上，P里面有两个列表去管理G，一个runq是存放当前P中可运行G的一个队列，另外一个gfee是存放空闲G的一个队列，启动M之后，则会等待拿取可执行的G</p>
+<p>第二个步骤，创建G，首先创建完之后，扔一个G到当前绑定P的runq队列当中</p>
+<p>第三个步骤，执行G，M从绑定的P那里的runq队列中拿取一个G进行执行</p>
+<p>第四个步骤，释放G，执行完G之后，将执行完毕的G放入gfee队列，当再次创建G的时候，从gfee列表中获取，这里是一个复用的逻辑，避免频繁创建G占用系统内存。</p>
+<p>所以这里是类似一个自循环的逻辑，执行完G1之后持续执行，当M1繁忙时，自动开启新的M来执行</p>
+<h3 id="多线程下的调度机制（偷取G机制）"><a href="#多线程下的调度机制（偷取G机制）" class="headerlink" title="多线程下的调度机制（偷取G机制）"></a>多线程下的调度机制（偷取G机制）</h3><p>前阵子我在开发的时候，有一种场景是下载大文件，一般这种情况就是划块下载，但是下载时间是不可控的，也是未知的，很可能有的下的快，有的下的慢，就会出现有的下载队列已经空了，但是有的依旧还很满这种情况。</p>
+<p>其实在Go里面，调度器在这一步就会寻找可执行的G，这里是它们的具体流程</p>
+<p>如图</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/10.jpg" alt></p>
+<p>这里用流程图表示就是</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/9.png" alt></p>
+<p>我将这里的大概步骤编写如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">1. 从本地P的可运行G队列（p.runq）中获取G. 调度器首先会尝试从此处获取G，并且返回一个结果</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">2. 从调度器的可运行G（sched.runq）队列获取G。调度器首先会尝试从此处获取G，并且返回一个结果</span><br><span class="line"></span><br><span class="line">3. 从其他P中可运行的G队列中获取G。 在某些条件下，调度器会使用伪随机算法在全局P列表中选取一个P，并且尝试从他们的可运行G队列中盗取（转移）一半的G到本地的P可运行队列中，这里会重复多次盗取动作，成功之后就把盗取的一个G作为结果进行返回。</span><br></pre></td></tr></table></figure>
+<p>这里就完成了盗取机制。</p>
+<p>那么偷取部分是怎么实现的呢？</p>
+<p>偷取部分的源码如下</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// runtime/proc.go</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 从其它地方获取G</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">findrunnable</span><span class="params">()</span> <span class="params">(gp *g, inheritTime <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">  ......</span><br><span class="line">  </span><br><span class="line">  <span class="comment">// 尝试4次从别的P偷</span></span><br><span class="line">  <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">4</span>; i++ &#123;</span><br><span class="line">    <span class="keyword">for</span> enum := stealOrder.start(fastrand()); !enum.done(); enum.next() &#123;</span><br><span class="line">      <span class="keyword">if</span> sched.gcwaiting != <span class="number">0</span> &#123;</span><br><span class="line">        <span class="keyword">goto</span> top</span><br><span class="line">      &#125;</span><br><span class="line">      stealRunNextG := i &gt; <span class="number">2</span> <span class="comment">// first look for ready queues with more than 1 g</span></span><br><span class="line">      <span class="comment">// 在这里开始针对P进行偷取操作</span></span><br><span class="line">      <span class="keyword">if</span> gp := runqsteal(_p_, allp[enum.position()], stealRunNextG); gp != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> gp, <span class="literal">false</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>转移部分的代码如下</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// runtime/proc.go</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 偷取P2一半到本地运行队列，失败则返回nil</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">runqsteal</span><span class="params">(_p_, p2 *p, stealRunNextG <span class="keyword">bool</span>)</span> *<span class="title">g</span></span> &#123;</span><br><span class="line">  t := _p_.runqtail</span><br><span class="line">  n := runqgrab(p2, &amp;_p_.runq, t, stealRunNextG)</span><br><span class="line">  <span class="keyword">if</span> n == <span class="number">0</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">  &#125;</span><br><span class="line">  n--</span><br><span class="line">  <span class="comment">// 返回尾部的一个G</span></span><br><span class="line">  gp := _p_.runq[(t+n)%<span class="keyword">uint32</span>(<span class="built_in">len</span>(_p_.runq))].ptr()</span><br><span class="line">  <span class="keyword">if</span> n == <span class="number">0</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> gp</span><br><span class="line">  &#125;</span><br><span class="line">  h := atomic.Load(&amp;_p_.runqhead) <span class="comment">// load-acquire, synchronize with consumers</span></span><br><span class="line">  <span class="keyword">if</span> t-h+n &gt;= <span class="keyword">uint32</span>(<span class="built_in">len</span>(_p_.runq)) &#123;</span><br><span class="line">    throw(<span class="string">"runqsteal: runq overflow"</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  atomic.Store(&amp;_p_.runqtail, t+n) <span class="comment">// store-release, makes the item available for consumption</span></span><br><span class="line">  <span class="keyword">return</span> gp</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 从P里获取一半的G,放到batch里</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">runqgrab</span><span class="params">(_p_ *p, batch *[256]guintptr, batchHead <span class="keyword">uint32</span>, stealRunNextG <span class="keyword">bool</span>)</span> <span class="title">uint32</span></span> &#123;</span><br><span class="line">  <span class="keyword">for</span> &#123;</span><br><span class="line">    <span class="comment">// 计算一半的数量</span></span><br><span class="line">    h := atomic.Load(&amp;_p_.runqhead) <span class="comment">// load-acquire, synchronize with other consumers</span></span><br><span class="line">    t := atomic.Load(&amp;_p_.runqtail) <span class="comment">// load-acquire, synchronize with the producer</span></span><br><span class="line">    n := t - h</span><br><span class="line">    n = n - n/<span class="number">2</span></span><br><span class="line">    </span><br><span class="line">    ......</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 将偷到的任务转移到本地P队列里</span></span><br><span class="line">    <span class="keyword">for</span> i := <span class="keyword">uint32</span>(<span class="number">0</span>); i &lt; n; i++ &#123;</span><br><span class="line">      g := _p_.runq[(h+i)%<span class="keyword">uint32</span>(<span class="built_in">len</span>(_p_.runq))]</span><br><span class="line">      batch[(batchHead+i)%<span class="keyword">uint32</span>(<span class="built_in">len</span>(batch))] = g</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> atomic.Cas(&amp;_p_.runqhead, h, h+n) &#123; <span class="comment">// cas-release, commits consume</span></span><br><span class="line">      <span class="keyword">return</span> n</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>第三步，我说到一个条件，这个条件其实定义的稍微复杂一些，分为两种</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">1. 除了本地的P外，其他有不为空的P</span><br><span class="line">2. M一直没有找到G来运行，也就是前两步一直没有找到G，这里的术语被称为“自旋状态”</span><br><span class="line">``` </span><br><span class="line"></span><br><span class="line">当满足上述条件的时候，才可以开启偷取机制。</span><br><span class="line"></span><br><span class="line">总之，调度器会权力查找可执行的G，它会调用多方资源来满足当前M，也就是我刚描述的，下载任务有快慢，会占用多余资源，但是调度器解决了闲置的问题，充分发挥了资源优势，这，相当牛逼了。</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">## GC机制</span><br><span class="line"></span><br><span class="line">在Golang里面，垃圾回收是基于CMS算法的，CMS算法我在这里简单描述一下吧</span><br><span class="line"></span><br><span class="line">洋文叫：Concurrent Low Pause Collector，jvm也是这套算法，玩java的一眼就明白吧。</span><br><span class="line"></span><br><span class="line">要说这套算法，Golang也用它，说明人家是经过考验的</span><br><span class="line"></span><br><span class="line">Golang这套CMS算法分为三种执行模式</span><br><span class="line"></span><br><span class="line">1. gcbackgroundMode 并发垃圾收集/清理</span><br><span class="line">2. gcforceMode 串行垃圾收集，并发垃圾清理</span><br><span class="line">3. gcforceBlockMode 串行垃圾收集，串行垃圾清理</span><br><span class="line"></span><br><span class="line">一般涉及到并发，调度器部分会自动GC，都是采用了gcbackgroundMode模式，首先会检查Go 程序的内存用量，检测增量过大的时候才会来一发GC。</span><br><span class="line"></span><br><span class="line">一般在Golang当中，我们可以通过环境变量**GODEBUG**控制GC，一般修改</span><br><span class="line"></span><br><span class="line">```golang</span><br><span class="line">// 转为gcforceMode 串行垃圾收集，并发垃圾清理</span><br><span class="line">gcstoptheworld=1</span><br><span class="line">// 转为gcforceBlockMode 串行垃圾收集，串行垃圾清理</span><br><span class="line">gcstoptheworld=2</span><br></pre></td></tr></table></figure>
+
+<p>一般GC的触发，是在Go程序分配的内存翻倍增长时被触发的。如果想要手动GC，可以调用</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">runtime.GC()</span><br></pre></td></tr></table></figure>
+
+<p>进行一次手动GC</p>
+<p>串行的GC触发方式为</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">runtime.freeOsMemory()</span><br></pre></td></tr></table></figure>
+<p>如果手动调用GC，将不会检测原有Go程序的内存使用量，是为强制GC。</p>
+<h2 id="隐藏的特殊成员-g0"><a href="#隐藏的特殊成员-g0" class="headerlink" title="隐藏的特殊成员-g0"></a>隐藏的特殊成员-g0</h2><p>在启动Go程序的时候，有一个特殊的隐藏G，叫做g0，这里的G，不是Go程序代码里面的那个G，是一开始，初始化流程中自动分配给M的g，这个g0和上面那个GC对应起来了，它负责的就是监控内存，垃圾回收，执行调度。</p>
+<p>一般由Go代码生成的G，称为用户G，而g0，则被称为系统G，一个系统一个用户，谁权限大是不是显而易见了，每个M都会生成一个g0，Go运行的时候会进行切换，g0是不会被阻塞的，也不会被垃圾回收监控扫描。</p>
+<p>所以g0，想象成一个守护神，伴随M，和M同生公死，相当于皇帝身边的大太监一样。</p>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>这篇文章写完，我是真的彻底搞懂了调度器原理和Golang并发核心机制，其实学习最好的方法就是写博客，记笔记，边写边记。其实慢慢来，都会有好的结果，已经到了年底了，今年大家都过的好嘛？或许今年过的很苦，但今天我们可乐。</p>
+<p>end。</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2020/11/27/Golang%E7%9A%84%E5%B9%B6%E5%8F%91%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/11/10/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3Golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-2/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">完全理解Golang并发模式(2)</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2020
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
