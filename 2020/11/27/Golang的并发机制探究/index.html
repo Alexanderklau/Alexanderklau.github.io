@@ -118,7 +118,7 @@
 <p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/1.jpg" alt></p>
 <p>这么理解一波，M是内核线程，按照一般的逻辑，一个内核线程一般运行一个任务，但是，GOlang比较牛逼，通过调度器，使得M可以运行多个用户线程G，其中，P的作用是，当遇到内核线程阻塞的时候，M可以放弃P，这样，其他的G就可以被调度到其他M上，持续接力执行。</p>
 <p>类似这样</p>
-<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/3.jpg" alt></p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/3.png" alt></p>
 <p>所以，同样配置的机器，Golang的效率就会成倍增长，并且可以迅速切换goroutine。所以这就是Go为什么比其他语言快的原因，这也是Go最核心的东西，说真的，Go这个玩意儿，比Python那套好使多了，不过不同任务不可同日而语，继续一波。</p>
 <h2 id="Go的调度器"><a href="#Go的调度器" class="headerlink" title="Go的调度器"></a>Go的调度器</h2><p>上面我讲到了调度器，什么是调度器？</p>
 <p>顾名思义，就是调度用的，相当于交通警察，看哪儿阻塞了就给你安排到不赌的路上去，这么想是不是就整明白了，但是Go里面的调度器没那么简单，它的功能相对来说复杂一点。例如空闲的M列表，空闲的P列表，需要运行的G列表等等，都属于调度器的管理部分。</p>
