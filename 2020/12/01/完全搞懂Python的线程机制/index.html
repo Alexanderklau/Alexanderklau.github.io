@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    完全搞懂Python的线程机制 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-完全搞懂Python的线程机制" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  完全搞懂Python的线程机制
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/12/01/%E5%AE%8C%E5%85%A8%E6%90%9E%E6%87%82Python%E7%9A%84%E7%BA%BF%E7%A8%8B%E6%9C%BA%E5%88%B6/" class="article-date">
+  <time datetime="2020-12-01T05:28:46.000Z" itemprop="datePublished">2020-12-01</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">3.5k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">14 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>总觉得用了Python那么久，感觉隔一层面纱似的，只是会用而已。</p>
+<p>现在Python更新了3.9，越来越厉害了，多了很多新的语法特性。</p>
+<p>想想自己，也不能总是写一些Golang的东西，Python也要持续跟上，所以打算开一个Python三巨头的坑，把Python的线程，进程，协程都讲明白，这样第一个是让我加深理解，第二个是让我彻底搞懂这三者的机制，我认为这样我才可以走的更远。</p>
+<p>在开发的过程当中，我们总是需要去提高效率，一般在Python里面，我们经常会听到所谓多线程，多进程，加上现在的协程的诸多方法去解决性能问题，那么，到底这些术语到底是个什么意思，我们什么时候用什么方法，才是最合适的呢？这才是促使我写这篇文章的原因吧。</p>
+<p>因为这些东西，应该是Python最核心的了，搞懂这个，Python也就没什么特别难的问题了。所以，我们开始吧</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">从来不畏惧到底明天会是什么模样</span><br><span class="line"></span><br><span class="line">活在今天告诉你生命不只一种颜色</span><br><span class="line"></span><br><span class="line">咬牙挺住却坚信黑暗之后即是黎明</span><br><span class="line"></span><br><span class="line">解剖生活才能看到未来的光</span><br></pre></td></tr></table></figure>
+
+<h2 id="Python的多线程是什么"><a href="#Python的多线程是什么" class="headerlink" title="Python的多线程是什么"></a>Python的多线程是什么</h2><p>首先，线程是什么，说的简单一点，线程就是进程的儿子，一个进程可以搞出多个线程，但是一个线程只能有一个爹（进程），不允许随便乱认爹（进程）。</p>
+<p>这就好比你看电影，电影是一个进程，里面的画面是一个线程，声音是一个线程，字幕又是一个线程，这就是线程的一种表现。</p>
+<p>如果是系统执行进程，首先需要划分独立的进程空间/内存，但是线程就不会这么麻烦。</p>
+<p>线程是独立执行的，并且也是并发的，占用资源也小，一个线程可以去创建/杀死另一个线程，相当于“子子孙孙无穷匮也”，并且线程之间还支持通信，可以共享其中的数据/内存等等。</p>
+<p>上面这些都是线程的优点，但是！但是！但是！<strong>Python的线程和这个不一样</strong>！</p>
+<p>Python的线程其实是个假的，为啥呢，因为Python有<strong>GIL全局锁</strong>。</p>
+<p>不知道你们看过《无限恐怖》这本小说没有，里面有个东西叫做基因锁，因为有基因锁的存在，导致人类的各项机能被限制了，同理，GIL全局锁也是一样，它的逻辑就是，只要你用了带GIL锁的解释器，任何时候，你都只能，也只可以在同一时间执行一个线程。</p>
+<p>带GIL锁的解释器有哪些呢？当然是我现在说的CPython啦！</p>
+<p>CPython用C实现的，用的人也最多，所以为什么市面上的教材都说Python的线程不好使，是因为大家全都是用的CPython。</p>
+<p>有点儿绕吧，其实意思就是，Python的多线程实际上是个伪多线程，并不是真正的多线程，实际上，无论如何，它只能保证一个线程执行。</p>
+<p>我来描述一下Python多线程执行的逻辑</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">线程1获取到GIL锁</span><br><span class="line">执行业务代码</span><br><span class="line">线程1释放GIL锁</span><br><span class="line"></span><br><span class="line">线程2获取到GIL锁</span><br><span class="line">执行业务代码</span><br><span class="line">线程2释放GIL锁</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<p>这个是不是贼TM绕，我写个代码给大家伙儿瞅瞅到底这个是怎么表现出来的</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> threading</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line">exitFlag = <span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 继承的方法写一个多线程逻辑</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">myThread</span> <span class="params">(threading.Thread)</span>:</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, threadID, name, counter)</span>:</span></span><br><span class="line">        threading.Thread.__init__(self)</span><br><span class="line">        self.threadID = threadID</span><br><span class="line">        self.name = name</span><br><span class="line">        self.counter = counter</span><br><span class="line">        </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">run</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">print</span> (<span class="string">"开始线程："</span> + self.name)</span><br><span class="line">        print_time(self.name, self.counter, <span class="number">5</span>)</span><br><span class="line">        <span class="keyword">print</span> (<span class="string">"退出线程："</span> + self.name)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">print_time</span><span class="params">(threadName, delay, counter)</span>:</span></span><br><span class="line">    <span class="keyword">while</span> counter:</span><br><span class="line">        <span class="keyword">if</span> exitFlag:</span><br><span class="line">            threadName.exit()</span><br><span class="line">        <span class="comment"># 这里模拟一个阻塞</span></span><br><span class="line">        time.sleep(delay)</span><br><span class="line">        <span class="keyword">print</span> (<span class="string">"%s: %s"</span> % (threadName, time.ctime(time.time())))</span><br><span class="line">        counter -= <span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建新线程</span></span><br><span class="line">thread1 = myThread(<span class="number">1</span>, <span class="string">"Thread-1"</span>, <span class="number">1</span>)</span><br><span class="line">thread2 = myThread(<span class="number">2</span>, <span class="string">"Thread-2"</span>, <span class="number">2</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开启新线程</span></span><br><span class="line">thread1.start()</span><br><span class="line">thread2.start()</span><br><span class="line"></span><br><span class="line"><span class="comment"># join等待</span></span><br><span class="line">thread1.join()</span><br><span class="line">thread2.join()</span><br><span class="line"><span class="keyword">print</span> (<span class="string">"退出主线程"</span>)</span><br></pre></td></tr></table></figure>
+
+<p>这里用了一个继承的方法，写了一个多线程逻辑</p>
+<p>这里输出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">开始线程：Thread-1</span><br><span class="line">开始线程：Thread-2</span><br><span class="line">Thread-1: Tue Dec  1 09:58:21 2020</span><br><span class="line">Thread-2: Tue Dec  1 09:58:22 2020</span><br><span class="line">Thread-1: Tue Dec  1 09:58:22 2020</span><br><span class="line">Thread-1: Tue Dec  1 09:58:23 2020</span><br><span class="line">Thread-2: Tue Dec  1 09:58:24 2020</span><br><span class="line">Thread-1: Tue Dec  1 09:58:24 2020</span><br><span class="line">Thread-1: Tue Dec  1 09:58:25 2020</span><br><span class="line">退出线程：Thread-1</span><br><span class="line">Thread-2: Tue Dec  1 09:58:26 2020</span><br><span class="line">Thread-2: Tue Dec  1 09:58:28 2020</span><br><span class="line">Thread-2: Tue Dec  1 09:58:30 2020</span><br><span class="line">退出线程：Thread-2</span><br><span class="line">退出主线程</span><br></pre></td></tr></table></figure>
+
+<p>发现了没，这个，有个时间差，这两根本不是同时去运行的，这就是GIL的石锤</p>
+<p>再看个图，这就是GIL的运行流程</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/Python%E7%BA%BF%E7%A8%8B/2.jpg" alt></p>
+<p>整明白了嘛？</p>
+<p>但是你会说，哎呀，我没感觉到缓慢阿，害挺快的，是，这就是我下面要聊的，它到底用了什么技术，才能让我们感觉到挺快的。</p>
+<h2 id="Python的多线程在代码部分是怎么实现的？"><a href="#Python的多线程在代码部分是怎么实现的？" class="headerlink" title="Python的多线程在代码部分是怎么实现的？"></a>Python的多线程在代码部分是怎么实现的？</h2><p>又涉及到看源码的东西了,这里首先追踪一把，threading的代码放置在</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://github.com/python/cpython/blob/3.9/Lib/threading.py</span><br></pre></td></tr></table></figure>
+
+<p>先从入口的Start追踪</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">start</span><span class="params">(self)</span>:</span></span><br><span class="line">    <span class="string">"""Start the thread's activity.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    It must be called at most once per thread object. It arranges for the</span></span><br><span class="line"><span class="string">    object's run() method to be invoked in a separate thread of control.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    This method will raise a RuntimeError if called more than once on the</span></span><br><span class="line"><span class="string">    same thread object.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    """</span></span><br><span class="line">    <span class="comment"># 线程是否初始化（这里就是刚那个init函数</span></span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> self._initialized:</span><br><span class="line">        <span class="keyword">raise</span> RuntimeError(<span class="string">"thread.__init__() not called"</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 设置线程的开始状态（把线程状态置为start</span></span><br><span class="line">    <span class="keyword">if</span> self._started.is_set():</span><br><span class="line">        <span class="keyword">raise</span> RuntimeError(<span class="string">"threads can only be started once"</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 加锁，调用GIL</span></span><br><span class="line">    <span class="keyword">with</span> _active_limbo_lock:</span><br><span class="line">        _limbo[self] = self</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 去启动新的线程</span></span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        _start_new_thread(self._bootstrap, ())</span><br><span class="line">    <span class="comment"># 如果启动出了问题</span></span><br><span class="line">    <span class="keyword">except</span> Exception:</span><br><span class="line">        <span class="comment"># 把锁给del了</span></span><br><span class="line">        <span class="keyword">with</span> _active_limbo_lock:</span><br><span class="line">            <span class="keyword">del</span> _limbo[self]</span><br><span class="line">        <span class="keyword">raise</span></span><br><span class="line">    <span class="comment"># 释放锁，阻塞。直到被唤醒/超时</span></span><br><span class="line">    self._started.wait()</span><br></pre></td></tr></table></figure>
+
+<p>其实threading的代码写的很好，已经大概把流程和步骤都说明白了，涉及到lock的部分是C写的, 首先追踪溯源，看一下启动线程的C代码</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">PyEval_InitThreads</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (gil_created())</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    <span class="comment">// 创建GIL锁</span></span><br><span class="line">    create_gil();</span><br><span class="line">    <span class="comment">// 申请GIL锁</span></span><br><span class="line">    take_gil(PyThreadState_GET());</span><br><span class="line">    <span class="comment">// 主线程</span></span><br><span class="line">    main_thread = PyThread_get_thread_ident();</span><br><span class="line">    <span class="comment">// 如果没有等待锁</span></span><br><span class="line">    <span class="keyword">if</span> (!pending_lock)</span><br><span class="line">        <span class="comment">// 创建等待锁</span></span><br><span class="line">        pending_lock = PyThread_allocate_lock();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到<br>核心的GIL代码如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">take_gil</span><span class="params">(PyThreadState *tstate)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    MUTEX_LOCK(gil_mutex);    <span class="comment">// 加锁</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!_Py_atomic_load_relaxed(&amp;gil_locked))</span><br><span class="line">        <span class="comment">// 获取 GIL，若已释放，直接获取，跳转</span></span><br><span class="line">        <span class="keyword">goto</span> _ready;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (_Py_atomic_load_relaxed(&amp;gil_locked)) &#123;</span><br><span class="line">        <span class="comment">// GIL 未释放</span></span><br><span class="line">        <span class="keyword">int</span> timed_out = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">unsigned</span> <span class="keyword">long</span> saved_switchnum;</span><br><span class="line">        <span class="comment">// 记录切换次数</span></span><br><span class="line">        saved_switchnum = gil_switch_number;</span><br><span class="line">        <span class="comment">// 利用 pthread_cond_tim 阻塞等待超时</span></span><br><span class="line">        COND_TIMED_WAIT(gil_cond, gil_mutex, INTERVAL, timed_out);</span><br><span class="line">        <span class="comment">/* 等待超时，仍未释放, 发送释放请求信号 */</span></span><br><span class="line">        <span class="keyword">if</span> (timed_out &amp;&amp;</span><br><span class="line">            _Py_atomic_load_relaxed(&amp;gil_locked) &amp;&amp;</span><br><span class="line">            gil_switch_number == saved_switchnum) &#123;</span><br><span class="line">            <span class="comment">// 设置 gil_drop_request=1，eval_breaker=1</span></span><br><span class="line">            <span class="comment">// 释放信号</span></span><br><span class="line">            SET_GIL_DROP_REQUEST();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">_ready:</span><br><span class="line">    <span class="comment">/* We now hold the GIL */</span></span><br><span class="line">    _Py_atomic_store_relaxed(&amp;gil_locked, <span class="number">1</span>); <span class="comment">// 设置 GIL 占用</span></span><br><span class="line">    _Py_ANNOTATE_RWLOCK_ACQUIRED(&amp;gil_locked, <span class="comment">/*is_write=*/</span><span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (tstate != (PyThreadState*)_Py_atomic_load_relaxed(&amp;gil_last_holder)) &#123;</span><br><span class="line">        _Py_atomic_store_relaxed(&amp;gil_last_holder, (<span class="keyword">uintptr_t</span>)tstate);</span><br><span class="line">        ++gil_switch_number;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (_Py_atomic_load_relaxed(&amp;gil_drop_request)) &#123;</span><br><span class="line">        <span class="comment">// 重置 gil_drop_request=0</span></span><br><span class="line">        RESET_GIL_DROP_REQUEST();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (tstate-&gt;async_exc != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        _PyEval_SignalAsyncExc();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    MUTEX_UNLOCK(gil_mutex);    <span class="comment">// 解锁</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里实现了互斥锁gil_mutex，如果GIL被占用，那么将持续等待，超时后将修改重置变量。</p>
+<p>这点代码给我看的累死了。</p>
+<p>回到本段开始的问题，为什么GIL有时候感觉不到慢？</p>
+<p>首先，GIL类似一个信号锁，意思就像是尚方宝剑，持有它的线程告诉其他线程，都不许动阿，我现在正用着呢，你们要么等着我主动释放，要么等我超时了自己释放，然后继续竞争切换持有GIL的线程。</p>
+<p>核心的意思就是，多线程的好处在于，阻塞并不会影响其他的线程，因为阻塞的线程持有的GIL马上就被释放了，其他线程可以接力马上干活儿，不会出现阻塞的情况。</p>
+<p>这里可以看一下切换线程的代码</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">PyObject *</span><br><span class="line">_PyEval_EvalFrameDefault(PyFrameObject *f, <span class="keyword">int</span> throwflag)&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        <span class="keyword">if</span> (_Py_atomic_load_relaxed(&amp;eval_breaker)) &#123;</span><br><span class="line">            <span class="keyword">if</span> (_Py_OPCODE(*next_instr) == SETUP_FINALLY ||</span><br><span class="line">                    _Py_OPCODE(*next_instr) == YIELD_FROM) &#123;</span><br><span class="line">                <span class="keyword">goto</span> fast_next_opcode;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (_Py_atomic_load_relaxed(&amp;pendingcalls_to_do)) &#123;</span><br><span class="line">                <span class="keyword">if</span> (Py_MakePendingCalls() &lt; <span class="number">0</span>)</span><br><span class="line">                    <span class="keyword">goto</span> error;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 如果检测到gil_drop_request，释放GIL</span></span><br><span class="line">            <span class="keyword">if</span> (_Py_atomic_load_relaxed(&amp;gil_drop_request)) &#123;</span><br><span class="line">                <span class="comment">/* Give another thread a chance */</span></span><br><span class="line">                <span class="keyword">if</span> (PyThreadState_Swap(<span class="literal">NULL</span>) != tstate)</span><br><span class="line">                    Py_FatalError(<span class="string">"ceval: tstate mix-up"</span>);</span><br><span class="line">                drop_gil(tstate);</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 继续去调用GIL抢占</span></span><br><span class="line">                take_gil(tstate);</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 检查是否退出线程</span></span><br><span class="line">                <span class="keyword">if</span> (_Py_Finalizing &amp;&amp; _Py_Finalizing != tstate) &#123;</span><br><span class="line">                    drop_gil(tstate);</span><br><span class="line">                    PyThread_exit_thread();</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> (PyThreadState_Swap(tstate) != <span class="literal">NULL</span>)</span><br><span class="line">                    Py_FatalError(<span class="string">"ceval: orphan tstate"</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当检测到 eval_breaker、gil_drop_request 时，会被动的释放 GIL，跟其他线程一起再次竞争 GIL，所以它几乎没有阻塞，虽然这狗GIL把你给锁住了，但是也保证了效率，当某个线程执行时间过长，可以迅速切换下一个线程调用。</p>
+<p>类似这样</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/Python%E7%BA%BF%E7%A8%8B/1.jpg" alt></p>
+<h2 id="如何绕过GIL锁？"><a href="#如何绕过GIL锁？" class="headerlink" title="如何绕过GIL锁？"></a>如何绕过GIL锁？</h2><p>如何绕过GIL锁，这个也是老生常谈的问题了。</p>
+<p>在我这里的话，如果是我，涉及到需要绕过的地方</p>
+<ol>
+<li>我会直接写C代码，用CPython去调用</li>
+<li>我会用JPython</li>
+<li>我会用Golang</li>
+</ol>
+<p>大概就这么几个方法，没别的方法了，再也不用看了</p>
+<h2 id="Python多线程适用于哪些场景？"><a href="#Python多线程适用于哪些场景？" class="headerlink" title="Python多线程适用于哪些场景？"></a>Python多线程适用于哪些场景？</h2><p>前面说了，Python多线程并不是真正意义的多线程，其实是个假的，但是还是有很多老哥不遗余力的推荐它，到底为啥，上一节也说得很清楚了，GIL虽然恶心，但是人家还是支持自动切换比较慢的阻塞线程的，不会影响其他线程运行，所以，你品一下，在咱们的开发岁月中，多线程，到底适用于哪些场景？</p>
+<p>首先，发生阻塞的是什么情况，网络的连接时间过长，或者是处理多个业务，读取多个文件，访问多个网页等等。</p>
+<p>网上很多文章都说： <strong>I/O 密集场景，多线程最合适</strong></p>
+<p>你抄我，我抄你，抄到最后就这么一句话，讲真，我看了那么多文章，真的没几个说清楚的，举个例子的都没。</p>
+<p>那行嘛，那我来举例子吧。</p>
+<p>首先，I/O密集型，指的是涉及到网络、磁盘IO的任务，现在互联网的web大部分都是IO密集的场景</p>
+<p>举几个常用的自用例子吧</p>
+<ol>
+<li>网络爬虫，这个都写烂了</li>
+<li>web应用，例如多用户访问，多用户登录，多用户下载</li>
+<li>数据库写入，Mysql/Es等等</li>
+<li>RPC框架</li>
+</ol>
+<p>大概就这些常用的，Python多线程，大概就这些比较合适。</p>
+<h2 id="Python多线程的几个基础用例"><a href="#Python多线程的几个基础用例" class="headerlink" title="Python多线程的几个基础用例"></a>Python多线程的几个基础用例</h2><p>说了那么多，最后还是加几个基础的用例，拿去举一反三，你们都是聪明人</p>
+<h3 id="基础的多线程框架"><a href="#基础的多线程框架" class="headerlink" title="基础的多线程框架"></a>基础的多线程框架</h3><p>这个基础的多线程框架包含的功能</p>
+<ol>
+<li>启动/停止线程</li>
+<li>展示线程的状态</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> threading</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line">exitFlag = <span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 利用继承的方法</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">myThread</span> <span class="params">(threading.Thread)</span>:</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, threadID, name, counter)</span>:</span></span><br><span class="line">        threading.Thread.__init__(self)</span><br><span class="line">        self.threadID = threadID</span><br><span class="line">        self.name = name</span><br><span class="line">        self.counter = counter</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">run</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">print</span> (<span class="string">"开始线程："</span> + self.name)</span><br><span class="line">        print_time(self.name, self.counter, <span class="number">5</span>)</span><br><span class="line">        <span class="keyword">print</span> (<span class="string">"退出线程："</span> + self.name)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">print_time</span><span class="params">(threadName, delay, counter)</span>:</span></span><br><span class="line">    <span class="keyword">while</span> counter:</span><br><span class="line">        <span class="keyword">if</span> exitFlag:</span><br><span class="line">            threadName.exit()</span><br><span class="line">        time.sleep(delay)</span><br><span class="line">        <span class="keyword">print</span> (<span class="string">"%s: %s"</span> % (threadName, time.ctime(time.time())))</span><br><span class="line">        counter -= <span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建新线程</span></span><br><span class="line">thread1 = myThread(<span class="number">1</span>, <span class="string">"Thread-1"</span>, <span class="number">1</span>)</span><br><span class="line">thread2 = myThread(<span class="number">2</span>, <span class="string">"Thread-2"</span>, <span class="number">2</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开启新线程</span></span><br><span class="line">thread1.start()</span><br><span class="line">thread2.start()</span><br><span class="line"></span><br><span class="line">thread1.join()</span><br><span class="line">thread2.join()</span><br><span class="line"><span class="keyword">print</span> (<span class="string">"退出主线程"</span>)</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="多线程的线程通信框架（利用队列）"><a href="#多线程的线程通信框架（利用队列）" class="headerlink" title="多线程的线程通信框架（利用队列）"></a>多线程的线程通信框架（利用队列）</h3><p>有些时候我们需要在线程之间交换信息和数据，所以多线程之间需要互相通信</p>
+<p>多线程的线程通信框架包含的功能</p>
+<ol>
+<li>利用队列共享数据（queue）</li>
+<li>创建一个生产者消费者模型，启动生产者，消费者线程</li>
+</ol>
+<p>这种框架同样适用于爬虫</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> threading</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">from</span> queue <span class="keyword">import</span> Queue</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">queue = Queue(<span class="number">20</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 生产者</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">Producer</span><span class="params">()</span>:</span></span><br><span class="line">    i = <span class="number">0</span></span><br><span class="line">    print(<span class="string">"开始线程"</span>)</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        i = i + <span class="number">1</span></span><br><span class="line">        print(<span class="string">"生产数据"</span>, i, <span class="string">"现有数据"</span>, queue.qsize())</span><br><span class="line">        time.sleep(<span class="number">1</span>)</span><br><span class="line">        queue.put(i)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 消费者</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">Consumer</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        i = queue.get()</span><br><span class="line">        time.sleep(<span class="number">0.5</span>)</span><br><span class="line">        print(<span class="string">"消费数据"</span>, i)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span><br><span class="line">    Th1 = threading.Thread(target=Producer, )</span><br><span class="line"></span><br><span class="line">    Th2 = threading.Thread(target=Consumer, )</span><br><span class="line"></span><br><span class="line">    Th2.start()</span><br><span class="line">    Th1.start()</span><br><span class="line"></span><br><span class="line">    Th1.join()</span><br><span class="line">    Th2.join()</span><br></pre></td></tr></table></figure>
+<p>大概就是这样，这个害挺简单的。</p>
+<h3 id="线程锁框架"><a href="#线程锁框架" class="headerlink" title="线程锁框架"></a>线程锁框架</h3><p>当需要修改共享数据的时候，多个线程会造成冲突，所以对执行的部分进行加锁很有必要，这里采用互斥锁逻辑</p>
+<p>线程池加锁框架大概实现的功能</p>
+<ol>
+<li>在程序中加锁，避免竞争冲突</li>
+</ol>
+<p>这部分代码我懒得写了，直接用了<br><a href="https://www.cnblogs.com/tashanzhishi/p/10775641.html" target="_blank" rel="noopener">https://www.cnblogs.com/tashanzhishi/p/10775641.html</a></p>
+<p>这位老兄的代码写的很好，看一遍就懂了，感恩!</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> threading</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line">count = <span class="number">0</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 做一个累加的函数</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">add_num</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">global</span> count</span><br><span class="line">    <span class="keyword">if</span> lock.acquire():  <span class="comment"># 获得锁，并返回True</span></span><br><span class="line">        tmp = count</span><br><span class="line">        time.sleep(<span class="number">0.001</span>)</span><br><span class="line">        count = tmp + <span class="number">1</span></span><br><span class="line">        lock.release()  <span class="comment"># 执行完释放锁</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">run</span><span class="params">(add_fun)</span>:</span></span><br><span class="line">    <span class="keyword">global</span> count</span><br><span class="line">    thread_list = []</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 累加100次</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">100</span>):</span><br><span class="line">        t = threading.Thread(target=add_fun)</span><br><span class="line">        t.start()</span><br><span class="line">        thread_list.append(t)  </span><br><span class="line"></span><br><span class="line">    <span class="comment"># 等待线程执行完</span></span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> thread_list:</span><br><span class="line">        j.join()</span><br><span class="line"></span><br><span class="line">    print(count)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line">    <span class="comment"># 添加全局锁</span></span><br><span class="line">    lock = threading.Lock()</span><br><span class="line">    <span class="comment"># 执行函数</span></span><br><span class="line">    run(add_num)</span><br></pre></td></tr></table></figure>
+
+<h3 id="线程池框架"><a href="#线程池框架" class="headerlink" title="线程池框架"></a>线程池框架</h3><p>线程池相当于冰箱里的啤酒</p>
+<p>你只要想喝打开冰箱拿就行</p>
+<p>你不喝人家也不会跑</p>
+<p>就在冰箱里，不吵不闹</p>
+<p>等待你的下一次临幸</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> socket <span class="keyword">import</span> AF_INET, SOCK_STREAM, socket</span><br><span class="line"><span class="keyword">from</span> concurrent.futures <span class="keyword">import</span> ThreadPoolExecutor</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 假装跑一个服务器client</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">echo_client</span><span class="params">(sock, client_addr)</span>:</span></span><br><span class="line">    <span class="string">'''</span></span><br><span class="line"><span class="string">    Handle a client connection</span></span><br><span class="line"><span class="string">    '''</span></span><br><span class="line">    print(<span class="string">'Got connection from'</span>, client_addr)</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        msg = sock.recv(<span class="number">65536</span>)</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> msg:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        sock.sendall(msg)</span><br><span class="line">    print(<span class="string">'Client closed connection'</span>)</span><br><span class="line">    sock.close()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 假装跑一个server</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">echo_server</span><span class="params">(addr)</span>:</span></span><br><span class="line">    <span class="comment"># 定义一个线程池</span></span><br><span class="line">    pool = ThreadPoolExecutor(<span class="number">128</span>)</span><br><span class="line">    sock = socket(AF_INET, SOCK_STREAM)</span><br><span class="line">    sock.bind(addr)</span><br><span class="line">    sock.listen(<span class="number">5</span>)</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        client_sock, client_addr = sock.accept()</span><br><span class="line">        <span class="comment"># 从池子里拿线程消费</span></span><br><span class="line">        pool.submit(echo_client, client_sock, client_addr)</span><br><span class="line"></span><br><span class="line">echo_server((<span class="string">''</span>,<span class="number">15000</span>))</span><br></pre></td></tr></table></figure>
+
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>线程这块，基本核心的东西都弄完了，其实梳理完，觉得还好，最起码我弄明白人家是干嘛的了，以后碰到任何线程的问题，我也不害怕了，这是12月第一篇blog，我要坚持三四个月，直到黎明的到来。</p>
+<p>end。</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2020/12/01/%E5%AE%8C%E5%85%A8%E6%90%9E%E6%87%82Python%E7%9A%84%E7%BA%BF%E7%A8%8B%E6%9C%BA%E5%88%B6/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/11/27/Golang%E7%9A%84%E5%B9%B6%E5%8F%91%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Golang的并发机制探究</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2020
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
