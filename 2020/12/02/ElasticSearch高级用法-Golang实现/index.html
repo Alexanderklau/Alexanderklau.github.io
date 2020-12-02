@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    ElasticSearch高级用法(Golang实现) |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-ElasticSearch高级用法-Golang实现" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  ElasticSearch高级用法(Golang实现)
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/12/02/ElasticSearch%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95-Golang%E5%AE%9E%E7%8E%B0/" class="article-date">
+  <time datetime="2020-12-02T06:38:21.000Z" itemprop="datePublished">2020-12-02</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">3.7k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">15 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>前阵子开发了一个检索服务器，用了一些Es的高阶功能，网上随便看了一圈，基本没有人公开这些功能的中文版，我寻思咱们不能只满足了自己，不满足其他老哥吧，所以，我将开发中用到的Es高阶功能总结输出.</p>
+<p>此次开发</p>
+<p>我用的是</p>
+<p>Golang 1.13.6 </p>
+<p>Es的版本是6.3.2，</p>
+<p>Package: “github.com/olivere/elastic”</p>
+<p>请注意。</p>
+<h2 id="定义Mapping模板"><a href="#定义Mapping模板" class="headerlink" title="定义Mapping模板"></a>定义Mapping模板</h2><p>首先，先展示一下我定义的mapping模板，这个模板是我们创建index之前定义的，这个十分重要！十分重要！十分重要！切记切记！</p>
+<p>首先我直接展示一下我的mapping定义，接下来我会一点点的说明每个参数的含义</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line">var Contentmapping = `&#123;</span><br><span class="line">	"settings": &#123;</span><br><span class="line">	  "number_of_shards": 5,</span><br><span class="line">	  "number_of_replicas": 1,</span><br><span class="line">	  "codec": "best_compression",</span><br><span class="line">	  "max_result_window": "100000000"</span><br><span class="line">	&#125;,</span><br><span class="line">	"mappings": &#123;</span><br><span class="line">	  "doc": &#123;</span><br><span class="line">		"properties": &#123;</span><br><span class="line">		  "name": &#123;</span><br><span class="line">			"type": "keyword"</span><br><span class="line">		  &#125;,</span><br><span class="line">		  "id": &#123;</span><br><span class="line">			"type": "keyword"</span><br><span class="line">		  &#125;,</span><br><span class="line">		  "data": &#123;</span><br><span class="line">			"type": "nested",</span><br><span class="line">			"properties": &#123;</span><br><span class="line">			  "value": &#123;</span><br><span class="line">				"type": "text",</span><br><span class="line">				"fields": &#123;</span><br><span class="line">				  "keyword": &#123;</span><br><span class="line">					"ignore_above": 256,</span><br><span class="line">					"type": "keyword"</span><br><span class="line">				  &#125;</span><br><span class="line">				&#125;</span><br><span class="line">			  &#125;,</span><br><span class="line">			  "key": &#123;</span><br><span class="line">				"type": "text",</span><br><span class="line">				"fields": &#123;</span><br><span class="line">				  "keyword": &#123;</span><br><span class="line">					"ignore_above": 256,</span><br><span class="line">					"type": "keyword"</span><br><span class="line">				  &#125;</span><br><span class="line">				&#125;</span><br><span class="line">			  &#125;</span><br><span class="line">			&#125;</span><br><span class="line">		  &#125;,</span><br><span class="line">		  "size": &#123;</span><br><span class="line">			"type": "long"</span><br><span class="line">		  &#125;,</span><br><span class="line">		  "last_mod_time": &#123;</span><br><span class="line">			"format": "yyyy-MM-dd HH:mm:ss",</span><br><span class="line">			"type": "date"</span><br><span class="line">		  &#125;,</span><br><span class="line">		  "user": &#123;</span><br><span class="line">			"type": "keyword"</span><br><span class="line">		  &#125;,</span><br><span class="line">		  "content": &#123;</span><br><span class="line">			"analyzer": "ik_smart",</span><br><span class="line">			"term_vector": "with_positions_offsets",</span><br><span class="line">			"type": "text"</span><br><span class="line">		  &#125;</span><br><span class="line">		&#125;</span><br><span class="line">	  &#125;</span><br><span class="line">	&#125;</span><br><span class="line">  &#125;`</span><br></pre></td></tr></table></figure>
+<p>mapping主字段，我定义了如下几个字段</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>字段说明</th>
+<th>字段mapping类型</th>
+<th>字段举例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>name</td>
+<td>姓名</td>
+<td>keyword</td>
+<td>YK_example</td>
+</tr>
+<tr>
+<td>id</td>
+<td>id</td>
+<td>keyword</td>
+<td>12345678</td>
+</tr>
+<tr>
+<td>user</td>
+<td>用户</td>
+<td>keyword</td>
+<td>YK</td>
+</tr>
+<tr>
+<td>content</td>
+<td>全文检索字段</td>
+<td>text</td>
+<td>中国123……</td>
+</tr>
+<tr>
+<td>size</td>
+<td>大小</td>
+<td>long</td>
+<td>14500</td>
+</tr>
+<tr>
+<td>data</td>
+<td>嵌套数据</td>
+<td>nested</td>
+<td>[{key:123,value:456}, {key:789,value:101112}</td>
+</tr>
+<tr>
+<td>last_mod_time</td>
+<td>最后修改时间</td>
+<td>date</td>
+<td>2020-12-02 12:00:00</td>
+</tr>
+</tbody></table>
+<p>这样是不是就说的很清楚了，下面我细致说一下mapping里面这种的设计方法吧</p>
+<ol>
+<li>首先是<strong>keyword</strong>类型，如果你的字段，有全检索的需求，也就是完全匹配的需求，你需要使用这个类型，但是keyword能完全检索的长度有限，也就是说，他只能完全匹配指定长度的数据，我查了一下，大概是2766个UTF-8字节数，所以超过这个数的将不会被检索到</li>
+<li>我这里面出现了<strong>ignore_above</strong>这个东西，这个东西是：最大可被检索字段 意思就是，当超过我定义的ignore_above的字符数的时候，多出来的将不会被检索到，这里是根据业务场景自己划分。</li>
+<li><strong>long</strong>类型，一般用来存储数字，这种情况，大部分都是存储文件大小之类的，一开始一定要用long定义，因为int类型大小超过100000会直接存不进去的。</li>
+<li><strong>text</strong>类型，这里一般都是存储那种特别大的文字数据的，比如你存了一个PDF进来，或者存了一本字典进来，就需要用text存储，text理论上支持存储无限大的文字数据。这里不想keyword，它不会被支持全文检索和精准匹配。需要定义分词器/在检索语句上下功夫</li>
+<li><strong>nested</strong>类型，这里一般是复杂嵌套，类似列表中包含字典的操作，[{key:123,value:456}，类似这样</li>
+<li><strong>date</strong>类型，这里一般是时间格式，你要自己格式化，”format”: “yyyy-MM-dd HH:mm:ss”,这种比对的就是：2020-12-02 12:00:00，如果你是2020-12-02 12:00:00:22，是肯定会导入失败的</li>
+</ol>
+<p>大概就是这些，包含的部分也就足够你一般使用了，还有一些mapping的高级用法，后面我会单独写博客分析，本篇内容不是这个，此处进行跳过了。</p>
+<h2 id="定义分词器"><a href="#定义分词器" class="headerlink" title="定义分词器"></a>定义分词器</h2><p>上面说了，分词器是做全文检索的时候必须要用的，分词器的功能就是<strong>能够让你对text字段进行检索</strong>，text字段是不可被全文检索的，因为它的大小不定，但是，用了分词器能让你进行全文检索，就像这样</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/es%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/1.jpg" alt></p>
+<p>所以，定义分词的的参数是</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">"content": &#123;</span><br><span class="line">			"analyzer": "ik_smart",</span><br><span class="line">			"term_vector": "with_positions_offsets",</span><br><span class="line">			"type": "text"</span><br><span class="line">		  &#125;</span><br></pre></td></tr></table></figure>
+<p>加一个analyzer参数，指定某个字段使用ik分词器，这里可以使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&quot;analyzer&quot;: &quot;ik_smart&quot;,</span><br></pre></td></tr></table></figure>
+
+<p>也可以使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&quot;analyzer&quot;: &quot;ik_max_word&quot;,</span><br></pre></td></tr></table></figure>
+<p>这里根据你的业务自己选择</p>
+<h2 id="定义最大展示条数"><a href="#定义最大展示条数" class="headerlink" title="定义最大展示条数"></a>定义最大展示条数</h2><p>一般ElasticSearch为了保证一次不拿取过多数据，会进行一个限制，限制最大不能读取10000条数据，但是我们有些时候因为一些特殊原因需要拿取超过10000条数据（翻页</p>
+<p>这时候有两种方法</p>
+<p>第一种直接通过Es的接口</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">PUT</span><br><span class="line">	_all/_settings</span><br><span class="line">	&#123;</span><br><span class="line">	<span class="attr">"index.max_result_window"</span>:<span class="number">200000</span></span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这种好处就是随时随地可以改</p>
+<p>第二种方法就是，定义mapping的时候，直接定义</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">"settings": &#123;</span><br><span class="line">	  "max_result_window": "100000000"</span><br><span class="line">	&#125;,</span><br></pre></td></tr></table></figure>
+
+<p>我个人还是比较喜欢第二种啦，因为事先定义好总比发现了问题再去调接口好一百倍。</p>
+<h2 id="根据模板创建index"><a href="#根据模板创建index" class="headerlink" title="根据模板创建index"></a>根据模板创建index</h2><p>mapping现在有了，咱们现在要做的就是，利用mapping创建一个index，涉及一些连接Es之类的，我在这就不说了，我以前写过一个Golang调用Es的接口，大家要不自己去瞅瞅？</p>
+<p><a href="https://yemilice.com/2020/05/14/golang%E5%B0%81%E8%A3%85elasticsearch%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/">https://yemilice.com/2020/05/14/golang%E5%B0%81%E8%A3%85elasticsearch%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/</a></p>
+<p>直接调用一把代码</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(Es *Elastic)</span> <span class="title">CreateIndex</span><span class="params">(index, mapping <span class="keyword">string</span>)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	<span class="comment">// 判断索引是否存在</span></span><br><span class="line">	exists, err := Es.Client.IndexExists(index).Do(context.Background())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">"&lt;CreateIndex&gt; some error occurred when check exists, index: %s, err:%s"</span>, index, err.Error())</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> exists &#123;</span><br><span class="line">		fmt.Printf(<span class="string">"&lt;CreateIndex&gt; index:&#123;%s&#125; is already exists"</span>, index)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 创建index</span></span><br><span class="line">	createIndex, err := Es.Client.CreateIndex(index).Body(mapping).Do(context.Background())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Printf(<span class="string">"&lt;CreateIndex&gt; some error occurred when create. index: %s, err:%s"</span>, index, err.Error())</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> !createIndex.Acknowledged &#123;</span><br><span class="line">		<span class="comment">// Not acknowledged</span></span><br><span class="line">		fmt.Printf(<span class="string">"&lt;CreateIndex&gt; Not acknowledged, index: %s"</span>, index)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 初始化连接Es</span></span><br><span class="line">	es, err := InitES()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 创建ES</span></span><br><span class="line">	es.CreateIndex(<span class="string">"text"</span>, Contentmapping)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后我们去查看我们的Es</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/es%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/2.jpg" alt></p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/es%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/3.jpg" alt></p>
+<p>就可以看到详细的信息了。大概就完成了</p>
+<h2 id="根据模板上传数据"><a href="#根据模板上传数据" class="headerlink" title="根据模板上传数据"></a>根据模板上传数据</h2><p>Golang有个很奇葩的地方，就是，你必须要按照规则传递数据，也就是事先定义好的结构体，如果你不按照这个规矩传，那你肯定是传不进去的，我这边模拟一个简单的数据传递逻辑吧，大家都是聪明孩子，肯定一点就通</p>
+<p>首先，观察一下咱们的mapping，定义一个结构体，用来传递数据/输出数据</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> ContentEsInfo <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name        <span class="keyword">string</span>     <span class="string">`json:"name"`</span></span><br><span class="line">	ID          <span class="keyword">string</span>     <span class="string">`json:"id"`</span></span><br><span class="line">	Size        <span class="keyword">uint64</span>     <span class="string">`json:"size"`</span></span><br><span class="line">	LastModTime <span class="keyword">string</span>     <span class="string">`json:"last_mod_time"`</span></span><br><span class="line">	User        <span class="keyword">string</span>     <span class="string">`json:"user"`</span></span><br><span class="line">	Data        []DataType <span class="string">`json:"data"`</span></span><br><span class="line">	Content     <span class="keyword">string</span>     <span class="string">`json:"content"`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> DataType <span class="keyword">struct</span> &#123;</span><br><span class="line">	Key   <span class="keyword">string</span> <span class="string">`json:"key"`</span></span><br><span class="line">	Value <span class="keyword">string</span> <span class="string">`json:"value" `</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Put 传入index名， typ，还有组合成的结构体</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(Es *Elastic)</span> <span class="title">Put</span><span class="params">(index <span class="keyword">string</span>, typ <span class="keyword">string</span>, bodyJSON <span class="keyword">interface</span>&#123;&#125;)</span> <span class="params">(<span class="keyword">bool</span>, error)</span></span> &#123;</span><br><span class="line">	_, err := Es.Client.Index().</span><br><span class="line">		Index(index).</span><br><span class="line">		Type(typ).</span><br><span class="line">		BodyJson(bodyJSON).</span><br><span class="line">		Do(context.Background())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="comment">// Handle error</span></span><br><span class="line">		fmt.Printf(<span class="string">"&lt;Put&gt; some error occurred when put.  err:%s"</span>, err.Error())</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span>, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	z := ContentEsInfo&#123;Name: <span class="string">"yk"</span>, ID: <span class="string">"ak47"</span>, Size: <span class="number">10423</span>, Data: []DataType&#123;&#123;Key: <span class="string">"1"</span>, Value: <span class="string">"2"</span>&#125;&#125;, User: <span class="string">"yk123"</span>, LastModTime: <span class="string">"2020-01-01 12:00:00"</span>, Content: <span class="string">"dssads"</span>&#125;</span><br><span class="line">	es.Put(<span class="string">"content_test"</span>, <span class="string">"doc"</span>, z)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>传完了咱们看一下Es，里面已经有数据了。</p>
+<p>如图：</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/es%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/4.jpg" alt></p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/es%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/5.jpg" alt></p>
+<h2 id="输出字段"><a href="#输出字段" class="headerlink" title="输出字段"></a>输出字段</h2><p>既然已经有字段了，我们现在要输出字段，看下检索结果，同理，你还是需要<strong>结构体</strong>，我告诉你，你就逃不开和结构体的孽缘，哈哈哈哈！</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> ContentEsInfo <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name        <span class="keyword">string</span>     <span class="string">`json:"name"`</span></span><br><span class="line">	ID          <span class="keyword">string</span>     <span class="string">`json:"id"`</span></span><br><span class="line">	Size        <span class="keyword">uint64</span>     <span class="string">`json:"size"`</span></span><br><span class="line">	LastModTime <span class="keyword">string</span>     <span class="string">`json:"last_mod_time"`</span></span><br><span class="line">	User        <span class="keyword">string</span>     <span class="string">`json:"user"`</span></span><br><span class="line">	Data        []DataType <span class="string">`json:"data"`</span></span><br><span class="line">	Content     <span class="keyword">string</span>     <span class="string">`json:"content"`</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//GetMsg 获取Msg</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(Es *Elastic)</span> <span class="title">GetMsg</span><span class="params">(indexname, typ <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> contentinfo ContentEsInfo</span><br><span class="line">	res, _ := Es.Client.Search(indexname).Type(typ).Do(context.Background())</span><br><span class="line">	<span class="comment">//从搜索结果中取数据的方法</span></span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> res.Each(reflect.TypeOf(contentinfo)) &#123;</span><br><span class="line">		<span class="keyword">if</span> t, ok := item.(ContentEsInfo); ok &#123;</span><br><span class="line">			fmt.Println(t)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	es, err := InitES()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	es.GetMsg(<span class="string">"content_test"</span>, <span class="string">"doc"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这边输出了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;yk ak47 10423 2020-01-01 12:00:00 yk123 [&#123;1 2&#125;] dssads&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="输出指定字段"><a href="#输出指定字段" class="headerlink" title="输出指定字段"></a>输出指定字段</h2><p>有些时候你不想显示太多字段？没问题，可以让Es返回的时候指定只显示某些字段。有些时候如果某个字段特别大，我们可以直接屏蔽它，让它不包装返回。</p>
+<p>假设我们要让<strong>content</strong>这个字段不返回</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ShieldAnotherfield 屏蔽指定字段</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(Es *Elastic)</span> <span class="title">ShieldAnotherfield</span><span class="params">(indexname, typ <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> contentinfo ContentEsInfo</span><br><span class="line">	<span class="comment">//指定返回的字段</span></span><br><span class="line">	fsc := elastic.NewFetchSourceContext(<span class="literal">true</span>).Include(<span class="string">"name"</span>, <span class="string">"type"</span>, <span class="string">"user"</span>, <span class="string">"size"</span>, <span class="string">"last_mod_time"</span>, <span class="string">"data"</span>)</span><br><span class="line">	res, _ := Es.Client.Search(indexname).Type(typ).FetchSourceContext(fsc).Do(context.Background())</span><br><span class="line">	<span class="comment">//从搜索结果中取数据的方法</span></span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> res.Each(reflect.TypeOf(contentinfo)) &#123;</span><br><span class="line">		<span class="keyword">if</span> t, ok := item.(ContentEsInfo); ok &#123;</span><br><span class="line">			fmt.Println(t)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	es, err := InitES()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	es.ShieldAnotherfield(<span class="string">"content_test"</span>, <span class="string">"doc"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以查看一下返回</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;yk  <span class="number">10423</span> <span class="number">2020</span><span class="number">-01</span><span class="number">-01</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> yk123 [&#123;<span class="number">1</span> <span class="number">2</span>&#125;] &#125;</span><br></pre></td></tr></table></figure>
+
+<p>和上面对比一下，是不是少了dsds那个字段，那个字段就是content，如果当content特别大的时候，它就相当有作用。</p>
+<h2 id="翻页的实现和优化"><a href="#翻页的实现和优化" class="headerlink" title="翻页的实现和优化"></a>翻页的实现和优化</h2><p>翻页，这是老生常谈的问题了，我的blog里面写过Es的翻页优化方法，其实很多人无脑推scroll动态翻页，这是不可取的，有些时候，你要根据自己的需求来定义翻页的逻辑，不能说别人用scroll，你就scroll，from+size也能满足一些不一样的需求。</p>
+<ol>
+<li>当你的翻页需要支持跳页，指定页数翻页，最前/最后翻页，随机跳页的时候，我建议你用from+size</li>
+<li>当你的翻页是动态的，例如下拉加载，例如往下滑持续加载，动态加载的时候，你要用scroll深度翻页，因为这个才是对你机器负载最低的一种翻页模式。</li>
+</ol>
+<p>好了，我们来实现翻页吧。</p>
+<p>我这里因为要支持随机跳页，所以我用了from+size的逻辑</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//FromSize 翻页方法</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(Es *Elastic)</span> <span class="title">FromSize</span><span class="params">(indexname, typ <span class="keyword">string</span>, size, from <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> contentinfo ContentEsInfo</span><br><span class="line">	res, _ := Es.Client.Search(indexname).Type(typ).Size(size).From(from).Do(context.Background())</span><br><span class="line">	<span class="comment">//从搜索结果中取数据的方法</span></span><br><span class="line">	<span class="keyword">for</span> _, item := <span class="keyword">range</span> res.Each(reflect.TypeOf(contentinfo)) &#123;</span><br><span class="line">		<span class="keyword">if</span> t, ok := item.(ContentEsInfo); ok &#123;</span><br><span class="line">			fmt.Println(t)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	es, err := InitES()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	es.FromSize(<span class="string">"content_test"</span>, <span class="string">"doc"</span>, <span class="number">10</span>, <span class="number">0</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里输出</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;yk ak47 <span class="number">10423</span> <span class="number">2020</span><span class="number">-01</span><span class="number">-01</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> yk123 [&#123;<span class="number">1</span> <span class="number">2</span>&#125;] dssads&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>这里的size，你可以理解为每页展示条数，</strong></p>
+<p><strong>而from，你可以理解为页数，</strong></p>
+<p>要注意，这是从0开始1计算的，类似列表，第一个下标为0，如果你将size改为1，那么将搜索不到数据，理由是：第11条数据不存在，因为我们的数据库只有1条数据（暂时</p>
+<h2 id="高亮检索关键字"><a href="#高亮检索关键字" class="headerlink" title="高亮检索关键字"></a>高亮检索关键字</h2><p>ElasticSearch支持高亮返回，回到刚刚咱们讨论的话题</p>
+<p>类似百度文库那样的搜索逻辑，如果检索到之后返回，高亮我们检索的值，这种一般怎么处理呢。</p>
+<p>这种其实Es也是支持的</p>
+<p>我们现在来一发检索</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//HighlightMsg 高亮方法</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(Es *Elastic)</span> <span class="title">HighlightMsg</span><span class="params">(indexname, typ <span class="keyword">string</span>, size, from <span class="keyword">int</span>, keyword <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">// var contentinfo ContentEsInfo</span></span><br><span class="line"></span><br><span class="line">	boolQ := elastic.NewBoolQuery()</span><br><span class="line">	boolZ := elastic.NewBoolQuery()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 定义highlight</span></span><br><span class="line">	highlight := elastic.NewHighlight()</span><br><span class="line">	<span class="comment">// 指定需要高亮的字段</span></span><br><span class="line">	highlight = highlight.Fields(elastic.NewHighlighterField(<span class="string">"content"</span>))</span><br><span class="line">	<span class="comment">// 指定高亮的返回逻辑 &lt;span style='color: red;'&gt;...msg...&lt;/span&gt;</span></span><br><span class="line">	highlight = highlight.PreTags(<span class="string">"&lt;span style='color: red;'&gt;"</span>).PostTags(<span class="string">"&lt;/span&gt;"</span>)</span><br><span class="line"></span><br><span class="line">	escontent := elastic.NewMatchQuery(<span class="string">"content"</span>, keyword)</span><br><span class="line">	boolZ.Filter(boolQ.Should(escontent))</span><br><span class="line"></span><br><span class="line">	res, _ := Es.Client.Search(indexname).Type(typ).Highlight(highlight).Query(boolZ).Do(context.Background())</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 高亮的输出和doc的输出不一样，这里要注意，我只输出了匹配到高亮的第一个词</span></span><br><span class="line">	<span class="keyword">for</span> _, highliter := <span class="keyword">range</span> res.Hits.Hits &#123;</span><br><span class="line">		fmt.Println(highliter.Highlight[<span class="string">"content"</span>][<span class="number">0</span>])</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	es, err := InitES()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 我们检索一下带有名气的doc，然后高亮输出</span></span><br><span class="line">	es.HighlightMsg(<span class="string">"content_test"</span>, <span class="string">"doc"</span>, <span class="number">10</span>, <span class="number">0</span>, <span class="string">"名气"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>看一下返回</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">那就当因为刘先&lt;span style='color: red;'&gt;名气&lt;/span&gt;太大，曹操不得不展现出极度的宽容吧，但是神奇的是后面的“周不疑之死”。</span><br></pre></td></tr></table></figure>
+
+<p>看到了没，“名气”这个词语被高亮输出了。</p>
+<h2 id="全文检索-精准度调整"><a href="#全文检索-精准度调整" class="headerlink" title="全文检索-精准度调整"></a>全文检索-精准度调整</h2><p>因为分词器的缘故，我们在检索词汇的时候，经常会搜索到一些不相干的词，例如</p>
+<p>我们搜索”今天是美好的一天”，我们想要的自然是匹配到 “今天是美好的一天” 的所有doc，但是分词器不会这么想，分词器会将这句话进行分词</p>
+<p>切分为：[今天，美好，一天，美好的，美好的一天]</p>
+<p>这样Es在检索的时候，就会把上面分词了的数据也检索到，意思就是，包含有“今天”，“美好”，“一天”。。。。之类的数据都可以被检索出来，这绝对不是我们想要的</p>
+<p>但是我们可以设定短句搜索，并且调整它的精准度</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Precisesearch 精准检索</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(Es *Elastic)</span> <span class="title">Precisesearch</span><span class="params">(indexname, typ <span class="keyword">string</span>, size, from <span class="keyword">int</span>, keyword <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">// var contentinfo ContentEsInfo</span></span><br><span class="line"></span><br><span class="line">	boolQ := elastic.NewBoolQuery()</span><br><span class="line">	boolZ := elastic.NewBoolQuery()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 定义highlight</span></span><br><span class="line">	highlight := elastic.NewHighlight()</span><br><span class="line">	<span class="comment">// 指定需要高亮的字段</span></span><br><span class="line">	highlight = highlight.Fields(elastic.NewHighlighterField(<span class="string">"content"</span>))</span><br><span class="line">	<span class="comment">// 指定高亮的返回逻辑 &lt;span style='color: red;'&gt;...msg...&lt;/span&gt;</span></span><br><span class="line">	highlight = highlight.PreTags(<span class="string">"&lt;span style='color: red;'&gt;"</span>).PostTags(<span class="string">"&lt;/span&gt;"</span>)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 短句匹配</span></span><br><span class="line">	escontent := elastic.NewMatchPhrasePrefixQuery(<span class="string">"content"</span>, keyword).MaxExpansions(<span class="number">10</span>)</span><br><span class="line"></span><br><span class="line">	boolZ.Filter(boolQ.Should(escontent))</span><br><span class="line"></span><br><span class="line">	res, _ := Es.Client.Search(indexname).Type(typ).Highlight(highlight).Query(boolZ).Do(context.Background())</span><br><span class="line">	<span class="keyword">for</span> _, highliter := <span class="keyword">range</span> res.Hits.Hits &#123;</span><br><span class="line">		fmt.Println(highliter.Highlight[<span class="string">"content"</span>][<span class="number">0</span>])</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	es, err := InitES()</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 搜个冷门词，ik里绝壁没有的</span></span><br><span class="line">	es.HighlightMsg(<span class="string">"content_test"</span>, <span class="string">"doc"</span>, <span class="number">10</span>, <span class="number">0</span>, <span class="string">"渔阳三檛"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>得到返回值</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">想想祢衡的类似表演（&lt;span style='color: red;'&gt;渔&lt;/span&gt;&lt;span style='color: red;'&gt;阳&lt;/span&gt;&lt;span style='color: red;'&gt;三&lt;/span&gt;&lt;span style='color: red;'&gt;檛&lt;/span&gt;），曹操都只能表示惹不起，恭送出许。那就当因为刘先名气太大，曹操不得不展现出极度的宽容吧，但是神奇的是后面的“周不疑之死”。</span><br></pre></td></tr></table></figure>
+<p>这就匹配到了，并且也不会出现乱匹配的问题了。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>大概也就这么多了，其实很多检索逻辑在我以前的blog里面都写过了</p>
+<p>再放送一遍：<a href="https://yemilice.com/2020/05/14/golang%E5%B0%81%E8%A3%85elasticsearch%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/">https://yemilice.com/2020/05/14/golang%E5%B0%81%E8%A3%85elasticsearch%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/</a></p>
+<p>这次用Es开发了一个文件检索服务器，作词作曲又是我自己，自认为在Es这个部分，我应该算是接触不少了吧，最近我在看Es源码，准备弄明白Es到底为什么检索那么快，下一篇不是Python三巨头就是Mysql vs Es，大家期待吧！</p>
+<p>年底了，希望大家都保重身体啊。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">翻看着年初自己许下的承诺</span><br><span class="line"></span><br><span class="line">到了如今却只有沉默</span><br><span class="line"></span><br><span class="line">告诉镜子里的他你已经不小了</span><br><span class="line"></span><br><span class="line">你该学会衡量什么是你想要的</span><br><span class="line"></span><br><span class="line">你可以无畏自由的向天空宣泄</span><br><span class="line"></span><br><span class="line">大喊着我要走自己的路</span><br><span class="line"></span><br><span class="line">check~</span><br></pre></td></tr></table></figure>
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2020/12/02/ElasticSearch%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95-Golang%E5%AE%9E%E7%8E%B0/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/12/01/%E5%AE%8C%E5%85%A8%E6%90%9E%E6%87%82Python%E7%9A%84%E7%BA%BF%E7%A8%8B%E6%9C%BA%E5%88%B6/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">完全搞懂Python的线程机制</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2020
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
