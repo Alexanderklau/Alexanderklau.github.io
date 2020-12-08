@@ -97,7 +97,9 @@
       
       <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>ElasticSearch当中，有许多的分词器供我们调用，中文用的最多的就是IK分词器，一些基本的词汇都包含了。</p>
 <p>但是，一些基本的生僻词就很难检索了，比如一些特定专业词汇，或者一些流行词汇之类的，所以这篇文章，我会讲一下自定义分词器词典的设置和扩展，让我们能够检索的词汇变的更多。如果能帮到你，我也会很开心！</p>
-<h2 id="分词器怎么分词的"><a href="#分词器怎么分词的" class="headerlink" title="分词器怎么分词的"></a>分词器怎么分词的</h2><p>首先要明白分词器分词的原理，这个我的blog以前说过，中文分词遵循的是最大匹配算法，Maximum，<a href="https://yemilice.com/2020/08/21/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/，可以参看一下这篇博客，说的很清楚了。">https://yemilice.com/2020/08/21/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/，可以参看一下这篇博客，说的很清楚了。</a></p>
+<h2 id="分词器怎么分词的"><a href="#分词器怎么分词的" class="headerlink" title="分词器怎么分词的"></a>分词器怎么分词的</h2><p>首先要明白分词器分词的原理，这个我的blog以前说过，中文分词遵循的是最大匹配算法，Maximum</p>
+<p><a href="https://yemilice.com/2020/08/21/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/">https://yemilice.com/2020/08/21/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/</a></p>
+<p>可以参看一下这篇博客，说的很清楚了。</p>
 <p>我们来举个简单的分词例子</p>
 <p>看下这个分词怎么分的：首先</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">GET http://10.0.9.28:9200/_analyze</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"analyzer"</span>: <span class="string">"ik_max_word"</span>,</span><br><span class="line">    <span class="string">"text"</span>: <span class="string">"年轻人不讲武德"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
