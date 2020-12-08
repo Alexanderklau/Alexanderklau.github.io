@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    ElasticSearch定义自己的分词器词典（检索生僻词） |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-ElasticSearch定义自己的分词器词典（检索生僻词）" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  ElasticSearch定义自己的分词器词典（检索生僻词）
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/12/08/ElasticSearch%E5%AE%9A%E4%B9%89%E8%87%AA%E5%B7%B1%E7%9A%84%E5%88%86%E8%AF%8D%E5%99%A8%E8%AF%8D%E5%85%B8%EF%BC%88%E6%A3%80%E7%B4%A2%E7%94%9F%E5%83%BB%E8%AF%8D%EF%BC%89/" class="article-date">
+  <time datetime="2020-12-08T07:20:23.000Z" itemprop="datePublished">2020-12-08</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">1.6k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">6 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>ElasticSearch当中，有许多的分词器供我们调用，中文用的最多的就是IK分词器，一些基本的词汇都包含了。</p>
+<p>但是，一些基本的生僻词就很难检索了，比如一些特定专业词汇，或者一些流行词汇之类的，所以这篇文章，我会讲一下自定义分词器词典的设置和扩展，让我们能够检索的词汇变的更多。如果能帮到你，我也会很开心！</p>
+<h2 id="分词器怎么分词的"><a href="#分词器怎么分词的" class="headerlink" title="分词器怎么分词的"></a>分词器怎么分词的</h2><p>首先要明白分词器分词的原理，这个我的blog以前说过，中文分词遵循的是最大匹配算法，Maximum，<a href="https://yemilice.com/2020/08/21/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/，可以参看一下这篇博客，说的很清楚了。">https://yemilice.com/2020/08/21/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/，可以参看一下这篇博客，说的很清楚了。</a></p>
+<p>我们来举个简单的分词例子</p>
+<p>看下这个分词怎么分的：首先</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">GET http://10.0.9.28:9200/_analyze</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"analyzer"</span>: <span class="string">"ik_max_word"</span>,</span><br><span class="line">    <span class="string">"text"</span>: <span class="string">"年轻人不讲武德"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>分词的结果是</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"tokens"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"年轻人"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 0,</span><br><span class="line">            <span class="string">"end_offset"</span>: 3,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_WORD"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 0</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"年轻"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 0,</span><br><span class="line">            <span class="string">"end_offset"</span>: 2,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_WORD"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 1</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"人"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 2,</span><br><span class="line">            <span class="string">"end_offset"</span>: 3,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_CHAR"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 2</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"不讲"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 3,</span><br><span class="line">            <span class="string">"end_offset"</span>: 5,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_WORD"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 3</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"讲武"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 4,</span><br><span class="line">            <span class="string">"end_offset"</span>: 6,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_WORD"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 4</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"武德"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 5,</span><br><span class="line">            <span class="string">"end_offset"</span>: 7,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_WORD"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 5</span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这就是最大粒度的分词结果</p>
+<p>举个例子，</p>
+<p>你搜 “武德”，这句话就能搜出来</p>
+<p>你搜 “年轻人”， 这句话也能搜出来</p>
+<p>但是你要搜 “人不”，你铁定毛都搜不出来</p>
+<p>为啥，因为这个没被分词儿，你肯定是什么都搜不到的。</p>
+<p>我估摸着，你没弄明白我说的啥意思？你那么聪明，智慧，美丽，大方，你肯定能懂吧。</p>
+<p>咱们拿生僻词举个例子</p>
+<p>假设，我现在搜 “意带利黑手哥”</p>
+<p>让我们和他比划比划</p>
+<p>让你比划比划，让你知道什么叫黑手！</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/es_fenci/4.jpg" alt></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">GET http://10.0.9.28:9200/_analyze</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"analyzer"</span>: <span class="string">"ik_max_word"</span>,</span><br><span class="line">    <span class="string">"text"</span>: <span class="string">"意带利黑手哥"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>分词出的结果就是</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"tokens"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"意"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 0,</span><br><span class="line">            <span class="string">"end_offset"</span>: 1,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_CHAR"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 0</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"带"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 1,</span><br><span class="line">            <span class="string">"end_offset"</span>: 2,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_CHAR"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 1</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"利"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 2,</span><br><span class="line">            <span class="string">"end_offset"</span>: 3,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_CHAR"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 2</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"黑手"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 3,</span><br><span class="line">            <span class="string">"end_offset"</span>: 5,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_WORD"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 3</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"哥"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 5,</span><br><span class="line">            <span class="string">"end_offset"</span>: 6,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_CHAR"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 4</span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>所以你搜 “意带利”,或者 “意带利黑手哥” 是肯定没这几个词儿的。</p>
+<p>那就不能和他比划了。</p>
+<p>但是我们就是要这个词可以被检索</p>
+<p>那么我们现在该怎么做呢？</p>
+<h2 id="分词器词汇的扩展"><a href="#分词器词汇的扩展" class="headerlink" title="分词器词汇的扩展"></a>分词器词汇的扩展</h2><p>百度，谷歌每天都会更新热点词汇，像 “意带利黑手”，“三日杀神”这样的人物，早就存在词库里面了。</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/es_fenci/5.jpg" alt></p>
+<p>当然，我ElasticSearch作为数一数二的检索引擎，能没这功能吗，其实也是有的</p>
+<p>一般我们如果要定义自己的词典，首先就要去修改ik的配置</p>
+<p>ik的配置一般放置在</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/etc/elasticsearch/analysis-ik</span><br></pre></td></tr></table></figure>
+
+<p>这下面有个文件叫做 <strong>IKAnalyzer.cfg.xml</strong></p>
+<p>打开它</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span></span><br><span class="line"><span class="meta">&lt;!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd"&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">properties</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">comment</span>&gt;</span>IK Analyzer 扩展配置<span class="tag">&lt;/<span class="name">comment</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!--用户可以在这里配置自己的扩展字典 --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">entry</span> <span class="attr">key</span>=<span class="string">"ext_dict"</span>&gt;</span><span class="tag">&lt;/<span class="name">entry</span>&gt;</span></span><br><span class="line">         <span class="comment">&lt;!--用户可以在这里配置自己的扩展停止词字典--&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">entry</span> <span class="attr">key</span>=<span class="string">"ext_stopwords"</span>&gt;</span><span class="tag">&lt;/<span class="name">entry</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!--用户可以在这里配置远程扩展字典 --&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- &lt;entry key="remote_ext_dict"&gt;words_location&lt;/entry&gt; --&gt;</span></span><br><span class="line">        <span class="comment">&lt;!--用户可以在这里配置远程扩展停止词字典--&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- &lt;entry key="remote_ext_stopwords"&gt;words_location&lt;/entry&gt; --&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">properties</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>这注释，很清楚啊，我想。。大家不需要我再解释参数了吧。</p>
+<p>如何定义扩展字典？</p>
+<p>首先看一下目录下面的几个文件</p>
+<ul>
+<li>IKAnalyzer.cfg.xml：用来配置自定义词库</li>
+<li>main.dic：ik 原生内置的中文词库，总共有 27 万多条</li>
+<li>quantifier.dic：放了一些单位相关的词</li>
+<li>suffix.dic：放了一些后缀</li>
+<li>surname.dic：中国的姓氏</li>
+<li>stopword.dic：英文停用词</li>
+</ul>
+<p>这里可以看到，我们有两个方法去增加扩展词</p>
+<p>一个是直接修改main.dic，进行词汇追加，另外一个就是重新写入一个dic文件，直接在IKAnalyzer.cfg.xml里面进行修改。这两种方法都介绍一下吧。</p>
+<h3 id="追加词汇"><a href="#追加词汇" class="headerlink" title="追加词汇"></a>追加词汇</h3><p>直接在main.dic里面追加词汇 “意带利黑手”</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/es_fenci/1.jpg" alt></p>
+<p>然后重启ElasticSearch</p>
+<p>再进行一次检索</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">GET http://10.0.9.28:9200/_analyze</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"analyzer"</span>: <span class="string">"ik_max_word"</span>,</span><br><span class="line">    <span class="string">"text"</span>: <span class="string">"意带利黑手"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>返回如下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"tokens"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"意带利黑手"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 0,</span><br><span class="line">            <span class="string">"end_offset"</span>: 5,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_WORD"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 0</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"黑手"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 3,</span><br><span class="line">            <span class="string">"end_offset"</span>: 5,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_WORD"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 1</span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这下就能搜到了。</p>
+<h3 id="新建字典"><a href="#新建字典" class="headerlink" title="新建字典"></a>新建字典</h3><p>首先，我们在/etc/elasticsearch/analysis-ik里面建个字典，名字叫 new.dic</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/es_fenci/2.jpg" alt></p>
+<p>在里面写入我们要检索的词</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/es_fenci/3.jpg" alt></p>
+<p>然后修改配置</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span></span><br><span class="line"><span class="meta">&lt;!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd"&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">properties</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">comment</span>&gt;</span>IK Analyzer 扩展配置<span class="tag">&lt;/<span class="name">comment</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!--用户可以在这里配置自己的扩展字典 --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">entry</span> <span class="attr">key</span>=<span class="string">"ext_dict"</span>&gt;</span>./new.dic<span class="tag">&lt;/<span class="name">entry</span>&gt;</span></span><br><span class="line">         <span class="comment">&lt;!--用户可以在这里配置自己的扩展停止词字典--&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">entry</span> <span class="attr">key</span>=<span class="string">"ext_stopwords"</span>&gt;</span><span class="tag">&lt;/<span class="name">entry</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!--用户可以在这里配置远程扩展字典 --&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- &lt;entry key="remote_ext_dict"&gt;words_location&lt;/entry&gt; --&gt;</span></span><br><span class="line">        <span class="comment">&lt;!--用户可以在这里配置远程扩展停止词字典--&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- &lt;entry key="remote_ext_stopwords"&gt;words_location&lt;/entry&gt; --&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">properties</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>重启elasticsearch</p>
+<p>然后继续检索</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">GET http://10.0.9.28:9200/_analyze</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"analyzer"</span>: <span class="string">"ik_max_word"</span>,</span><br><span class="line">    <span class="string">"text"</span>: <span class="string">"意带利黑手"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>返回如下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"tokens"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"意带利黑手"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 0,</span><br><span class="line">            <span class="string">"end_offset"</span>: 5,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_WORD"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 0</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">"token"</span>: <span class="string">"黑手"</span>,</span><br><span class="line">            <span class="string">"start_offset"</span>: 3,</span><br><span class="line">            <span class="string">"end_offset"</span>: 5,</span><br><span class="line">            <span class="string">"type"</span>: <span class="string">"CN_WORD"</span>,</span><br><span class="line">            <span class="string">"position"</span>: 1</span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这就能和黑手哥比划比划了。</p>
+<p>扩展字典的逻辑，大概就是这样。</p>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>这两天在做智能检索，自己的ElasticSearch还是要多补补啊，最近成都疫情又变严重了，sad，要老老实实在家待一阵好好学习了。</p>
+<p>希望能够帮到大家，希望大家多提意见，多和我比划比划。</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/es_fenci/6.jpg" alt></p>
+<p>年底了，大家要快乐呀！</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2020/12/08/ElasticSearch%E5%AE%9A%E4%B9%89%E8%87%AA%E5%B7%B1%E7%9A%84%E5%88%86%E8%AF%8D%E5%99%A8%E8%AF%8D%E5%85%B8%EF%BC%88%E6%A3%80%E7%B4%A2%E7%94%9F%E5%83%BB%E8%AF%8D%EF%BC%89/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2020/12/02/ElasticSearch%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95(Golang%E5%AE%9E%E7%8E%B0)/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">ElasticSearch高级用法(Golang实现)</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2020
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
