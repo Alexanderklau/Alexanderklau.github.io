@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    Golang进阶-必须知道的一些事 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-Golang进阶-必须知道的一些事" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Golang进阶-必须知道的一些事
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/03/19/Golang%E8%BF%9B%E9%98%B6-%E5%BF%85%E9%A1%BB%E7%9F%A5%E9%81%93%E7%9A%84%E4%B8%80%E4%BA%9B%E4%BA%8B/" class="article-date">
+  <time datetime="2021-03-19T08:46:16.000Z" itemprop="datePublished">2021-03-19</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.6k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">9 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>最近感觉自己又陷入了无尽的自我循环和自我否定，不知道自己到底是怎么了</p>
+<p>我，出生于忧患之中，但是告诫自己，不能死于安乐。</p>
+<p>这篇文章是收集的一些Golang进阶的知识，作为我自己更上一层楼的笔记，也希望可以帮助大家</p>
+<p>未来将会持续性输出面试之类的八股文和算法之类的笔记，因为我感觉自己需要时间去沉淀</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">怀才不遇只是欺骗自己的安慰剂</span><br><span class="line"></span><br><span class="line">胸无点墨想学太白一字千金？</span><br><span class="line"></span><br><span class="line">泛舟池上不如随风远去</span><br><span class="line"></span><br><span class="line">人生不止生命不息</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="Golang进阶需要知道的知识"><a href="#Golang进阶需要知道的知识" class="headerlink" title="Golang进阶需要知道的知识"></a>Golang进阶需要知道的知识</h2><h3 id="理解Golang垃圾回收"><a href="#理解Golang垃圾回收" class="headerlink" title="理解Golang垃圾回收"></a>理解Golang垃圾回收</h3><p>垃圾回收，一般简称GC，你理解为，释放不需要的资源就行</p>
+<p>GC的核心机制，就是后台维护一个守护线程，监控对象状态，识别不需要的对象，释放资源</p>
+<p>Golang的垃圾回收机制进行了多次演变</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">1. v1.0 — 完全串行的标记和清除过程，需要暂停整个程序</span><br><span class="line"></span><br><span class="line">2. v1.1 — 在多核主机并行执行垃圾收集的标记和清除阶段</span><br><span class="line"></span><br><span class="line">3. v1.3 — 运行时基于只有指针类型的值包含指针的假设增加了对栈内存的精确扫描支持，实现了真正精确的垃圾收集</span><br><span class="line"></span><br><span class="line">4. v1.5 — 实现了基于三色标记清扫的并发垃圾收集器,大幅度降低垃圾收集的延迟从几百 ms 降低至 10ms 以下</span><br><span class="line"></span><br><span class="line">5. v1.6 — 实现了去中心化的垃圾收集协调器；基于显式的状态机使得任意 Goroutine 都能触发垃圾收集的状态迁移</span><br><span class="line"></span><br><span class="line">6. v1.7 — 通过并行栈收缩将垃圾收集的时间缩短至 2ms 以内</span><br><span class="line"></span><br><span class="line">7. v1.8 — 使用混合写屏障将垃圾收集的时间缩短至 0.5ms 以内</span><br><span class="line"></span><br><span class="line">8. v1.9 — 彻底移除暂停程序的重新扫描栈的过程</span><br><span class="line"></span><br><span class="line">9. v1.10 — 更新了垃圾收集调频器（Pacer）的实现，分离软硬堆大小的目标</span><br><span class="line"></span><br><span class="line">10. v1.12 — 使用新的标记终止算法简化垃圾收集器的几个阶段</span><br><span class="line"></span><br><span class="line">11. v1.13 — 通过新的 Scavenger 解决瞬时内存占用过高的应用程序向操作系统归还内存的问题</span><br><span class="line"></span><br><span class="line">12. v1.14 — 使用全新的页分配器优化内存分配的速度</span><br></pre></td></tr></table></figure>
+
+<p><strong>2021年</strong>，Golang的垃圾回收机制是<strong>三色标记法</strong>搭配<strong>辅助GC</strong>还有<strong>写屏障</strong></p>
+<p>三色标记法是<strong>标记-清除法</strong>的一个增强版本</p>
+<p>那么，什么是标记清除法呢</p>
+<p>简单的说下</p>
+<p><strong>标记-清除法的基础原理</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">就是，先停止服务运行，被引用的对象打上标记</span><br><span class="line"></span><br><span class="line">没打上标记的对象就直接清除，也就是回收资源，然后恢复程序运行。</span><br></pre></td></tr></table></figure>
+
+<p>说白了，就是先给你停止任务，正在引用的对象被打个标签，告诉GC，这个是我的人，我罩着的，你不能动，其他的我都用过了，随便你干掉吧，GC才会去清除未引用的标记。</p>
+<p>那么<strong>三色标记法</strong>的原理呢？</p>
+<p>首先，三色，是哪三色，是<strong>白色</strong>，<strong>灰色</strong>，<strong>黑色</strong></p>
+<p>这三个分别代表三种不同的标识状态</p>
+<p>白色代表可回收，灰色代表被黑色引用，黑色代表被程序引用</p>
+<p>感觉有点绕，这边简单的出个示意图吧</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">main(主程)</span><br><span class="line">| |</span><br><span class="line">---------------------</span><br><span class="line">A B C D E F G</span><br><span class="line">---------------------</span><br><span class="line">  |-----|</span><br><span class="line">  包含引用</span><br></pre></td></tr></table></figure>
+
+<p>现在我们有个栈，主main引用了A，B两个元素，但是B同时引用了E这个元素，根据三色标记法，三色标记的情况如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">A B  标记的黑色对象</span><br><span class="line">---</span><br><span class="line">-</span><br><span class="line">E    标记的灰色对象</span><br><span class="line">-</span><br><span class="line">-------</span><br><span class="line">C D F G  标记的白色对象</span><br><span class="line">-------</span><br></pre></td></tr></table></figure>
+
+<p>所以三色标记法GC的步骤是</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">1. 扫描全局数据和当前的栈区域，标记引用的对象（A，B）黑色对象</span><br><span class="line">2. 扫描引用的对象，(E) 标记灰色对象</span><br><span class="line">3. 其他的全打入白色对象（C D F G）</span><br><span class="line">4. 重复步骤2，直到灰色对象为空，清空所有白色对象</span><br></pre></td></tr></table></figure>
+
+<p><strong>写屏障</strong>，简单点说，就是GC开始的时候，有一个记录器，名字叫屏障，第一次运行的时候，它会扫描各个对象的状态，第二次扫描时，会拿出来和第一次扫描的结果进行比对，也就是三色法那个记录灰色的步骤，标记被引用对象为灰色，防止丢失。</p>
+<p><strong>辅助GC</strong>，如果GC回收的速度过慢，赶不上程序分配对象的速度，那么这边就会暂时停止分配对象，然后将用户线程抢过来执行GC，其实整个程序现在就是停止的状态，这就是辅助GC</p>
+<p>讲了原理，那么我们什么时候去触发GC呢？</p>
+<ol>
+<li>达到内存阈值，阈值是由一个gcpercent的变量控制的,当新分配的内存占已在使用中的内存的比例超过gcprecent时就会触发</li>
+<li>达到定时时间，如果上面的内存阈值一直达不到，那就默认2min触发一次GC。</li>
+<li>手动触发GC，runtime.GC()等</li>
+</ol>
+<h3 id="理解Golang的内存分配"><a href="#理解Golang的内存分配" class="headerlink" title="理解Golang的内存分配"></a>理解Golang的内存分配</h3><p>首先，什么是内存分配</p>
+<p><strong>内存分配的地位？</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">内存分配和垃圾回收是Golang内存管理的核心双子</span><br></pre></td></tr></table></figure>
+
+<p><strong>内存分配主要解决什么问题？</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">主要解决协程,对象的内存分配问题</span><br></pre></td></tr></table></figure>
+
+<p><strong>Golang内存分配的算法是？主要的思想是什么？</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">TCMalloc算法，全程：Thread-Caching Malloc，中文翻译：线程缓存分配</span><br><span class="line"></span><br><span class="line">核心的思想就是内存分为多级管理，也就是根据多级缓存，将对象大小分类，根据类别实行不同的分配策略。</span><br><span class="line"></span><br><span class="line">每个线程维护独立的内存池，进行内存分配时，首先从独立的内存池申请内存，不足时，才向全局申请内存，避免恶意竞争</span><br></pre></td></tr></table></figure>
+
+<p><strong>对象大小有哪几种分类方法？</strong></p>
+<ol>
+<li>微对象 （0， 168b）</li>
+<li>小对象  (16b， 32KB)</li>
+<li>大对象  (32KB，无限大)</li>
+</ol>
+<p><strong>多级缓存是什么</strong></p>
+<p>看下这张图</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/golang%E8%BF%9B%E9%98%B6/1.jpg" alt></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">首先看下这个图，这个图里面有三个组件：</span><br><span class="line"></span><br><span class="line">1. 线程缓存（Thread Cache）</span><br><span class="line">2. 中心缓存（Central Cache）</span><br><span class="line">3. 页堆（Page Heap），</span><br><span class="line"></span><br><span class="line">这三个组件的作用分别是</span><br><span class="line"></span><br><span class="line">线程缓存: 线程缓存和线程上的处理器一一绑定，主要用来缓存用户程序申请的微小对象。</span><br><span class="line"></span><br><span class="line">中心缓存：Golang内存分配的中心缓存，访问需要互斥锁，主要是用来管理跨度内存管理单元。</span><br><span class="line"></span><br><span class="line">页堆：内存分配的核心结构体，Golang会将其作为全局变量存储，是一个全局的缓存列表。</span><br><span class="line"></span><br><span class="line">下面来理解多级：</span><br><span class="line"></span><br><span class="line">多级，理解为多层级，每个线程都有一个独立的池，所以不需要进行竞争</span><br><span class="line"></span><br><span class="line">也就不需要互斥锁进行保护，能够较少抢锁带来的损耗</span><br><span class="line"></span><br><span class="line">当自带的缓存不足时，会直接调用中心缓存解决对象的内存分配</span><br><span class="line"></span><br><span class="line">如果是大对象，将会被直接进行分配（页堆分配）</span><br></pre></td></tr></table></figure>
+
+<p><strong>分配小对象的步骤</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">1. 确定分配对象的大小</span><br><span class="line">2. 从线程缓存获取空闲的内存空间</span><br><span class="line">3. 假设线程缓存空闲不足，从中心缓存获取</span><br><span class="line">4. 清除空闲内存（调用runtime.memclrNoHeapPointers）</span><br></pre></td></tr></table></figure>
+
+<p><strong>分配大对象的步骤</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1. 获取对象大小，检测对象大小</span><br><span class="line">2. 大于32KB，直接调用（runtime.mcache.allocLarge）分配大内存</span><br></pre></td></tr></table></figure>
+
+<h3 id="理解Golang的runtime"><a href="#理解Golang的runtime" class="headerlink" title="理解Golang的runtime"></a>理解Golang的runtime</h3><p><strong>runtime是什么东西？</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">理解为Golang的基础设施</span><br><span class="line"></span><br><span class="line">是一个Golang的内置库</span><br><span class="line"></span><br><span class="line">主要就是调度协程，内存分配，GC等一系列基础操作</span><br><span class="line"></span><br><span class="line">也是管理goroutine的调度程序</span><br><span class="line"></span><br><span class="line">可以理解Golang运行时候系统交互的操作。</span><br></pre></td></tr></table></figure>
+
+<p><strong>详细一点，runtime主要有什么功能</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">1. GC() 垃圾回收</span><br><span class="line">2. GOMAXPROCS(n) 控制最大CPU</span><br><span class="line">3. Goexit() 终止调用并且退出</span><br><span class="line">4. Gosched() 让出CPU，让其他协程运行，接力协程</span><br><span class="line">5. NumGoroutine：返回正在执行和排队的任务总数</span><br><span class="line">6. NumCPU：返回当前系统的 CPU 核数量</span><br></pre></td></tr></table></figure>
+
+<h3 id="理解goroutine泄漏"><a href="#理解goroutine泄漏" class="headerlink" title="理解goroutine泄漏"></a>理解goroutine泄漏</h3><p><strong>goroutine泄漏是什么？</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">结束goroutine有如下几种方法</span><br><span class="line"></span><br><span class="line">1. goroutine完成任务退出</span><br><span class="line">2. 遇到错误</span><br><span class="line">3. 通过信号的方式停止</span><br><span class="line"></span><br><span class="line">如果不是通过这三种方式结束的goroutine</span><br><span class="line"></span><br><span class="line">那就导致goroutine不会正常退出</span><br><span class="line"></span><br><span class="line">然后不断的增长，不会释放，占用过多资源</span><br><span class="line"></span><br><span class="line">这就叫goroutine的内存泄漏</span><br></pre></td></tr></table></figure>
+
+<p><strong>举几个goroutine内存泄漏的例子</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">一般goroutine调度不当，才会出现内存泄漏</span><br><span class="line"></span><br><span class="line">一般有如下几个原因可能造成goroutine泄漏</span><br><span class="line"></span><br><span class="line">1. 死循环</span><br><span class="line">2. channel机制-持续发送，但不接收</span><br><span class="line">3. channel机制-持续接收，但不发送(空channel)</span><br><span class="line">4. channel机制-缓冲区已满，持续发送</span><br></pre></td></tr></table></figure>
+
+<p><strong>防治goroutine内存泄漏的几个方法</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">1. 信号控制goroutine，当创建goroutine的时候就要想着结束goroutine</span><br><span class="line"></span><br><span class="line">2. 使用channel的时候，最好不要用无限缓存，规定一个缓存数量</span><br><span class="line"></span><br><span class="line">3. 避免死循环操作</span><br></pre></td></tr></table></figure>
+
+<p><strong>如何检查goroutine内存泄漏</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go pprof， 这个可以看一下我原来的blog</span><br></pre></td></tr></table></figure>
+
+<p>链接在这里</p>
+<p><a href="https://yemilice.com/2020/08/17/%E4%B8%80%E6%AC%A1golang%E6%9C%8D%E5%8A%A1%E5%8D%A0%E7%94%A8cpu%E8%BF%87%E5%A4%A7%E7%9A%84%E6%8E%92%E6%9F%A5%E7%BB%8F%E8%BF%87/">一次Golang服务占用CPU过大的排查经过</a></p>
+<h3 id="Golang的一些常用标准库"><a href="#Golang的一些常用标准库" class="headerlink" title="Golang的一些常用标准库"></a>Golang的一些常用标准库</h3><p><strong>os</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">操作系统功能的相关接口</span><br><span class="line"></span><br><span class="line">例如Open, Create, Mkdir, Remove</span><br></pre></td></tr></table></figure>
+
+<p><strong>time</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">时间相关处理</span><br><span class="line"></span><br><span class="line">例如 time.Sleep(time.Second * 1)</span><br></pre></td></tr></table></figure>
+
+<p><strong>fmt</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">格式化操作</span><br><span class="line"></span><br><span class="line">例如 fmt.Println(&quot;12&quot;)</span><br></pre></td></tr></table></figure>
+
+<p><strong>strconv</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">提供字符串与基本数据类型互转的能力</span><br></pre></td></tr></table></figure>
+
+<p><strong>string</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">处理字符串的一些函数集合，包括合并、查找、分割、比较、后缀检查、索引、大小写处理等等。</span><br></pre></td></tr></table></figure>
+
+<p><strong>http</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">提供web服务</span><br></pre></td></tr></table></figure>
+
+<p><strong>context</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">上下文操作，我blog里有</span><br></pre></td></tr></table></figure>
+
+<p><strong>sync</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">提供了基本的同步原语。在多个goroutine访问共享资源的时候，需要使用sync中提供的锁机制。</span><br></pre></td></tr></table></figure>
+
+<h3 id="Golang的package包管理"><a href="#Golang的package包管理" class="headerlink" title="Golang的package包管理"></a>Golang的package包管理</h3><p><strong>Go modules管理</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">1. go.mod 文件，它与 package.json 或 Pipfile 文件的功能类似。</span><br><span class="line">2. 机器生成的传递依赖项描述文件 ： go.sum。</span><br><span class="line">3. 不再有 GOPATH 限制。模块可以位于任何路径中。</span><br></pre></td></tr></table></figure>
+
+<h3 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h3>
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2021/03/19/Golang%E8%BF%9B%E9%98%B6-%E5%BF%85%E9%A1%BB%E7%9F%A5%E9%81%93%E7%9A%84%E4%B8%80%E4%BA%9B%E4%BA%8B/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/03/03/%E8%AF%BB%E8%AF%97%E7%9A%84%E6%84%9F%E6%82%9F/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">读诗的感悟</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
