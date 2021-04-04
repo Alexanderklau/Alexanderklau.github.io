@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    学习etcd核心机制Raft协议的一点随想 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-学习etcd核心机制raft协议的一点随想" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  学习etcd核心机制Raft协议的一点随想
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/04/04/%E5%AD%A6%E4%B9%A0etcd%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6raft%E5%8D%8F%E8%AE%AE%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/" class="article-date">
+  <time datetime="2021-04-04T06:50:25.000Z" itemprop="datePublished">2021-04-04</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">3.5k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">12 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>最近开始学习k8s相关的东西，不可避免的和etcd搭上了交道，说来使用etcd的日子也不短了</p>
+<p>中途开源过Python和Golang的etcd的api，代码在github上，公布一下</p>
+<p>Golang的代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://github.com/Alexanderklau/Go_poject/tree/master/Go-Etcd</span><br></pre></td></tr></table></figure>
+
+<p>我只能说我会用，但是，会用是远远不够的，所以，这几天看了一些书和博客，将etcd相关的一些重要的知识点进行梳理总结，并且整理输出</p>
+<p>作为自己的笔记，希望可以帮到大家。</p>
+<p>感谢 《etcd技术内幕》的作者！您的书给了我很大的启发，也推荐大家去看看！</p>
+<h2 id="etcd到底是什么"><a href="#etcd到底是什么" class="headerlink" title="etcd到底是什么"></a>etcd到底是什么</h2><p>是一个<strong>分布式</strong>的<strong>KV存储</strong>数据库，通过<strong>raft算法</strong>保持数据的一致性。</p>
+<p>通常，我们会把etcd作为分布式系统的<strong>数据共享</strong>，或者是<strong>服务发现</strong>，<strong>服务注册</strong>等。</p>
+<h3 id="什么是服务发现？"><a href="#什么是服务发现？" class="headerlink" title="什么是服务发现？"></a>什么是服务发现？</h3><p>当我们开发到后期，一个系统中包含的模块和服务越来越多，所以对需要对系统进行拆分，现在流行的微服务架构就差不多这样。</p>
+<p>有时候多个服务互相依赖，假设，一个检索系统，tika和elasticsearch相互依赖，当tika挂掉之后，elasticsearch并不知道它挂了，所以，这就出现了负载均衡的问题。</p>
+<p>当我们使用了服务发现后，tika和elasticsearch通过定期发送心跳，告知服务是否存活，当elasticsearch调用tika的时候，会调用服务发现组件，保证返回的服务地址可用，或者是良好的负载均衡。</p>
+<h3 id="什么是服务注册？"><a href="#什么是服务注册？" class="headerlink" title="什么是服务注册？"></a>什么是服务注册？</h3><p>服务注册，其实和服务发现相辅相成，如果没有服务注册，那我们一般都是通过读取配置文件获取服务地址，如果有了服务注册，当启动服务，或者安装服务的时候，将信息注册到etcd当中，这时，服务发现就派上了用场了，请继续浏览上面的流程。</p>
+<h3 id="什么是数据共享？"><a href="#什么是数据共享？" class="headerlink" title="什么是数据共享？"></a>什么是数据共享？</h3><p>这个很简单，在分布式系统中，我们经常需要同步配置文件，也有可能，分布式系统中的几个机器需要共用一个文件，例如rabbitmq的cookie。我们可以将这种数据存储在etcd当中，就避免了配置同步需要另写代码，或者是rpc，其他服务出现问题时同步失败的情况。</p>
+<h2 id="etcd的基础数据模型"><a href="#etcd的基础数据模型" class="headerlink" title="etcd的基础数据模型"></a>etcd的基础数据模型</h2><p>etcd有几个特殊功能，假设我们对一个键值进行修改</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"work"</span>:<span class="string">"ak47"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果现在我们把ak47换成m16，那么原有的ak47这个值不会消失/删除，而是会记录一个不同的版本号，把ak47和m16进行区分。这就是wathcer机制。</p>
+<p>一个key会对应多个generation（翻译成代，世代的意思，可以记作周期），意思就是，一个key很可能有多个实例，也就是说，可以被修改多次，也可以对应多个值</p>
+<p>当key被创建的时候，会同时创建一个generation实例，和这个key相互关联</p>
+<p>当key被修改的时候，会记录当前版本到generation中</p>
+<p>当key被删除时，会添加一个墓碑（tombstone）到 generation中，标识这个generation已经完蛋，并且创建一个新的generation。</p>
+<p>所以，查询的步骤应该是</p>
+<ol>
+<li>寻找指定的key值</li>
+<li>获取全部generation版本号 </li>
+<li>根据查询的generation从存储中找到具体的Value值</li>
+<li>输出Value</li>
+</ol>
+<p>所以，etcd不会进行覆盖的操作，而总是生成一个新的数据结构。</p>
+<h3 id="更详细的解释etcd的数据模型"><a href="#更详细的解释etcd的数据模型" class="headerlink" title="更详细的解释etcd的数据模型"></a>更详细的解释etcd的数据模型</h3><p>首先，etcd将数据存放在一个持久化的B+树当中</p>
+<p>etcd会维护一个字段序的B树索引，是为了加速针对key的范围扫描</p>
+<p>在每个B树索引项中，都存储了一个key值，这也是为了快速定位指定的key或者进行范围扫描</p>
+<p>所以回到上面讲的，etcd的每个key有多个版本，在每个revision的tree里，有多个对应的keys。</p>
+<h2 id="etcd保证数据一致性的方法-Raft协议"><a href="#etcd保证数据一致性的方法-Raft协议" class="headerlink" title="etcd保证数据一致性的方法-Raft协议"></a>etcd保证数据一致性的方法-Raft协议</h2><p>etcd是一种分布式的数据库，分布式数据库里面，存在的一个很重要的问题就是，保证每个节点的数据一致，也就是<strong>数据一致性</strong></p>
+<p>一般的分布式数据库，etcd，elasticsearch之类的都会维护多个<strong>副本</strong>，这样我们上面的问题就变成了 <strong>维护多节点副本的一致性</strong></p>
+<p>那么什么又是<strong>一致性</strong>呢？</p>
+<p>顾名思义，多个节点的数据一致，并且保持更新的状态，少数集群凉了也不影响整个集群的工作。</p>
+<p>这就是<strong>一致性</strong>的妙处，Raft协议，就是实现一致性的重要算法。</p>
+<h3 id="Raft协议的大白话解释"><a href="#Raft协议的大白话解释" class="headerlink" title="Raft协议的大白话解释"></a>Raft协议的大白话解释</h3><p>首先我看了一下Raft的一致性算法论文，论文的中文地址在</p>
+<p><a href="https://www.infoq.cn/article/raft-paper" target="_blank" rel="noopener">https://www.infoq.cn/article/raft-paper</a></p>
+<p>我在这里大白话总结一下Raft协议的核心内容</p>
+<p>首先，Raft会进行一个状态（角色）划分</p>
+<p>假设现在我们有四个个节点node1, node2, node3，node4, 副本的协议是单副本</p>
+<p>那么所有的节点就会处于三种角色状态</p>
+<ol>
+<li>leader 主节点，通过follower选举出来的，接收所有的client请求</li>
+<li>follower 跟随者，从主节点获取请求，进行相关操作</li>
+<li>candidate 当leader出现故障时，选主过程打开，其他follower转为这个角色，直到选出新的leader</li>
+</ol>
+<p>在这里可以看到了，leader是带头大哥，follower是小弟，任何时候都要听大哥指挥</p>
+<p>大哥让你更新你就更新，让你删除你就删除。如果大哥被杀（leader挂掉），那么其他小弟（follower）就会竞争大哥的位置</p>
+<p>你们看过《新世界》没，选帮派大哥，是不是有那味了？</p>
+<p>竞选大哥（leader选举）的流程如下：</p>
+<ol>
+<li>其他小弟follower发现，大哥node1的心跳没了（leader节点不通，无返回，心跳机制接收不到leader的存活信息，leader timeout）</li>
+<li>开始触发选举 （election timeout）</li>
+<li>所有 follower 转变角色为 candidate</li>
+<li>candidate（node2）开始投票，优先投票给自己（加勒比海盗选海盗王）</li>
+<li>candidate (node2)给其他节点(node3, node4)发送选举请求（request vote）拉票</li>
+<li>其他的candidate(node3, node4)节点接收到请求后，如果他们还没有开始进行投票（上一步的投票给自己），就会投票给拉票节点(node2)</li>
+<li>node2 获取了半数以上的票数，当选为新的大哥（leader）</li>
+</ol>
+<p>但是，竞选大哥（leader）也可能出现一种情况，就是我支持大D，你支持阿乐，那谁当大哥啊？</p>
+<p>这种问题也是有的，就是</p>
+<p>当node2(大D) 得到了 node3 (根叔)的支持，拿到一票，但是node1（邓伯）投了 node4(阿乐)一票，这样就是2对2</p>
+<p>当node2的选举请求（request vote）到达node3，但是node4 的选举请求到了node1的时候，会有一个election timeout的事件，这一步预示选举失败，要搞新和连胜了，重新选举一个大佬，所以上一轮选举失败。</p>
+<p>node4(阿乐)的选举计时器（election timer）到期，直接timeout，阿乐会触发选举，继续发送选举请求（request vote）给根叔（node3）,邓伯（node4）,大D（node2），这时，邓伯和根叔的选举计时器（election timer也到期，接受到阿乐（node4）的信息，直接投票给阿乐（node4），大D（node4）这时候也到期了，这时node4（阿乐）已经获得了半数投票，加冕话事人，大D那票，也就无所谓了。</p>
+<p>这就是Raft的大白话解读，我反正懂了，你们呢？</p>
+<h3 id="日志复制"><a href="#日志复制" class="headerlink" title="日志复制"></a>日志复制</h3><p>首先书接上回，我们选出了大哥（leader）</p>
+<p>大哥（leader）能干嘛</p>
+<p>leader除了给小弟（follower）发号施令（心跳信息），还会接受到client的请求，比如更新，删除，等消息，发送到所有follower节点，进行相应的操作，当leader接受到半数以上的follower操作成功信息的时候，将成功的相应返回，对client进行应答。</p>
+<p>回到本节，什么是日志复制？只是复制日志吗？</p>
+<p>native了兄弟！在数据库里面，日志里面有数据也有操作，是很重要的东西，万一你把数据整丢了，通过日志也能恢复！</p>
+<p>日志应该是挺重要的东西，etcd是怎么保护日志的那？</p>
+<p>假设三个节点，node1（leader）, node2（follower）, node3（follower）</p>
+<p>假设我们现在往etcd里面写了一条数据</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"a"</span>:<span class="number">10</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>首先，这个写入的请求(set a=10)会被传入到node1（leader），然后被传输给node2，node3</p>
+<p>node2，node3收到Append Entries的消息(set a=10)之后，会记录操作到本地的log当中，并且返回成功的信息</p>
+<p>node1在收到半数以上的响应消息之后，才会认为集群已经成功记录了本次操作，node1会更新日志，提交对应日志的纪录状态，最后返回消息给client。</p>
+<p>一个etcd集群当中，每个节点都需要维护一个log，除此之外，log维护还需要两个重要的数值</p>
+<p>一个是commitIndex（当前日志索引值）</p>
+<p>另一个是lastApplied （最后日志索引值）</p>
+<p>说起来似乎有点抽象，其实就是，一个是现在日志的位置，另一个是最后一条日志的位置，做记录用的。</p>
+<p>leader节点不仅要维护自己commitIndex，lastApplied，他还需要知道所有节点的commitIndex，lastApplied信息。</p>
+<p>为啥呢，因为leader是老大啊，他需要知道每个follower节点的日志记录到哪了，从而保持大家的一致，也决定下次发送的消息里面包含什么信息。</p>
+<p>所以leader还维护了两个数组，一个叫nextIndex，另一个叫matchIndex。</p>
+<p>这个同样是为了更新用的</p>
+<p>nextIndex记录的是发送给follower的下一条日志的索引值</p>
+<p>matchIndex是记录了已经发送给follower的最大索引值</p>
+<p>这都是由follower节点上报给leader的</p>
+<p>太绕了，我举个例子吧。</p>
+<p>还是用上面那个node1,node2,node3的环境。</p>
+<p>假设，node3宕机过，现在数据不一致，那么leader节点的记录的三个节点的nextIndex和matchIndex的表示形式如下图，看图</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/etcd/1.jpg" alt></p>
+<p>黑色箭头代表的是nextIndex，红色箭头代表的是matchIndex，这边表示出来就是</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"node1"</span>: &#123;</span><br><span class="line">        <span class="attr">"nextIndex"</span>: <span class="number">3</span>,</span><br><span class="line">        <span class="attr">"matchIndex"</span>: <span class="number">4</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>所以leader里面应该是按照这个形式存储的nextIndex和matchIndex</p>
+<p>我们发现node3和node1,node2有误差，是因为node3宕机过，现在在leader中，记录了node3的nextIndex和matchIndex</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"node3"</span>: &#123;</span><br><span class="line">        <span class="attr">"nextIndex"</span>: <span class="number">0</span>,</span><br><span class="line">        <span class="attr">"matchIndex"</span>: <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这时leader还能知道node3的日志具体位置，也知道该向node3发送哪些日志信息。</p>
+<p>但是有一种特殊情况，leader挂掉之后，新leader接替上位，新leader会把所有的nextIndex和matchIndex都置为空。新leader会以自己本节点的日志为核心，将其他节点的nextIndex置换为本节点提交日志的最后一条，将matchIndex置为0值。</p>
+<p>新的leader会持续向其他节点发送append Entriesx消息，node3并没有2，3这两条日志，node3将会返回给leader追加失败的相应，leader会修改node3的nextIndex,matchIndex，将他们前移一位，继续进行追加，直到返回成功为止。</p>
+<p>可以看下这个图</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/etcd/2.jpg" alt></p>
+<h3 id="日志的新旧对比"><a href="#日志的新旧对比" class="headerlink" title="日志的新旧对比"></a>日志的新旧对比</h3><p>上一节提到了日志复制，但是我们如何去保持日志永远都是最新的呢？</p>
+<p>如果需要比较节点之间的日志新旧，就需要找到最后一条日志的索引值和任期号，用来决定谁才是最新的。</p>
+<p>如果任期号比较大，那么认为此日志比较新。</p>
+<p>如果任期号相同，日志索引值比较大的比较新。</p>
+<p>在选举过程中，candidate节点成为leader的过程中，向半数以上的节点都发送了日志信息，所以，leader节点必然和其他节点都有一个相同的日志信息，也就是交集。</p>
+<h3 id="日志压缩与快照"><a href="#日志压缩与快照" class="headerlink" title="日志压缩与快照"></a>日志压缩与快照</h3><p>随着etcd服务集群部署的时间越长，数据量也就越来越大，占用的资源也就越多，我们前一阵子，etcd的内存占用率非常高，一看，原来是有人把操作日志全记录在etcd当中了。</p>
+<p>日志不能无限量增长下去，所以需要压缩机制和清除机制来释放空间。</p>
+<p>一般在etcd中，大家都用压缩这种机制，因为压缩非常简单，而且效率也非常高。</p>
+<p>快照包含了节点当前的数据状态，也包含了最后一条日志记录的任期和索引号</p>
+<p>也就是说，假设，我们的日志记录了1-100条日志的任期和索引号，现在我们生成快照文件，只需要记录最后第100条的任期和索引号就得了，1-99条日志记录全部丢弃。</p>
+<p>一般恢复快照的时候，都是leader节点发送快照给follower，follower使用快照恢复数据，这里是通过GRPC发送的网络消息，这里比较复杂，未来我写一篇日志详细讲下。</p>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>etcd的基础过了一遍了，其实我弄明白的差不多了。</p>
+<p>学习嘛，见贤思齐焉，见不贤而内自省也。</p>
+<p>希望能帮助大家。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">描绘人生不用名贵的画笔</span><br><span class="line"></span><br><span class="line">我吐字成金</span><br><span class="line"></span><br><span class="line">勾勒速写生活的点滴</span><br><span class="line"></span><br><span class="line">妈妈总是说你还是个孩子</span><br><span class="line"></span><br><span class="line">没有办法处理好自己的事</span><br><span class="line"></span><br><span class="line">可我已经开始长胡子</span><br><span class="line"></span><br><span class="line">扛起不屈的意志</span><br></pre></td></tr></table></figure>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2021/04/04/%E5%AD%A6%E4%B9%A0etcd%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6raft%E5%8D%8F%E8%AE%AE%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/03/19/Golang%E8%BF%9B%E9%98%B6-%E5%BF%85%E9%A1%BB%E7%9F%A5%E9%81%93%E7%9A%84%E4%B8%80%E4%BA%9B%E4%BA%8B/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Golang进阶-必须知道的一些事</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>

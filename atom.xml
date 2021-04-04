@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://yemilice.com/"/>
-  <updated>2021-03-19T09:07:34.825Z</updated>
+  <updated>2021-04-04T06:56:43.913Z</updated>
   <id>https://yemilice.com/</id>
   
   <author>
@@ -15,6 +15,31 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>学习etcd核心机制Raft协议的一点随想</title>
+    <link href="https://yemilice.com/2021/04/04/%E5%AD%A6%E4%B9%A0etcd%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6raft%E5%8D%8F%E8%AE%AE%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/"/>
+    <id>https://yemilice.com/2021/04/04/%E5%AD%A6%E4%B9%A0etcd%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6raft%E5%8D%8F%E8%AE%AE%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</id>
+    <published>2021-04-04T06:50:25.000Z</published>
+    <updated>2021-04-04T06:56:43.913Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          
+        
+      
+    
+    </summary>
+    
+    
+    
+      <category term="前后端" scheme="https://yemilice.com/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/"/>
+    
+  </entry>
   
   <entry>
     <title>Golang进阶-必须知道的一些事</title>
@@ -504,33 +529,6 @@
     
     
       <category term="杂七杂八" scheme="https://yemilice.com/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Elasticsearch检索PDF和Office文档的方案测评</title>
-    <link href="https://yemilice.com/2020/07/29/Elasticsearch%E6%A3%80%E7%B4%A2PDF%E5%92%8COffice%E6%96%87%E6%A1%A3%E7%9A%84%E6%96%B9%E6%A1%88%E6%B5%8B%E8%AF%84/"/>
-    <id>https://yemilice.com/2020/07/29/Elasticsearch%E6%A3%80%E7%B4%A2PDF%E5%92%8COffice%E6%96%87%E6%A1%A3%E7%9A%84%E6%96%B9%E6%A1%88%E6%B5%8B%E8%AF%84/</id>
-    <published>2020-07-29T06:02:32.000Z</published>
-    <updated>2020-07-29T08:25:59.815Z</updated>
-    
-    <summary type="html">
-    
-      
-      
-        
-        
-          
-        
-      
-    
-    </summary>
-    
-    
-    
-      <category term="前后端" scheme="https://yemilice.com/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/"/>
-    
-      <category term="其他技术" scheme="https://yemilice.com/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/"/>
     
   </entry>
   
