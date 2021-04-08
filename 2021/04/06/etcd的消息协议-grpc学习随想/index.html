@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    etcd的消息协议-grpc学习随想 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-etcd的消息协议-grpc学习随想" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  etcd的消息协议-grpc学习随想
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/04/06/etcd%E7%9A%84%E6%B6%88%E6%81%AF%E5%8D%8F%E8%AE%AE-grpc%E5%AD%A6%E4%B9%A0%E9%9A%8F%E6%83%B3/" class="article-date">
+  <time datetime="2021-04-06T02:39:55.000Z" itemprop="datePublished">2021-04-06</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">3.5k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">15 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>首先，要在这里说明一个情况，我的etcd的学习进入了第二个阶段</p>
+<p>再一个，未来我将不会更新一些基础代码用法，未来的博客文章将会持续性输出阅读源码和算法之类的文章，因为我的学习也进入了另一个阶段。</p>
+<p>大家共勉吧，希望大家都能找到合适的，适合自己的工作，也希望大家都可以快快乐乐的工作和生活。</p>
+<p>爱你们！</p>
+<p>我以前也写过一篇gRPC鸡翅使用的的相关文章</p>
+<p>如果大家不了解gRPC，请先看看怎么用</p>
+<p><a href="https://yemilice.com/2020/07/07/%E4%BD%BF%E7%94%A8golang%E7%9A%84grpc%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/">使用golang的grpc框架的一点随想</a></p>
+<h2 id="etcd和grpc的关系"><a href="#etcd和grpc的关系" class="headerlink" title="etcd和grpc的关系"></a>etcd和grpc的关系</h2><p>首先，为什么我要把etcd和grpc放到一起，或者说，他们到底有什么PY交易，导致etcd一定要用grpc呢。</p>
+<p>这里就要将一些基础理论了</p>
+<p>首先简单说明他们的关系</p>
+<p>etcd v3 使用了gRPC作为了它的消息协议。</p>
+<p>etcd 项目包括基于 gRPC 的 Go client 和 命令行工具 etcdctl，通过 gRPC 和 etcd 集群通讯。</p>
+<p>对于不支持 gRPC 支持的语言，etcd 提供 JSON 的 grpc-gateway。这个网关提供 RESTful 代理，翻译 HTTP/JSON 请求为 gRPC 消息。</p>
+<p>这里的资料来源于<a href="https://doczhcn.gitbook.io/etcd/" target="_blank" rel="noopener">etcd官方文档中文版</a></p>
+<p>这里用大白话来说，就是</p>
+<p>etcd v3 是通过grpc通信的，并且etcd惯用的管理命令 etcdctl，也是通过grpc进行etcd集群的管理和消息分发的。</p>
+<h2 id="为什么etcd-v3要使用gRPC"><a href="#为什么etcd-v3要使用gRPC" class="headerlink" title="为什么etcd v3要使用gRPC"></a>为什么etcd v3要使用gRPC</h2><p>这里就要了解一下etcd 协议的变迁了</p>
+<p>首先，etcd v2 使用的是传统的 http+JSON 和server端进行交互，http+JSON的组合必须为每个请求建立一个连接，相当于<strong>一对一</strong>。</p>
+<p>etcd v3 就开始完全采用了gRPC进行通信底层的协议消息。</p>
+<p>gRPC是通过了protocol buffer进行定义管理，gRPC在处理网络连接的优势非常明显，因为它使用单一连接的HTTP2， 实现多路复用的RPC，相当于<strong>一对多</strong></p>
+<p>为什么原有的http+JSON被替换了呢？</p>
+<p>分开剖析一下。</p>
+<h3 id="JSON-和-protobuf的对比"><a href="#JSON-和-protobuf的对比" class="headerlink" title="JSON 和 protobuf的对比"></a>JSON 和 protobuf的对比</h3><p>首先，RPC这个东西，主要就是把消息（内存对象）转换成信息流，发给server端，然后server端再给它转换成需要的数据类型。</p>
+<p>etcd v2 是通过JSON作为消息传递的数据格式</p>
+<p>etcd v3 是通过protobuf作为消息传递的数据格式</p>
+<p>不同的地方出现了，首先，protobuf 替代了 JSON，那，为什么JSON这种老牌数据格式被替换了呢？</p>
+<p>这里我查阅了一些资料，<a href="https://zhuanlan.zhihu.com/p/331593548" target="_blank" rel="noopener">这篇文章</a>写的真的很好，一看就大概明白了，我在这里感谢这个作者！</p>
+<p>这个作者的文章地址在：<a href="https://zhuanlan.zhihu.com/p/331593548" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/331593548</a></p>
+<p>很感谢您！您是我的指路明灯！</p>
+<p>首先先说一下结论：<strong>protobuf的效率高于JSON</strong></p>
+<p>现在分析一下为什么会这样。</p>
+<p>看下这段JSON</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"work"</span>:<span class="number">123</span>,</span><br><span class="line">    <span class="attr">"work2"</span>:<span class="string">"456"</span>,</span><br><span class="line">    <span class="attr">"work3"</span>:&#123;</span><br><span class="line">        <span class="attr">"work31"</span>:<span class="number">789</span></span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="attr">"work"</span>:<span class="number">789</span>,</span><br><span class="line">    <span class="attr">"work2"</span>:<span class="string">"456"</span>,</span><br><span class="line">    <span class="attr">"work3"</span>:&#123;</span><br><span class="line">        <span class="attr">"work31"</span>:<span class="number">123</span></span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，JSON中包含很多类型的值，但是有些值是<strong>非字符串</strong>的，丽日，work的值是123，这个值的类型是int，内存表示只占两个字节，转成 JSON 却要五个字节。bool 字段则占了四或五个字节，所以，JSON其实有很多不必要的内存占用的。</p>
+<p>还有一个问题<strong>重复传输字段</strong>，可以看见，同样的key，work，只是因为值不同，就要传输两次work这个key值，所以造成了不必要的冗余，所以这就是JSON不足的地方。</p>
+<p>那么protobuf是从哪里解决这个问题的呢？</p>
+<p>首先，protobuf首先需要定义好要传输的字段类型和字段名，例如</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">message</span> <span class="title">TestWork</span> </span>&#123;</span><br><span class="line">    <span class="built_in">string</span> <span class="class"><span class="keyword">message</span> = 1;</span></span><br><span class="line"><span class="class">    <span class="title">int32</span>  code = 2;</span></span><br><span class="line"><span class="class">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>定义好之后，直接编译成二进制文件 .proto</p>
+<p>这部分不明白的可以看一下我以前的blog: <a href="https://yemilice.com/2020/07/07/%E4%BD%BF%E7%94%A8golang%E7%9A%84grpc%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/">使用golang的grpc框架的一点随想</a></p>
+<p>编译之后，protobuf对数字之类的编码，使用了VarInts</p>
+<p>Varints是将一个整数序列化为一个或多个Bytes的方法,越小的整数，使用的Bytes越小。所以解决了JSON的第一个问题，非字符串的资源占用<strong>效率问题</strong>。</p>
+<p>并且看上面，protobuf直接定义好了要传输的字段名，给每个字段指定了一个整数编号。就像上面。这里传输的时候，可以直接传递编号，不用带上字段传输，这样增加了效率，避免了第二个问题：<strong>冗余问题</strong></p>
+<p>所以，这就是protobuf替代JSON的必要条件。</p>
+<h3 id="HTTP-API-和-gRPC的对比"><a href="#HTTP-API-和-gRPC的对比" class="headerlink" title="HTTP API 和 gRPC的对比"></a>HTTP API 和 gRPC的对比</h3><p>从上面可以知道，etcd v2 是直接用了http api，etcd v3兼容了两种模式，一种是 http api，一种是gRPC，那么，这两种服务，有什么不同的地方吗？</p>
+<p>这边简单列一个表格，对他们进行比较</p>
+<table>
+<thead>
+<tr>
+<th>功能</th>
+<th>gRPC</th>
+<th>HTTP API</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>协定</td>
+<td>.proto(必须用)</td>
+<td>OpenAPI（可以不用）</td>
+</tr>
+<tr>
+<td>协议</td>
+<td>HTTP/2</td>
+<td>HTTP</td>
+</tr>
+<tr>
+<td>Payload</td>
+<td>Protobuf(二进制，不可外部读取)</td>
+<td>JSON（可外部读取）</td>
+</tr>
+<tr>
+<td>规定性</td>
+<td>非常严格</td>
+<td>宽松</td>
+</tr>
+<tr>
+<td>流式处理</td>
+<td>客户端，服务器，双向</td>
+<td>客户端，服务器</td>
+</tr>
+<tr>
+<td>浏览器支持</td>
+<td>不支持</td>
+<td>支持</td>
+</tr>
+<tr>
+<td>安全性</td>
+<td>TLS</td>
+<td>TLS</td>
+</tr>
+<tr>
+<td>客户端代码生成</td>
+<td>可生成</td>
+<td>OpanAPI</td>
+</tr>
+</tbody></table>
+<p>gRPC 替代 HTTP API的一些原因，相信大家在上面那个表里也能看出来。</p>
+<p>我在这里总结一下gRPC的<strong>优点</strong></p>
+<ol>
+<li>性能： protobuf序列化字段，负载小</li>
+<li>协议：转为HTTP/2 设计，比普通的HTTP紧凑高效，单个TCP可复用多个HTTP/2 调用</li>
+<li>代码生成：.proto文件自动生成，并且端到端生成消息和客户端代码</li>
+<li>严格规范：避免多平台的情况下出现分歧，各个平台实现一致。</li>
+<li>流式处理：支持一元，服务到客户端，客户到服务端，双向流式传输</li>
+<li>超时处理支持：支持rpc内部的timeout，并且可以取消timeout的服务</li>
+</ol>
+<p>现在，为什么要用gRPC替代HTTP API，我相信，你心里，也应该有数了。</p>
+<h2 id="etcd的gRPC源码简单解读"><a href="#etcd的gRPC源码简单解读" class="headerlink" title="etcd的gRPC源码简单解读"></a>etcd的gRPC源码简单解读</h2><p>读源码真是个很头大的工作，反正我是觉得自己很菜，读起来很累，不过查询了一些资料，自己也读了一点，也算是明白了那么点点门道，哈哈。</p>
+<h3 id="server端"><a href="#server端" class="headerlink" title="server端"></a>server端</h3><p>首先，阅读gRPC源码，还是要先找到proto</p>
+<p>etcd的gRPC的proto，放置的位置在：/etcdserver/etcdserverpb/rpc.proto</p>
+<p>首先先看一下这个文件定义了哪些服务</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">service</span> <span class="title">KV</span></span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class">service Watch</span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class">service Lease</span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class">service Cluster</span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class">service Maintenance</span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class">service Auth</span></span><br><span class="line"><span class="class">``` </span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class">定义了6个服务，服务里面有多个RPC方法，我们选一个最常用的KV来进行简单的分析吧。</span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class">首先看KV这个服务，代码如下</span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class">```protobuf</span></span><br><span class="line"><span class="class">service KV </span>&#123;</span><br><span class="line">  <span class="comment">// Range gets the keys in the range from the key-value store.</span></span><br><span class="line">  <span class="function"><span class="keyword">rpc</span> Range(RangeRequest) <span class="keyword">returns</span> (RangeResponse) &#123;</span></span><br><span class="line"><span class="function">      option (google.api.http) = &#123;</span></span><br><span class="line"><span class="function">        post: "/v3beta/kv/range"</span></span><br><span class="line"><span class="function">        body: "*"</span></span><br><span class="line"><span class="function">    &#125;</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Put puts the given key into the key-value store.</span></span><br><span class="line">  <span class="comment">// A put request increments the revision of the key-value store</span></span><br><span class="line">  <span class="comment">// and generates one event in the event history.</span></span><br><span class="line">  <span class="function"><span class="keyword">rpc</span> Put(PutRequest) <span class="keyword">returns</span> (PutResponse) &#123;</span></span><br><span class="line"><span class="function">      option (google.api.http) = &#123;</span></span><br><span class="line"><span class="function">        post: "/v3beta/kv/put"</span></span><br><span class="line"><span class="function">        body: "*"</span></span><br><span class="line"><span class="function">    &#125;</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// DeleteRange deletes the given range from the key-value store.</span></span><br><span class="line">  <span class="comment">// A delete request increments the revision of the key-value store</span></span><br><span class="line">  <span class="comment">// and generates a delete event in the event history for every deleted key.</span></span><br><span class="line">  <span class="function"><span class="keyword">rpc</span> DeleteRange(DeleteRangeRequest) <span class="keyword">returns</span> (DeleteRangeResponse) &#123;</span></span><br><span class="line"><span class="function">      option (google.api.http) = &#123;</span></span><br><span class="line"><span class="function">        post: "/v3beta/kv/deleterange"</span></span><br><span class="line"><span class="function">        body: "*"</span></span><br><span class="line"><span class="function">    &#125;</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Txn processes multiple requests in a single transaction.</span></span><br><span class="line">  <span class="comment">// A txn request increments the revision of the key-value store</span></span><br><span class="line">  <span class="comment">// and generates events with the same revision for every completed request.</span></span><br><span class="line">  <span class="comment">// It is not allowed to modify the same key several times within one txn.</span></span><br><span class="line">  <span class="function"><span class="keyword">rpc</span> Txn(TxnRequest) <span class="keyword">returns</span> (TxnResponse) &#123;</span></span><br><span class="line"><span class="function">      option (google.api.http) = &#123;</span></span><br><span class="line"><span class="function">        post: "/v3beta/kv/txn"</span></span><br><span class="line"><span class="function">        body: "*"</span></span><br><span class="line"><span class="function">    &#125;</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Compact compacts the event history in the etcd key-value store. The key-value</span></span><br><span class="line">  <span class="comment">// store should be periodically compacted or the event history will continue to grow</span></span><br><span class="line">  <span class="comment">// indefinitely.</span></span><br><span class="line">  <span class="function"><span class="keyword">rpc</span> Compact(CompactionRequest) <span class="keyword">returns</span> (CompactionResponse) &#123;</span></span><br><span class="line"><span class="function">      option (google.api.http) = &#123;</span></span><br><span class="line"><span class="function">        post: "/v3beta/kv/compaction"</span></span><br><span class="line"><span class="function">        body: "*"</span></span><br><span class="line"><span class="function">    &#125;</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后我们需要找到对应的服务端的go文件，文件名叫 v3_server.go</p>
+<p>先看下Put方法</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *EtcdServer)</span> <span class="title">Put</span><span class="params">(ctx context.Context, r *pb.PutRequest)</span> <span class="params">(*pb.PutResponse, error)</span></span> &#123;</span><br><span class="line">	resp, err := s.raftRequest(ctx, pb.InternalRaftRequest&#123;Put: r&#125;)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> resp.(*pb.PutResponse), <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>看到了吗，有个<strong>raftRequest</strong>函数，追踪一下</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *EtcdServer)</span> <span class="title">raftRequest</span><span class="params">(ctx context.Context, r pb.InternalRaftRequest)</span> <span class="params">(proto.Message, error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		resp, err := s.raftRequestOnce(ctx, r)</span><br><span class="line">		<span class="keyword">if</span> err != auth.ErrAuthOldRevision &#123;</span><br><span class="line">			<span class="keyword">return</span> resp, err</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这部分代码调用<strong>raftRequestOnce</strong>，大概的意思就是如果出现错误，就进行重试。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *EtcdServer)</span> <span class="title">raftRequestOnce</span><span class="params">(ctx context.Context, r pb.InternalRaftRequest)</span> <span class="params">(proto.Message, error)</span></span> &#123;</span><br><span class="line">	result, err := s.processInternalRaftRequestOnce(ctx, r)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> result.err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, result.err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> result.resp, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>回到PUT部分的代码，大致意思就是，上传信息，如果错误，重试。</p>
+<p>再看下Range方法</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *EtcdServer)</span> <span class="title">Range</span><span class="params">(ctx context.Context, r *pb.RangeRequest)</span> <span class="params">(*pb.RangeResponse, error)</span></span> &#123;</span><br><span class="line">    <span class="comment">// 判断请求是否是可以 read</span></span><br><span class="line">	<span class="keyword">if</span> !r.Serializable &#123;</span><br><span class="line">		err := s.linearizableReadNotify(ctx)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">var</span> resp *pb.RangeResponse</span><br><span class="line">	<span class="keyword">var</span> err error</span><br><span class="line">    <span class="comment">// 检查权限，看看权限是否可用</span></span><br><span class="line">	chk := <span class="function"><span class="keyword">func</span><span class="params">(ai *auth.AuthInfo)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">		<span class="keyword">return</span> s.authStore.IsRangePermitted(ai, r.Key, r.RangeEnd)</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="comment">// 查询kv时候的回调函数</span></span><br><span class="line">	get := <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; resp, err = s.applyV3Base.Range(<span class="literal">nil</span>, r) &#125;</span><br><span class="line">	<span class="keyword">if</span> serr := s.doSerialize(ctx, chk, get); serr != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, serr</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> resp, err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用了一个doSerialize函数</p>
+<p>看下它</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *EtcdServer)</span> <span class="title">doSerialize</span><span class="params">(ctx context.Context, chk <span class="keyword">func</span>(*auth.AuthInfo)</span> <span class="title">error</span>, <span class="title">get</span> <span class="title">func</span><span class="params">()</span>) <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">        <span class="comment">// 获取权限相关信息</span></span><br><span class="line">		ai, err := s.AuthInfoFromCtx(ctx)</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> err</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> ai == <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="comment">// chk expects non-nil AuthInfo; use empty credentials</span></span><br><span class="line">			ai = &amp;auth.AuthInfo&#123;&#125;</span><br><span class="line">		&#125;</span><br><span class="line">        <span class="comment">// 回调执行chk函数，校验权限</span></span><br><span class="line">		<span class="keyword">if</span> err = chk(ai); err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">if</span> err == auth.ErrAuthOldRevision &#123;</span><br><span class="line">				<span class="keyword">continue</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span> err</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// fetch response for serialized request</span></span><br><span class="line">        <span class="comment">// 回调get函数，通过authStore读取kv</span></span><br><span class="line">		get()</span><br><span class="line">		<span class="comment">//  empty credentials or current auth info means no need to retry</span></span><br><span class="line">        <span class="comment">// 读完，权限没有更改，结束，否则，重试</span></span><br><span class="line">		<span class="keyword">if</span> ai.Revision == <span class="number">0</span> || ai.Revision == s.authStore.Revision() &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// avoid TOCTOU error, retry of the request is required.</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="cilent端"><a href="#cilent端" class="headerlink" title="cilent端"></a>cilent端</h3><p>server看完了，该看下cilent端的部分代码了</p>
+<p>client端的代码 放置在：/clientv3/client.go</p>
+<p>下面，将针对几个重要函数进行源码解析</p>
+<p>如果我们要启动一个etcd 的 client连接，我们应该</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">client, err := clientv3.New(cfg)</span><br><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"连接ETCD失败"</span>)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>追踪到核心代码 newClient</p>
+<p>这里为了避免文章太长，将一些不必要的操作打了省略号，请注意！！</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">newClient</span><span class="params">(cfg *Config)</span> <span class="params">(*Client, error)</span></span> &#123;</span><br><span class="line">    </span><br><span class="line">    ......</span><br><span class="line">	<span class="comment">// use a temporary skeleton client to bootstrap first connection</span></span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">	ctx, cancel := context.WithCancel(baseCtx)</span><br><span class="line">    <span class="comment">// 这里检测配置信息，并且创建一个client实例</span></span><br><span class="line">	client := &amp;Client&#123;</span><br><span class="line">		conn:     <span class="literal">nil</span>,</span><br><span class="line">		dialerrc: <span class="built_in">make</span>(<span class="keyword">chan</span> error, <span class="number">1</span>),</span><br><span class="line">		cfg:      *cfg,</span><br><span class="line">		creds:    creds,</span><br><span class="line">		ctx:      ctx,</span><br><span class="line">		cancel:   cancel,</span><br><span class="line">		mu:       <span class="built_in">new</span>(sync.Mutex),</span><br><span class="line">		callOpts: defaultCallOpts,</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="comment">// 记录账户和密码</span></span><br><span class="line">	<span class="keyword">if</span> cfg.Username != <span class="string">""</span> &amp;&amp; cfg.Password != <span class="string">""</span> &#123;</span><br><span class="line">		client.Username = cfg.Username</span><br><span class="line">		client.Password = cfg.Password</span><br><span class="line">	&#125;</span><br><span class="line">	......</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化balancer实例</span></span><br><span class="line">	client.balancer = newHealthBalancer(cfg.Endpoints, cfg.DialTimeout, <span class="function"><span class="keyword">func</span><span class="params">(ep <span class="keyword">string</span>)</span> <span class="params">(<span class="keyword">bool</span>, error)</span></span> &#123;</span><br><span class="line">		<span class="keyword">return</span> grpcHealthCheck(client, ep)</span><br><span class="line">	&#125;)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// use Endpoints[0] so that for https:// without any tls config given, then</span></span><br><span class="line">	<span class="comment">// grpc will assume the certificate server name is the endpoint host.</span></span><br><span class="line">    <span class="comment">// 建立一个网络连接</span></span><br><span class="line">	conn, err := client.dial(cfg.Endpoints[<span class="number">0</span>], grpc.WithBalancer(client.balancer))</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		client.cancel()</span><br><span class="line">		client.balancer.Close()</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line">	client.conn = conn</span><br><span class="line"></span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化多个客户端，前面的介绍过，有6个</span></span><br><span class="line">	client.Cluster = NewCluster(client)</span><br><span class="line">	client.KV = NewKV(client)</span><br><span class="line">	client.Lease = NewLease(client)</span><br><span class="line">	client.Watcher = NewWatcher(client)</span><br><span class="line">	client.Auth = NewAuth(client)</span><br><span class="line">	client.Maintenance = NewMaintenance(client)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> cfg.RejectOldCluster &#123;</span><br><span class="line">		<span class="keyword">if</span> err := client.checkVersion(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">			client.Close()</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 启动一个goroutine，同步集群中的URL</span></span><br><span class="line">	<span class="keyword">go</span> client.autoSync()</span><br><span class="line">	<span class="keyword">return</span> client, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后一步执行了一个goroutine，执行了一个autoSync 方法</p>
+<p>这个方法的代码如下</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Client)</span> <span class="title">autoSync</span><span class="params">()</span></span> &#123;</span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> &lt;-c.ctx.Done():</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		<span class="keyword">case</span> &lt;-time.After(c.cfg.AutoSyncInterval):</span><br><span class="line">			ctx, cancel := context.WithTimeout(c.ctx, <span class="number">5</span>*time.Second)</span><br><span class="line">			err := c.Sync(ctx)</span><br><span class="line">			cancel()</span><br><span class="line">			<span class="keyword">if</span> err != <span class="literal">nil</span> &amp;&amp; err != c.ctx.Err() &#123;</span><br><span class="line">				logger.Println(<span class="string">"Auto sync endpoints failed:"</span>, err)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里循环执行了一个Sync方法，方法代码如下</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Client)</span> <span class="title">Sync</span><span class="params">(ctx context.Context)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	mresp, err := c.MemberList(ctx)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">var</span> eps []<span class="keyword">string</span></span><br><span class="line">	<span class="keyword">for</span> _, m := <span class="keyword">range</span> mresp.Members &#123;</span><br><span class="line">		eps = <span class="built_in">append</span>(eps, m.ClientURLs...)</span><br><span class="line">	&#125;</span><br><span class="line">	c.SetEndpoints(eps...)</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里的的操作步骤，是请求当前的节点列表，然后更新本地的缓存。</p>
+<p>下面我们举一个简单的put例子，看一下put的代码怎么写的</p>
+<p>首先，写一个put代码</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">etcd.client.Put(context.Background(), name, value)</span><br></pre></td></tr></table></figure>
+
+<p>追踪代码 clientv3/kv.go</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> KV <span class="keyword">interface</span> &#123;</span><br><span class="line">	<span class="comment">// Put puts a key-value pair into etcd.</span></span><br><span class="line">	<span class="comment">// Note that key,value can be plain bytes array and string is</span></span><br><span class="line">	<span class="comment">// an immutable representation of that bytes array.</span></span><br><span class="line">	<span class="comment">// To get a string of bytes, do string([]byte&#123;0x10, 0x20&#125;).</span></span><br><span class="line">	Put(ctx context.Context, key, val <span class="keyword">string</span>, opts ...OpOption) (*PutResponse, error)</span><br><span class="line">    ....</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>持续追踪</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kv *kv)</span> <span class="title">Put</span><span class="params">(ctx context.Context, key, val <span class="keyword">string</span>, opts ...OpOption)</span> <span class="params">(*PutResponse, error)</span></span> &#123;</span><br><span class="line">	r, err := kv.Do(ctx, OpPut(key, val, opts...))</span><br><span class="line">	<span class="keyword">return</span> r.put, toErr(ctx, err)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用了kv.Do部分</p>
+<p>看下kv.Do的代码</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kv *kv)</span> <span class="title">Do</span><span class="params">(ctx context.Context, op Op)</span> <span class="params">(OpResponse, error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> err error</span><br><span class="line">	<span class="keyword">switch</span> op.t &#123;</span><br><span class="line">    <span class="comment">// 查询操作</span></span><br><span class="line">	<span class="keyword">case</span> tRange:</span><br><span class="line">        .......</span><br><span class="line">    <span class="comment">// 上传操作</span></span><br><span class="line">	<span class="keyword">case</span> tPut:</span><br><span class="line">		<span class="keyword">var</span> resp *pb.PutResponse</span><br><span class="line">		r := &amp;pb.PutRequest&#123;Key: op.key, Value: op.val, Lease: <span class="keyword">int64</span>(op.leaseID), PrevKv: op.prevKV, IgnoreValue: op.ignoreValue, IgnoreLease: op.ignoreLease&#125;</span><br><span class="line">		resp, err = kv.remote.Put(ctx, r, kv.callOpts...)</span><br><span class="line">		<span class="keyword">if</span> err == <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> OpResponse&#123;put: (*PutResponse)(resp)&#125;, <span class="literal">nil</span></span><br><span class="line">		&#125;</span><br><span class="line">    <span class="comment">// 删除操作</span></span><br><span class="line">	<span class="keyword">case</span> tDeleteRange:</span><br><span class="line">        .......</span><br><span class="line">	<span class="keyword">case</span> tTxn:</span><br><span class="line">        .......</span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">		<span class="built_in">panic</span>(<span class="string">"Unknown op"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> OpResponse&#123;&#125;, toErr(ctx, err)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>看到了吗，put调用了 KVclient.Put的方法，这个方法在刚刚上面那个位置</p>
+<p>/etcdserver/etcdserverpb/rpc.pb.go里面</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> KVClient <span class="keyword">interface</span> &#123;</span><br><span class="line">	Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>client v3的服务流程，就这样走完了。</p>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>etcd grpc这部分就讲完了</p>
+<p>其实grpc还有很多可以讲的东西，不过这篇blog不是这么玩的。</p>
+<p>下一篇博客将会详细分析gRPC，或者是ElasticSearch的一些原理或者源码解读，或者是算法，请大家期待吧。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">突然想写一首diss 歌曲</span><br><span class="line"></span><br><span class="line">内心依旧激昂翻滚从未平息</span><br><span class="line"></span><br><span class="line">想到那些不尊重人的faker coder 面试官</span><br><span class="line"></span><br><span class="line">竖起中指对你们亲切表达</span><br><span class="line"></span><br><span class="line">从来不care他人的看法</span><br><span class="line"></span><br><span class="line">评判我的资格你还没有拿下</span><br><span class="line"></span><br><span class="line">回去继续敲你那没用的代码</span><br><span class="line"></span><br><span class="line">甩你开源5个身位</span><br><span class="line"></span><br><span class="line">冒牌faker程序员还有资格坐在高位？</span><br><span class="line"></span><br><span class="line">fuck off 垃圾傀儡。</span><br></pre></td></tr></table></figure>
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2021/04/06/etcd%E7%9A%84%E6%B6%88%E6%81%AF%E5%8D%8F%E8%AE%AE-grpc%E5%AD%A6%E4%B9%A0%E9%9A%8F%E6%83%B3/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/04/04/%E5%AD%A6%E4%B9%A0etcd%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6raft%E5%8D%8F%E8%AE%AE%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">学习etcd核心机制Raft协议的一点随想</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
