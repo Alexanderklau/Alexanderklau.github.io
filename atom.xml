@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://yemilice.com/"/>
-  <updated>2021-04-08T07:09:07.605Z</updated>
+  <updated>2021-04-08T08:09:33.194Z</updated>
   <id>https://yemilice.com/</id>
   
   <author>
@@ -17,11 +17,11 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>学习etcd的消息协议grpc一点随想</title>
+    <title>学习etcd的消息协议gRPC一点随想</title>
     <link href="https://yemilice.com/2021/04/06/etcd%E7%9A%84%E6%B6%88%E6%81%AF%E5%8D%8F%E8%AE%AE-gRPC%E5%AD%A6%E4%B9%A0%E9%9A%8F%E6%83%B3/"/>
     <id>https://yemilice.com/2021/04/06/etcd%E7%9A%84%E6%B6%88%E6%81%AF%E5%8D%8F%E8%AE%AE-gRPC%E5%AD%A6%E4%B9%A0%E9%9A%8F%E6%83%B3/</id>
     <published>2021-04-06T02:39:55.000Z</published>
-    <updated>2021-04-08T07:09:07.605Z</updated>
+    <updated>2021-04-08T08:09:33.194Z</updated>
     
     <summary type="html">
     
