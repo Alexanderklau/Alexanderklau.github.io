@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    为什么要使用消息队列服务 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-为什么要使用消息队列服务" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  为什么要使用消息队列服务
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/05/08/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1/" class="article-date">
+  <time datetime="2021-05-08T01:48:28.000Z" itemprop="datePublished">2021-05-08</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">4.2k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">14 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="消息队列是什么？"><a href="#消息队列是什么？" class="headerlink" title="消息队列是什么？"></a>消息队列是什么？</h2><p>化繁为简一下，分拆一下这个词汇，首先，先来看队列（queue）</p>
+<p>队列是一种常用的数据结构，特点是<strong>先进先出</strong></p>
+<p>消息队列，顾名思义一下，就是把<strong>消息</strong>放在<strong>队列</strong>当中进行处理</p>
+<p>这个消息，肯定是等待处理的消息，我们应该要获取消息做什么事</p>
+<p>比如获取一个返回结果，接受一个参数等等。</p>
+<p>所以这里引出了新的概念，<strong>消费者</strong>和<strong>生产者</strong></p>
+<p><strong>生产者</strong>就是往<strong>队列</strong>里面塞数据</p>
+<p><strong>消费者</strong>就是往<strong>队列</strong>里面取数据</p>
+<p>这就是消息队列的基础概念。</p>
+<h2 id="消息队列解决了什么问题"><a href="#消息队列解决了什么问题" class="headerlink" title="消息队列解决了什么问题"></a>消息队列解决了什么问题</h2><p>按理说，消息队列只是一个队列类数据结构，这个我们完全可以自己实现</p>
+<p>例如Python的队列queue，或者java的Deque都可以实现队列的功能</p>
+<p>再去实现一个消费者／生产者逻辑就好了，那为什么要用消息队列呢？</p>
+<p>这边举几个我开发中遇见的例子</p>
+<h3 id="异步"><a href="#异步" class="headerlink" title="异步"></a>异步</h3><p>拿初始化服务来说，初始化服务的步骤如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">初始化开始 --&gt; 服务A初始化 --&gt; 服务B初始化 --&gt; 服务C初始化 --&gt; 返回成功</span><br></pre></td></tr></table></figure>
+
+<p>来看个图，大概类似这样。</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/1.jpg" alt></p>
+<p>初始化的流程类似是一个链表，一走到底，这样你让人家客户等很久，客户心理也不开心啊，不能这么搞，所以得想个好办法处理一下。</p>
+<p>如果有了消息队列，我们就可以把这个处理方法优化一下</p>
+<p>如图所示</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/2.jpg" alt></p>
+<p>现在我们利用了消息队列作为中间件，当传入ip给消息队列之后，可以直接返回一个<strong>初始化进行中</strong>的状态，立马返回，减少等待。</p>
+<p>各个服务会自己去消息队列中获取ip进行操作，这样就避免了一步步调用造成的时间浪费，这里就将整个流程异步化。</p>
+<p>这是消息队列的第一个好处。</p>
+<h3 id="解耦-复用"><a href="#解耦-复用" class="headerlink" title="解耦/复用"></a>解耦/复用</h3><p>解耦，这个翻译一下，说人话就是，解除相互的依赖，让大家能独立运行。</p>
+<p>还是老样子，举个例子。</p>
+<p>现在我们有一个<strong>处理订单</strong>的程序</p>
+<p>主要的功能有获取订单，订单入库，订单校验，费用计算，记录日志等</p>
+<p>这个画个图，流程如下</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/3.jpg" alt></p>
+<p>现在可以看出，订单入库，订单校验，费用计算，日志记录这几个功能都依赖订单处理这个模块</p>
+<p>写一个伪代码来看的话</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Order_process 订单处理 </span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Order_process</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//获取订单的函数</span></span><br><span class="line">    Order, _ := GetOrder()</span><br><span class="line">    <span class="comment">// 获取到订单去做几个功能</span></span><br><span class="line">    <span class="comment">// 订单入库</span></span><br><span class="line">    _ := OrderStorage(Order)</span><br><span class="line">    <span class="comment">// 订单校验</span></span><br><span class="line">    _ := OrderVer(Order)</span><br><span class="line">    <span class="comment">// 订单金额</span></span><br><span class="line">    _ := OrderAmount(Order)</span><br><span class="line">    <span class="comment">// 日志</span></span><br><span class="line">    - := OrderLog(Order)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>现在只有四个功能，如果后序功能越来越多，那么Order_process这个函数也会越来越长，并且每次都要重新编译主函数，这个是非常不可取的。</p>
+<p>假设我们现在用了消息队列，它的流程就变成了这样</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/4.jpg" alt></p>
+<p>首先，订单处理模块，解除了其他四个功能对它的依赖，只将订单传输进消息队列当中</p>
+<p>其他几个功能模块要做的就是去消息队列中获取订单，分别处理就好了</p>
+<p>这样我们的伪代码就变成了</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Order_process 订单处理 </span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Order_process</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">//获取订单的函数</span></span><br><span class="line">    Order, _ := GetOrder()</span><br><span class="line">    <span class="comment">// 订单入消息队列</span></span><br><span class="line">    mq.put(Order)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>完全破处了其他几个功能模块的依赖，如果未来需要进行功能添加，只需要单独开发，并且订阅mq队列就可以。</p>
+<p>也降低了维护成本，处理问题也针对到模块本身，减少了排错占用的人力成本。</p>
+<p>这是消息队列的第二个好处。</p>
+<h3 id="削峰-限流"><a href="#削峰-限流" class="headerlink" title="削峰/限流"></a>削峰/限流</h3><p>说人话就是，当访问量激增，咱们的数据库或者是服务顶不住的时候，先往消息队列里面写，等着后面数据库/服务根据自身设置，从消息队列里面取数据消费。</p>
+<p>这个其实说起来比较简单，画个图吧（突然发觉我已经不讨厌画图了</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/5.jpg" alt></p>
+<p>现在有个大批量的访问来了，直接去访问服务A，服务A假设上限是1000，结果你访问量是10000，好了，直接凉凉</p>
+<p>现在加上消息队列，访问先存放到消息队列里面，然后服务A直接去消息队列取1000条出来先消费了，然后继续从队列里面取就行了，避免服务直接挂掉。</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/6.jpg" alt></p>
+<p>不过这不是缓存嘛？？？？</p>
+<p>我寻思redis好像也是干这个的。。。。不过的确还是有不一样的地方，我在下面的会详细说下。</p>
+<h2 id="为什么要选择消息队列中间件？"><a href="#为什么要选择消息队列中间件？" class="headerlink" title="为什么要选择消息队列中间件？"></a>为什么要选择消息队列中间件？</h2><p>这个其实是我曾经一直思考过的一个问题</p>
+<p>首先</p>
+<p>在Python里，我们有collections 的 queue</p>
+<p>在Java里，我们有JDK 的 Deque</p>
+<p>在Golang里，我们有slice作为简单队列</p>
+<p>我们还可以多线程，多进行处理一些问题。</p>
+<p>如果只是为了实现一些功能，我们甚至可以用redis这个更简单的玩意儿。</p>
+<p>那么，为什么我们还是要选择例如rabbitmq，rocketmq，kafka这类做消息队列服务呢？</p>
+<p>下面我将从我自己收集到的一些信息，总结一些自己的感悟，希望可以帮助大家。</p>
+<h3 id="持久化"><a href="#持久化" class="headerlink" title="持久化"></a>持久化</h3><p>首先，持久化就可以把前面说的那几种干死一大片</p>
+<p>对，你可以用queue实现一个队列，但是万一断电了，你队列里面的消息不就没了吗？</p>
+<p>对，你也可以往硬盘里写，你甚至可以另写一个定时同步的脚本去做这件事</p>
+<p>但是。。。这不麻烦吗。。</p>
+<p>万一你是分布式的，你存一份同步一份，妈耶，那工作量。</p>
+<p>类似redis这种，可以把数据存在磁盘上。同理，消息队列的数据也是要存起来的。这样才可以减少意外情况带来的损失。</p>
+<p>所以，你要自己写的话，简单的队列还是可以滴，但是消息队列嘛，免了。</p>
+<h3 id="高可用"><a href="#高可用" class="headerlink" title="高可用"></a>高可用</h3><p>用消息队列的都是他娘的分布式服务，如果你是个自己写的单机的消息队列，你这台机器挂了，岂不是消息队列服务就没了？</p>
+<p>像rabbitmq这种，带着主从模式的，可以保证多少个节点down掉之后，消息服务依旧可用</p>
+<p>一般的内存消息队列可没有这个功能哈，you know？</p>
+<h3 id="Redis-Vs-消息队列"><a href="#Redis-Vs-消息队列" class="headerlink" title="Redis Vs 消息队列"></a>Redis Vs 消息队列</h3><p>上面两个还是比较好理解，完全排除了那些内存数据库，也就是断了你自己写消息队列的这条心</p>
+<p>因为你的多线程，多进程，queue，deque，永远都是<strong>单节点内存队列</strong></p>
+<p>但是有个特殊的玩意儿，<strong>Redis</strong></p>
+<p>上面我说过了，其实削峰的功能，还挺像Redis的，因为Redis也有这个功能，而且用的人还不少。</p>
+<p>在互联网，大家都把这个叫做Redis缓存。</p>
+<p>Redis其实可以覆盖很多消息队列的功能，但是！它终究有些功能是做不到的，下面我还是来详细讲一下redis和消息队列的对比不同吧。</p>
+<p>首先，<strong>Redis也可以做消息队列</strong></p>
+<p>这个毋庸置疑，并且Redis的消息队列实现起来还挺简单的。</p>
+<p>老版本的Redis，功能需求不多的，直接可以上 <strong>Redis Pub/Sub</strong></p>
+<p>如果Redis的版本大于5.0, 可以直接上<strong>Redis Stream</strong>，这个就是Redis专门用来做消息队列的实现方案。</p>
+<p>Redis Stream的概念如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Redis Stream 提供了消息的持久化和主备复制功能</span><br><span class="line"></span><br><span class="line">可以让任何客户端访问任何时刻的数据</span><br><span class="line"></span><br><span class="line">并且能记住每一个客户端的访问位置，还能保证消息不丢失</span><br></pre></td></tr></table></figure>
+
+<p>既然，Redis已经这么厉害了，那为什么还要用消息队列的中间件呢，例如rabbitmq，rocketmq</p>
+<p>其实Redis和消息队列中间件还是有区别的，下面我把我总结的几个点拿出来，给大家讲讲</p>
+<ol>
+<li>Redis的机制，本来就是做缓存的</li>
+<li>Redis严格上来讲是一个内存数据库</li>
+<li>Redis如果pop任务从队列出去，失败了不会回到队列重试，需要手动重新push</li>
+<li>Redis自己本身有一个基于Redis源码的消息队列disque</li>
+<li>一般的消息队列中间件都有持久化设置，Redis需要手动设置</li>
+<li>一般的消息队列中间件处理之后可以手动ack，也可以自动ack</li>
+<li>以rabbitmq为例，如果rabbitmq没有收到ack，会将消息放回消息队列进行处理，保证消息不丢失</li>
+<li>一般的消息队列中间件具有更完善的MQ机制。</li>
+</ol>
+<h2 id="消息队列在项目上的使用"><a href="#消息队列在项目上的使用" class="headerlink" title="消息队列在项目上的使用"></a>消息队列在项目上的使用</h2><p>一般什么情况下才会用消息队列呢，这个问题我也反复问过我自己，下面我就从我自己做过的几个项目来分析一下一般什么情况才会上消息队列吧，可能并不完善，不过胜在都是自己的经验，也算有一点点可取之处吧。</p>
+<h3 id="需要异步的情况下"><a href="#需要异步的情况下" class="headerlink" title="需要异步的情况下"></a>需要异步的情况下</h3><p>这种情况我在上面的章节举过例子，但是我举一个我开发的项目的例子吧，这样更加直观。</p>
+<p>我开发了一个文件同步系统，类似百度网盘，需要从远端下载文件到本地，并且要对每个文件的同步结果进行日志记录。</p>
+<p>分析一下，我的大概步骤就是</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">获取文件 -&gt; 文件传输 -&gt; 下发文件 -&gt; 同步文件 -&gt; 记录状态 -&gt; 结束同步 -&gt; 日志记录</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，这是一个很长的步骤，并且可以通过异步逻辑去改装这个步骤</p>
+<p>所以这里调用了消息队列做异步服务</p>
+<p>修改过的服务步骤如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">                     Rabbitmq服务</span><br><span class="line">            ——————————————————————————————         </span><br><span class="line">获取文件 -&gt; |文件传输 -&gt; 下发文件 -&gt; 同步文件| -&gt; 记录状态 -&gt; 结束同步 -&gt; 日志记录</span><br></pre></td></tr></table></figure>
+
+<p>首先，从获取文件开始，后面的任务状态直接修改为“待同步”，等rabbitmq服务跑外内部的步骤，再去修改服务状态，然后结束同步，记录日志。</p>
+<p>这样做就可以减少业务在前端的等待时间。</p>
+<p>这样就是我的大概想法。</p>
+<h3 id="微服务的架构下"><a href="#微服务的架构下" class="headerlink" title="微服务的架构下"></a>微服务的架构下</h3><p>公司的微服务架构我参与了设计，其实主要的核心就是<strong>解耦</strong>，这个我上面也说过了</p>
+<p>主要的核心就是降低每个业务之间的互相依赖，比如A依赖B，B依赖C，这样如果A丢失或者挂掉，那么B，C都会一起完蛋，这是高可用的系统中非常不可取的。</p>
+<p>所以，消息队列中间件，起到一个链接各方，传递消息的作用，以前是互相依赖传递消息，现在是用电话（消息队列）去传递消息，并且只用记住电话号码（订阅的消息队列）就可以了。</p>
+<h3 id="实时性要求不高的情况下"><a href="#实时性要求不高的情况下" class="headerlink" title="实时性要求不高的情况下"></a>实时性要求不高的情况下</h3><p>以rabbitmq为例，rabbitmq在上传消息到队列的时候是有一些延迟的，并不是实时操作的</p>
+<p>而且rabbitmq还有ack机制消费者获取消息之后才会ack通知消息队列，如果没有ack通知，消息会重新放入消息队列，再次等待消费</p>
+<p>所以消息队列，例如rabbitmq，kafka等，都不是实时的，如果需要追求实时性操作，你需要redis。</p>
+<h2 id="几种常见的消息队列盘点"><a href="#几种常见的消息队列盘点" class="headerlink" title="几种常见的消息队列盘点"></a>几种常见的消息队列盘点</h2><p>这里直接上个图，这个图的原地址是</p>
+<p><a href="https://zhuanlan.zhihu.com/p/60288391" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/60288391</a></p>
+<p>感谢您！您的图让我醍醐灌顶！</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/v2-87643ff65973d1860f1ab6919f4b0aa4_r.jpg" alt></p>
+<p>并且将消息队列优缺点总结如下</p>
+<h3 id="ActiveMQ"><a href="#ActiveMQ" class="headerlink" title="ActiveMQ"></a>ActiveMQ</h3><h4 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h4><ol>
+<li>单机吞吐量：万级</li>
+<li>topic数量都吞吐量的影响：</li>
+<li>时效性：ms级</li>
+<li>可用性：高，基于主从架构实现高可用性</li>
+<li>消息可靠性：有较低的概率丢失数据</li>
+<li>功能支持：MQ领域的功能极其完备<h4 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h4></li>
+</ol>
+<p>ActiveMQ 5.x维护越来越少，较少在大规模吞吐的场景中使用。</p>
+<h3 id="Kafka"><a href="#Kafka" class="headerlink" title="Kafka"></a>Kafka</h3><p>号称大数据的杀手锏，谈到大数据领域内的消息传输，则绕不开Kafka，这款为大数据而生的消息中间件，以其百万级TPS的吞吐量名声大噪，迅速成为大数据领域的宠儿，在数据采集、传输、存储的过程中发挥着举足轻重的作用。</p>
+<p>Apache Kafka它最初由LinkedIn公司基于独特的设计实现为一个分布式的提交日志系统( a distributed commit log)，之后成为Apache项目的一部分。</p>
+<p>目前已经被LinkedIn，Uber, Twitter, Netflix等大公司所采纳。</p>
+<h4 id="优点-1"><a href="#优点-1" class="headerlink" title="优点"></a>优点</h4><ol>
+<li>性能卓越，单机写入TPS约在百万条/秒，最大的优点，就是吞吐量高。</li>
+<li>时效性：ms级</li>
+<li>可用性：非常高，kafka是分布式的，一个数据多个副本，少数机器宕机，不会丢失数据，不会导致不可用</li>
+<li>消费者采用Pull方式获取消息, 消息有序, 通过控制能够保证所有消息被消费且仅被消费一次</li>
+<li>有优秀的第三方Kafka Web管理界面Kafka-Manager</li>
+<li>在日志领域比较成熟，被多家公司和多个开源项目使用</li>
+<li>功能支持：功能较为简单，主要支持简单的MQ功能，在大数据领域的实时计算以及日志采集被大规模使用</li>
+</ol>
+<h4 id="缺点-1"><a href="#缺点-1" class="headerlink" title="缺点"></a>缺点</h4><ol>
+<li>Kafka单机超过64个队列/分区，Load会发生明显的飙高现象，队列越多，load越高，发送消息响应时间变长</li>
+<li>使用短轮询方式，实时性取决于轮询间隔时间</li>
+<li>消费失败不支持重试</li>
+<li>支持消息顺序，但是一台代理宕机后，就会产生消息乱序</li>
+<li>社区更新较慢</li>
+</ol>
+<h3 id="RabbitMQ"><a href="#RabbitMQ" class="headerlink" title="RabbitMQ"></a>RabbitMQ</h3><p>RabbitMQ 2007年发布，是一个在AMQP(高级消息队列协议)基础上完成的，可复用的企业消息系统，是当前最主流的消息中间件之一。</p>
+<h4 id="优点-2"><a href="#优点-2" class="headerlink" title="优点"></a>优点</h4><ol>
+<li>由于erlang语言的特性，mq 性能较好，高并发；</li>
+<li>吞吐量到万级，MQ功能比较完备</li>
+<li>健壮、稳定、易用、跨平台、支持多种语言、文档齐全</li>
+<li>开源提供的管理界面非常棒，用起来很好用</li>
+<li>社区活跃度高</li>
+</ol>
+<h4 id="缺点："><a href="#缺点：" class="headerlink" title="缺点："></a>缺点：</h4><ol>
+<li>erlang开发，很难去看懂源码，基本职能依赖于开源社区的快速维护和修复bug，不利于做二次开发和维护。</li>
+<li>RabbitMQ吞吐量相比其他消息队列低</li>
+<li>需要学习比较复杂的接口和协议，学习和维护成本较高。</li>
+<li>性能差，每秒只能处理几万到十几万</li>
+<li>消息堆积的时候，性能会马上下降</li>
+</ol>
+<h3 id="RocketMQ"><a href="#RocketMQ" class="headerlink" title="RocketMQ"></a>RocketMQ</h3><p>RocketMQ阿里的开源，用Java语言实现，在设计时参考了Kafka，并做出了自己的一些改进。</p>
+<p>RocketMQ在阿里集团被广泛应用在订单，交易，充值，流计算，消息推送，日志流式处理，binglog分发等场景。</p>
+<h4 id="优点-3"><a href="#优点-3" class="headerlink" title="优点"></a>优点</h4><ol>
+<li>单机吞吐量：十万级</li>
+<li>可用性：非常高，分布式架构</li>
+<li>消息可靠性：经过参数优化配置，消息可以做到0丢失</li>
+<li>功能支持：MQ功能较为完善，还是分布式的，扩展性好</li>
+<li>支持10亿级别的消息堆积，不会因为堆积导致性能下降</li>
+<li>源码是java，可以自己阅读源码，定制MQ</li>
+</ol>
+<h4 id="缺点-2"><a href="#缺点-2" class="headerlink" title="缺点"></a>缺点</h4><ol>
+<li>支持的客户端语言不多，目前是java及c++，其中c++不成熟</li>
+<li>社区活跃度一般</li>
+<li>没有在 mq 核心中去实现JMS等接口，迁移需要修改大量代码</li>
+</ol>
+<h2 id="选择消息队列的建议"><a href="#选择消息队列的建议" class="headerlink" title="选择消息队列的建议"></a>选择消息队列的建议</h2><p>如果你的只是轻量级使用mq消息队列</p>
+<p>数据量可能每秒10W以下，对于持久化要求不高</p>
+<p>上<strong>Redis</strong></p>
+<p>如果你只是轻量级使用mq消息队列</p>
+<p>数据量10w以下，需要一定的持久化操作</p>
+<p>上<strong>Rabbitmq</strong></p>
+<p>如果你是互联网业务，并且数据量时高时低，高的时候特别高，低的时候几乎没有（好像都是这样。。）</p>
+<p>你要求数据不能丢失</p>
+<p>你要求分布式</p>
+<p>你要求高吞吐</p>
+<p>上<strong>kafka</strong></p>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>差不多就这样些，作为5月第一篇blog，我要加油！大家也要加油！</p>
+<p>我们一起刷题，一起离开！</p>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2021/05/08/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/04/28/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84DFS%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-Python%E5%AE%9E%E7%8E%B0/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">弄懂难缠的DFS算法和相关变种(Python实现)</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
