@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    ElasticSearch检索的核心-倒排索引解读 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-ElasticSearch检索的核心-倒排索引解读" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  ElasticSearch检索的核心-倒排索引解读
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/05/14/ElasticSearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/" class="article-date">
+  <time datetime="2021-05-14T07:09:41.000Z" itemprop="datePublished">2021-05-14</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.8k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">9 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>ElasticSearch为什么适合做检索服务器？</p>
+<p>因为快啊，大佬！</p>
+<p>为什么快啊？</p>
+<p>因为<strong>倒排索引</strong>啊！</p>
+<p>什么是<strong>倒排索引</strong>？</p>
+<p>这个，就要细细分析一下了，这篇文章可能写的不是那么全，但是我也会尽量总结所有重点！希望能帮到大家，爱你们！</p>
+<h2 id="索引是什么？"><a href="#索引是什么？" class="headerlink" title="索引是什么？"></a>索引是什么？</h2><p>首先，从基础玩起来，<strong>倒排索引</strong>，分为倒排+索引</p>
+<p>索引这个词汇，在数据库的出镜率非常高，我基础比较差，所以，我在这里会从头进行学习解读，希望大家理解，如果对索引非常了解的兄弟，请直接跳过这一段</p>
+<p>首先，什么是索引。</p>
+<p>索引是一种特殊的数据库数据结构</p>
+<p>首先，一般我们认为的查找，就是从头检索到尾，也就是从开头遍历到结尾，这样的时间复杂度是O(n)</p>
+<p>索引，就是将数据库表中的某一列或几列以特定的数据结构存起来，比如B-Tree，Hash等，这样我们去查找的时候，复杂度就会下降到O(log)或者O(1)</p>
+<p>把索引想成<strong>目录</strong>，把数据库想成<strong>书的内容</strong>。所以索引的核心作用就是加快数据的检索和查询速度。</p>
+<p>上面那句话我感觉就是说了和没说一样。。你用目录来找内容肯定比一页页遍历翻书快多了，下面咱们就该走一下索引的原理了，睁大眼睛，我们走起。</p>
+<h3 id="索引的原理"><a href="#索引的原理" class="headerlink" title="索引的原理"></a>索引的原理</h3><p>首先，上面说了，索引是一种数据结构，这种结构很可能是B-Tree，Hash等等</p>
+<p>一般的数据库索引数据结构基本都是Tree，Tree这个东西，涉及一种叫做<strong>平衡多叉树</strong>的数据结构</p>
+<p>也有一些数据库索引使用hash桶做数据结构，但大部分都是Tree</p>
+<p><strong>平衡多叉树</strong>就是b-tree，b+ tree的核心，这玩意儿就是搞查询用的</p>
+<p>平衡多叉树的基本原理</p>
+<ol>
+<li>这不是二叉结构，有一种树叫做平衡二叉树，多叉和二叉是不同的玩意。</li>
+<li>B树和B+树的核心都是平衡多叉树</li>
+<li>所有节点关键字是按递增次序排列，并遵循左小右大原则</li>
+<li>树中每个节点最多含有m个节点（m&gt;=2）</li>
+</ol>
+<p>这样似乎有点抽象。。。不过这个只是理论</p>
+<p>后面我单独开贴来说一下B树,B+树系列吧</p>
+<p>常规的索引数据结构如下</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95/3.png" alt></p>
+<p>这篇文章不是讲B树，hash的，所以我就直接进入正题了，直接讲ElasticSearch。</p>
+<h2 id="ElasticSearch的倒排索引是什么？"><a href="#ElasticSearch的倒排索引是什么？" class="headerlink" title="ElasticSearch的倒排索引是什么？"></a>ElasticSearch的倒排索引是什么？</h2><p>上面说了，索引相当于是目录，是查询内容的指向标一类的东西</p>
+<p>那么，倒排索引又是什么？和一般的索引有什么不一样的嘛？</p>
+<p>现在我来和大家一起复习一下。</p>
+<p>首先索引的机制我已经简单的介绍了，是一种数据库中使用的数据结构。</p>
+<p>一般是B树，hash之类的。</p>
+<p>但是ElasticSearch用的既不是B树也不是hash，用的是倒排索引</p>
+<p>ElasticSearch的核心就是搜索，所做的一切都是为了提高搜索的效率</p>
+<p>ElasticSearch是一个<strong>非关系型</strong>的数据库，和Mysql之类的关系型数据库有本质区别。</p>
+<p>所以用的索引技术也不相同</p>
+<p>倒排索引，就是为了方便<strong>检索</strong>的一种数据结构</p>
+<h2 id="倒排索引检索-VS-传统检索"><a href="#倒排索引检索-VS-传统检索" class="headerlink" title="倒排索引检索 VS 传统检索"></a>倒排索引检索 VS 传统检索</h2><p>如果我们在<strong>关系型</strong>数据库中，例如Mysql中进行查找，我们只能用like来实现模糊检索</p>
+<p>例如，我们现在要检索一篇含有 “Ak47” 的文章，需要编写如下sql语句</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> * <span class="keyword">from</span> article <span class="keyword">where</span> <span class="keyword">content</span> <span class="keyword">like</span> <span class="string">'%Ak47%'</span>;</span><br></pre></td></tr></table></figure>
+
+<p>这样的查找，我们是没法使用索引的，因为我们需要进行全扫描，你不可能将整个文章内容都作为索引</p>
+<p>这样检索效率很差，也没法完成复杂性检索。</p>
+<p>更别提复杂的全文检索了，所以，mysql不适合用来做检索引擎。</p>
+<p>更多情况下，很多数据库是以一个主键，作为每个文档的唯一标识</p>
+<p>例如传统索引下</p>
+<table>
+<thead>
+<tr>
+<th>文档ID</th>
+<th>content</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Ak47突击步枪</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Ak74u突击步枪</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Ak74s突击步枪</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Akm突击步枪</td>
+</tr>
+</tbody></table>
+<p>倒排索引就不一样了，他是以单词作为索引，然后将对应的文档id和索引进行关联，类似链表，然后生成倒排索引结构</p>
+<table>
+<thead>
+<tr>
+<th>word</th>
+<th>文档ID</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Ak</td>
+<td>1,2,3,4</td>
+</tr>
+<tr>
+<td>Ak47</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Ak74</td>
+<td>2,3</td>
+</tr>
+<tr>
+<td>Akm</td>
+<td>4</td>
+</tr>
+<tr>
+<td>突击</td>
+<td>1,2,3,4</td>
+</tr>
+<tr>
+<td>步枪</td>
+<td>1,2,3,4</td>
+</tr>
+<tr>
+<td>突击步枪</td>
+<td>1,2,3,4</td>
+</tr>
+</tbody></table>
+<p>所以，检索的时候只要去通过词汇，直接就能找到匹配的文档</p>
+<p>相当于，假设你要搜索 “Ak47”，直接根据word去找匹配的词汇，然后取到文档ID就行了。</p>
+<p>这个不就很快？所以倒排索引的好处就体现出来了。</p>
+<p>所以倒排 Vs 传统，倒排完胜。</p>
+<p>词汇的形成是通过分词进行切分的，分词的核心在这里就不做讨论了，如果想看，可以看下我以前的一篇blog</p>
+<p><a href="https://yemilice.com/2020/08/21/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/">中文分词的算法分析</a></p>
+<h2 id="倒排索引的数据结构"><a href="#倒排索引的数据结构" class="headerlink" title="倒排索引的数据结构"></a>倒排索引的数据结构</h2><p>ElasticSearch的核心首先是 Apache Lucene，而倒排索引也是出自Lucene的特殊的数据结构</p>
+<p>首先我们看上一节，倒排索引其实可以用一个字典逻辑来表达</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"Ak"</span>:[<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>],</span><br><span class="line">    <span class="string">"AK47"</span>:[<span class="number">1</span>],</span><br><span class="line">    <span class="string">"Ak74"</span>:[<span class="number">2</span>,<span class="number">3</span>]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个字典里面的key值是分词后的单词，对应的value是文档的ID</p>
+<p>根据Lucene的概念，这个key值被称为 <strong>Term</strong></p>
+<p>如果要进行检索，我们通过term去找对应的值</p>
+<p>一般如果文档数量很大，那么对应的term表也一样很大，全都放到内存会出事的，所以，Lucene定义了一个索引，叫做 <strong>Term Index</strong>，汉语<strong>词典索引</strong></p>
+<p>一般我们不能把所有的Term表都放到内存里，所以这个是指向第二层索引表指路牌</p>
+<p>第二层，全称 <strong>Term Dictionary</strong>，汉语叫做<strong>索引表</strong></p>
+<p>根据lucene的概念，这个value值被称为 <strong>Postings List</strong>，汉语被称为<strong>倒排表</strong>。</p>
+<p>记录表不仅仅只是一个文档ID的list，不要被我的简写搞混淆了，记录表里面包含了大概如下信息</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>字段功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>文档ID</td>
+<td>包含单词的所有文档唯一id</td>
+</tr>
+<tr>
+<td>词频（TF）</td>
+<td>记录 Term 在每篇文档中出现的次数，用于评分</td>
+</tr>
+<tr>
+<td>位置（Position）</td>
+<td>记录 Term 在每篇文档中的分词位置（多个），用于做词语搜索</td>
+</tr>
+<tr>
+<td>偏移（Offset)</td>
+<td>记录 Term 在每篇文档的开始和结束位置，用于高亮显示</td>
+</tr>
+</tbody></table>
+<p>看个图</p>
+<p>这是他们三者之间的关系</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95/4.jpg" alt></p>
+<p>这就是倒排索引的大概数据结构。</p>
+<h3 id="Term-Index解析"><a href="#Term-Index解析" class="headerlink" title="Term Index解析"></a>Term Index解析</h3><p>Trem Index, 走检索的时候，这个相当于是入口，也就是目录。</p>
+<p>通过Terms Index能够快速地在Terms Dictionary中找到你的想要的Term。</p>
+<h4 id="存储模式"><a href="#存储模式" class="headerlink" title="存储模式"></a>存储模式</h4><p>Terms Dictionary 存储 Term 的索引文件叫做 Terms Index，存储的格式是 <strong>.tip</strong></p>
+<h4 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h4><p>Term Index是由多个<strong>FST</strong>组成的，FST这个东西展开说太多了，咱们这篇文章不太够，所以我这里就简单描述下，后面再开团讲这个。</p>
+<p>Trem Index里面主要包含</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>字段功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>header</td>
+<td>header头</td>
+</tr>
+<tr>
+<td>IndexStartFP</td>
+<td>当前的FSTIndex信息的起始位置</td>
+</tr>
+<tr>
+<td>FSIndex</td>
+<td>起始位置索引，FST算法存储</td>
+</tr>
+</tbody></table>
+<p>它的数据结构如下：</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95/6.jpg" alt></p>
+<p>Trem Index的结构是<strong>Burst-Trie</strong>实现的，这里面主要包含了Term的一些前缀</p>
+<p>它的结构类似</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95/5.jpg" alt></p>
+<p>这里简单的画了个图，您就凑合看吧</p>
+<p>当然也有复杂的，类似这样</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95/9.jpg" alt></p>
+<p>当然这里不可能是包含所有的term，这里和mysql之类的索引是不一样的，这里存的只是term的前缀。</p>
+<p>所以，当我们搜索”Ak47”的时候，这里面大概率会存储着”A”的前缀，找到A之后再去匹配Term Dictionary</p>
+<h3 id="Term-Dictionary解析"><a href="#Term-Dictionary解析" class="headerlink" title="Term Dictionary解析"></a>Term Dictionary解析</h3><p>Term Dictionary 存储了所有的Term值</p>
+<p>如果用精准一点的描述，Term Dictionary存储了Term和对应的Postings List指针。</p>
+<h4 id="存储模式-1"><a href="#存储模式-1" class="headerlink" title="存储模式"></a>存储模式</h4><p>Terms Dictionary 的文件存储格式为 <strong>.tim</strong>，存储了Term和对应的Postings List指针。</p>
+<h4 id="数据结构-1"><a href="#数据结构-1" class="headerlink" title="数据结构"></a>数据结构</h4><p>先看个图</p>
+<p>tim主要包含了如下字段</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95/7.jpg" alt></p>
+<p>这里面，Nodeblock是核心，先看这张图，Nodeblock其实类似一个树</p>
+<p>Terms Dictionary 通过 .tim 后缀文件存储，</p>
+<p>其内部采用 NodeBlock 对 Term 进行压缩前缀存储，</p>
+<p>处理过程会将相同前缀的的 Term 压缩为一个 NodeBlock，</p>
+<p>NodeBlock 会存储公共前缀，然后将每个 Term 的后缀以及对应 Term 的 Posting 关联信息处理为一个 Entry 保存到 Block</p>
+<p>Entry是一个关联的信息，一般记作元数据</p>
+<p>Block可以互相包含，因为前缀很可能相同</p>
+<p>具体流程类似：</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95/10.jpg" alt></p>
+<h3 id="Postings-List解析"><a href="#Postings-List解析" class="headerlink" title="Postings List解析"></a>Postings List解析</h3><p>Postings List就是前面我们说的，包含文档ID，文档位置，词频等信息，这些数据相互独立，并且在Postings List中也有这样的表现</p>
+<h4 id="存储模式-2"><a href="#存储模式-2" class="headerlink" title="存储模式"></a>存储模式</h4><p>Postings List 被拆成三个文件存储：</p>
+<ol>
+<li>.doc后缀文件：记录 Postings 的 docId 信息和 Term 的词频</li>
+<li>.pay后缀文件：记录 Payload 信息和偏移量信息</li>
+<li>.pos后缀文件：记录位置信息</li>
+</ol>
+<h4 id="数据结构-2"><a href="#数据结构-2" class="headerlink" title="数据结构"></a>数据结构</h4><p>这三个文件是做查询使用的，所以用的最多的应该.doc文件</p>
+<p>我这里举一个.doc的数据结构的例子，进行分析</p>
+<p>.doc文件里存储了Term的文档对应的ID，.doc的数据结构如下</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95/11.jpg" alt></p>
+<ol>
+<li>TermFreqs 存储文档号和对应的词频</li>
+<li>SkipData是搜索的时候判断对应的文档ID在不在一个交集当中，进行跳表的</li>
+</ol>
+<h2 id="倒排索引的查询逻辑"><a href="#倒排索引的查询逻辑" class="headerlink" title="倒排索引的查询逻辑"></a>倒排索引的查询逻辑</h2><p>首先接着上面那个数据结构，我们把数据结构连接起来，看一下下面的图。</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95/14.jpg" alt></p>
+<ol>
+<li>通过Term index，这里面记录着前缀</li>
+<li>通过前缀快速定位到Term dictionary的offset</li>
+<li>通过offset定位到Postings List</li>
+</ol>
+<p>这就是大概的倒排索引查询逻辑，这里面较为抽象，但是将基本的查询步骤都刻画出来了。</p>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>这篇文章，我感觉写的不好，我预计，我后序还是会修修补补，大家看到了，如果我有错误，马上指出来！</p>
+<p>最近学习进入了一个新的阶段，希望我自己能打通任督二脉，希望我可以做到吧。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">太多的感谢说不出口</span><br><span class="line"></span><br><span class="line">我知道是你们在我的背后</span><br><span class="line"></span><br><span class="line">不断鞭策</span><br><span class="line"></span><br><span class="line">信念不会随时间陈旧</span><br><span class="line"></span><br><span class="line">停不下执笔的手</span><br><span class="line"></span><br><span class="line">踌躇茫然也只是短暂停留</span><br></pre></td></tr></table></figure>
+
+<p>最后感谢一些文章的作者，你们帮了我很多</p>
+<blockquote>
+<p><a href="https://www.amazingkoala.com.cn/Lucene/suoyinwenjian/2019/0401/43.html" target="_blank" rel="noopener">tim&amp;&amp;tip文件</a><br><a href="https://juejin.cn/post/6947984489960177677#heading-12" target="_blank" rel="noopener">Lucene 倒排索引原理</a><br><a href="https://www.cnblogs.com/jiu0821/p/7688628.html#_label1_2" target="_blank" rel="noopener">Elasticsearch索引原理</a></p>
+</blockquote>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2021/05/14/ElasticSearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/05/08/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">为什么要使用消息队列服务</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
