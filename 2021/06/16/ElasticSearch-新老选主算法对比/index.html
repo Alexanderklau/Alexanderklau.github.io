@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    ElasticSearch-新老选主算法对比 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-ElasticSearch-新老选主算法对比" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  ElasticSearch-新老选主算法对比
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/06/16/ElasticSearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/" class="article-date">
+  <time datetime="2021-06-16T07:17:06.000Z" itemprop="datePublished">2021-06-16</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">4.1k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">15 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>首先，ElasticSearch 7，也就是Es 7， 变动还是有点儿大，改了很多东西，例如取消了type，修改了选主算法之类的操作</p>
+<p>正好几天在钻研一些选主算法一类的东西，看了ETCD，rabbitmq，kafka之类的一些选主算法，想起来似乎对于Es，我还没有细致研究</p>
+<p>于是产生了写这篇文章的动力，这篇文章，也是一篇新老选主算法的对比文章</p>
+<p>大概会描述一下Es的两种选主算法，然后分析一下新老算法的差异</p>
+<p>好了，我们开始把。</p>
+<p>老样子，一段freestyle</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">黑暗笼罩着我的眼</span><br><span class="line"></span><br><span class="line">看不清到底是黎明还是黑夜</span><br><span class="line"></span><br><span class="line">时间依旧不会停歇滴答滴答</span><br><span class="line"></span><br><span class="line">本质是仅仅如此还是始终如一？</span><br><span class="line"></span><br><span class="line">我问自己到底想要何物</span><br><span class="line"></span><br><span class="line">夸父逐日</span><br><span class="line"></span><br><span class="line">终于大泽之尾</span><br><span class="line"></span><br><span class="line">停下来的风景似乎更美</span><br></pre></td></tr></table></figure>
+
+<h2 id="老选主算法-Bully算法（在Es7之前的所有版本使用）"><a href="#老选主算法-Bully算法（在Es7之前的所有版本使用）" class="headerlink" title="老选主算法 Bully算法（在Es7之前的所有版本使用）"></a>老选主算法 Bully算法（在Es7之前的所有版本使用）</h2><p>Bully算法，在ElasticSearch 7.0之前，都是Es的选主算法，在7.0之后被替换。bully，顾名思义，霸道选举，也叫霸道选举算法（自己编的）</p>
+<h3 id="Bully算法的原理"><a href="#Bully算法的原理" class="headerlink" title="Bully算法的原理"></a>Bully算法的原理</h3><p>首先，一句话概括：</p>
+<p><strong>Bully算法的基本原理就是，根据节点的ID大小来判定谁是leader</strong></p>
+<p>这个直接点明本质</p>
+<h4 id="Bully算法的消息类型"><a href="#Bully算法的消息类型" class="headerlink" title="Bully算法的消息类型"></a>Bully算法的消息类型</h4><p>Bully算法在选举的时候会发送三种消息类型</p>
+<ol>
+<li>选举消息 （Election Message: Sent to announce election.）</li>
+<li>应答消息（Answer (Alive) Message: Responds to the Election message.）</li>
+<li>选举成功消息 （Coordinator (Victory) Message: Sent by winner of the election to announce victory.）</li>
+</ol>
+<p>这三种消息类型组成了Bully的基础消息类型，这也是Bully算法选举必须要了解的东西。请注意。</p>
+<h4 id="Bully算法的选举流程"><a href="#Bully算法的选举流程" class="headerlink" title="Bully算法的选举流程"></a>Bully算法的选举流程</h4><p>还是用最熟悉的《黑社会》电影举例</p>
+<p>假设我们现在有node1（大D）, node2（阿乐）, node3（吉米）三个进程，现在开始选主。</p>
+<ol>
+<li>node1的进程号比node2，node3都大，他会直接通知node2，node3,发送选举成功（Coordinator Message）消息，如果它的进程ID小于node2，node3，那么他将发送选举消息 （Election Message）</li>
+<li>如果发送选举消息没有回应，这时候有两个原因，一个是其他节点的进程ID大于它，另一个是其他节点还在向集群内节点广播选举消息，也就是互相发送选举消息，就类似，大D和阿乐都自认自己是话事人。</li>
+<li>如果node2的进程ID大于node1，那么node1就会收到应答消息（Answer (Alive) Message），表明，选举失败，你不是话事人，等待其他节点的选举成功（Coordinator Message）消息</li>
+<li>如果node2进程ID小于node1，node1会返回一个应答消息（Answer (Alive) Message），启动选举进程，向更高的进程发送选举消息 （Election Message）</li>
+<li>如果node1接受到了node2节点选举成功（Coordinator Message）消息，则说明，node1看node2是master节点。</li>
+</ol>
+<p>为了方便阅读，这里有个图将bully算法选举流程列出如下</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%96%B0%E6%97%A7%E7%AE%97%E6%B3%95/1.png" alt></p>
+<p>分步解释</p>
+<ol>
+<li>节点1向节点，节点3发送选举，并且带上自己的序号<strong>1</strong></li>
+<li>节点2，3接收到消息之后，进行序号比较，发觉自己的序号更大，向节点1返回应答消息Answer (Alive) Message，告知节点1被踢出选主序列（大概是这个意思）</li>
+<li>节点2向节点3发送选举请求，节点3找不到更高序号的节点发送选举请求了</li>
+<li>节点3向节点2返回应答消息，节点3收不到其他节点的应答消息了</li>
+<li>节点3被认为是leader，向其他节点发送Coordinator Message，选举成功的请求，将自己是master节点广播到节点1，节点2</li>
+</ol>
+<h3 id="Bully算法在ElasticSearch中如何运用（如何选出es的Master）"><a href="#Bully算法在ElasticSearch中如何运用（如何选出es的Master）" class="headerlink" title="Bully算法在ElasticSearch中如何运用（如何选出es的Master）"></a>Bully算法在ElasticSearch中如何运用（如何选出es的Master）</h3><p>上面我已经把bully算法如何选举详细的说了，聪明的你应该明白了吧？</p>
+<p>要不明白可以给我发邮件或者留言</p>
+<p>下面说一下Es里面，bully如何选举出master的</p>
+<p>首先看一下基础步骤，这里很可能会贴出java源码，看不懂的我也米办法了，凑合看</p>
+<h4 id="找到活动的active-node"><a href="#找到活动的active-node" class="headerlink" title="找到活动的active node"></a>找到活动的active node</h4><p>可以选举的节点，这个是在配置文件 elasticsearch.yml 里面的 <strong>discovery.zen.ping.unicast.hosts</strong> 定义的</p>
+<p>首先Es的Java实例会去直接调用ping逻辑检查可用的节点</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">List&lt;DiscoveryNode&gt; activeMasters = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">  <span class="keyword">for</span> (ZenPing.PingResponse pingResponse : pingResponses) &#123;</span><br><span class="line">      <span class="comment">// We can't include the local node in pingMasters list, otherwise we may up electing ourselves without</span></span><br><span class="line">      <span class="comment">// any check / verifications from other nodes in ZenDiscover#innerJoinCluster()</span></span><br><span class="line">      <span class="keyword">if</span> (pingResponse.master() != <span class="keyword">null</span> &amp;&amp; !localNode.equals(pingResponse.master())) &#123;</span><br><span class="line">          activeMasters.add(pingResponse.master());</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里会直接去ping 那些节点，然后把除本节点以外的，能ping通的，可用的，正在活动的节点加入到<strong>activeMasters</strong>这一个链表里面</p>
+<h4 id="找到可以成为master的node"><a href="#找到可以成为master的node" class="headerlink" title="找到可以成为master的node"></a>找到可以成为master的node</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// nodes discovered during pinging</span></span><br><span class="line">   List&lt;ElectMasterService.MasterCandidate&gt; masterCandidates = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">   <span class="keyword">for</span> (ZenPing.PingResponse pingResponse : pingResponses) &#123;</span><br><span class="line">       <span class="keyword">if</span> (pingResponse.node().isMasterNode()) &#123;</span><br><span class="line">           masterCandidates.add(<span class="keyword">new</span> ElectMasterService.MasterCandidate(pingResponse.node(), pingResponse.getClusterStateVersion()));</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+<p>这里是将所有的可以选举的节点（包括本节点），加入到了一个新的masterCandidates链表里面</p>
+<h4 id="Bully算法选举"><a href="#Bully算法选举" class="headerlink" title="Bully算法选举"></a>Bully算法选举</h4><p>看下代码</p>
+<p>如果刚才的那个活动选举的链表activeMasters为空，也就是说不存在活着的master节点，然后再去再去配置文件里面<strong>elasticsearch.yml</strong>，有个重要属性，discovery.zen.minimum_master_nodes，这代表着最小选举节点，当activeMasters为空，并且minimum_master_nodes &gt; masterCandidates，满足匹配数量，直接走bully的选举，选举出最小ID的节点成为master节点。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (activeMasters.isEmpty()) &#123;</span><br><span class="line">        <span class="keyword">if</span> (electMaster.hasEnoughCandidates(masterCandidates)) &#123;</span><br><span class="line">            <span class="keyword">final</span> ElectMasterService.MasterCandidate winner = electMaster.electMaster(masterCandidates);</span><br><span class="line">            logger.trace(<span class="string">"candidate &#123;&#125; won election"</span>, winner);</span><br><span class="line">            <span class="keyword">return</span> winner.getNode();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// if we don't have enough master nodes, we bail, because there are not enough master to elect from</span></span><br><span class="line">            logger.warn(<span class="string">"not enough master nodes discovered during pinging (found [&#123;&#125;], but needed [&#123;&#125;]), pinging again"</span>,</span><br><span class="line">                        masterCandidates, electMaster.minimumMasterNodes());</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">assert</span> !activeMasters.contains(localNode) : <span class="string">"local node should never be elected as master when other nodes indicate an active master"</span>;</span><br><span class="line">        <span class="comment">// lets tie break between discovered nodes</span></span><br><span class="line">        <span class="keyword">return</span> electMaster.tieBreakActiveMasters(activeMasters);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Bully算法的优点"><a href="#Bully算法的优点" class="headerlink" title="Bully算法的优点"></a>Bully算法的优点</h3><p>其实Bully算法，简单粗暴，好处就是<strong>简单</strong></p>
+<p>并且算法的难度低啊，怪不得Es最初几个版本要用它，简单就完事儿了</p>
+<p>而且bully的选举速度很快，相互通知，比对大小，就得了，所以我想这就是es最初几版用它的原因吧。</p>
+<h3 id="Bully算法的缺点"><a href="#Bully算法的缺点" class="headerlink" title="Bully算法的缺点"></a>Bully算法的缺点</h3><p>缺点的话。。。我感觉bully算法相比于其他主流算法，相对来说简单一些</p>
+<p>但是简单很可能就是一种原罪</p>
+<p>当有节点频繁加入或者退出的时候，主节点会频繁的进行切换，保存的节点信息的元数据也就会越来越大，越来越大</p>
+<p>所以Bully算法的缺点，从我的角度上来看的话，也就是无法满足复杂场景下的选主需求，因为复杂场景下的选主，需要强力的选主算法支撑</p>
+<p>因为主节点，能力越大，责任越大！必须保持稳定！包租婆，你说是吧！</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%96%B0%E6%97%A7%E7%AE%97%E6%B3%95/2.png" alt></p>
+<h3 id="为什么要替换Bully算法"><a href="#为什么要替换Bully算法" class="headerlink" title="为什么要替换Bully算法"></a>为什么要替换Bully算法</h3><p>Es7 版本算是大改，不仅改了选主算法，连type都删了，这算是一个大变动，我记得很多人的Es都是5，或者6</p>
+<p>我查询了一些资料，发觉在Es官方的文章上说明了为什么替换的原因</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">Elasticsearch 6.x 及之前的版本使用了一个叫作 Zen Discovery 的集群协调子系统。</span><br><span class="line"></span><br><span class="line">这个子系统经过多年的发展，成功地为大大小小的集群提供支持。</span><br><span class="line"></span><br><span class="line">然而，我们想做出一些改进，这需要对它的工作方式作出一些根本性的修改。</span><br><span class="line"></span><br><span class="line">Zen Discovery 允许用户通过设置 </span><br><span class="line"></span><br><span class="line">discovery.zen.minimum_master_nodes 来决定多少个符合主节点条件的节点可以形成仲裁。</span><br><span class="line"></span><br><span class="line">在每个节点上一定要正确地配置这个参数，如果集群进行动态扩展，也需要正确地更新它，这一点非常重要。</span><br><span class="line"></span><br><span class="line">系统不可能检测到用户是否错误配置了这个参数，而且在实践当中，在</span><br><span class="line">添加或删除节点之后很容易忘记调整这个参数。</span><br><span class="line"></span><br><span class="line">Zen Discovery 试图通过在每次主节点选举过程中等待几秒来防止出现这种错误配置。</span><br><span class="line"></span><br><span class="line">这意味着，如果所选的主节点失败，在选择替代节点之前，集群至少在几秒钟内是不可用的。</span><br><span class="line"></span><br><span class="line">如果集群无法选举出一个主节点，有时候很难知道是为什么。</span><br></pre></td></tr></table></figure>
+
+<p>这个翻译太蹩脚了，我来直接简单扼要的说明一下为什么要替换吧</p>
+<ol>
+<li>老版本里面有个discovery.zen.minimum_master_nodes，这个很重要，但是动态扩展的时候有些时候可能会忘记设置这个东西</li>
+<li>如果不设置这个东西，Zen Discovery会在每次选举过程中等待一阵，大概是几秒时间来防止这种错误配置，这就造成集群暂时不可用</li>
+<li>也有可能造成无法选主的问题，这个非常致命，所以我们要换这套算法。</li>
+</ol>
+<h2 id="新选主算法-类Raft算法（Es7之后更新）"><a href="#新选主算法-类Raft算法（Es7之后更新）" class="headerlink" title="新选主算法 类Raft算法（Es7之后更新）"></a>新选主算法 类Raft算法（Es7之后更新）</h2><p>接上节，那么，Es不用Bully之后，到底要用什么呢？</p>
+<p>官方给的文章也说明了这个问题</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">我们重新设计并重建了 Elasticsearch 7.0 的集群协调子系统：</span><br><span class="line"></span><br><span class="line">1. 移除 minimum_master_nodes 参数，让 Elasticsearch 自己选择可以形成仲裁的节点。</span><br><span class="line"></span><br><span class="line">2. 典型的主节点选举现在只需要很短的时间就可以完成。</span><br><span class="line"></span><br><span class="line">3. 集群的伸缩变得更安全、更容易，并且可能造成丢失数据的系统配置选项更少了。</span><br><span class="line"></span><br><span class="line">4. 节点更清楚地记录它们的状态，有助于诊断为什么它们不能加入集群或为什么无法选举出主节点</span><br></pre></td></tr></table></figure>
+
+<p>这边说的很清楚，原有的Zen Discovery被替换了，不再使用</p>
+<p>那么新版采用的算法是什么呢？</p>
+<p>这个在官方文档里也有</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">我们经常被问到的一个问题是，为什么不简单地“插入”像 Raft 一样的标准分布式共识算法。</span><br><span class="line"></span><br><span class="line">有很多公认的算法，每种算法都有不同的利弊权衡。</span><br><span class="line"></span><br><span class="line">我们仔细评估了所有可以找到的文献，并从中汲取灵感。</span><br><span class="line"></span><br><span class="line">在我们早期的概念验证中，有一个概念便使用了非常接近 Raft 的协议。</span><br></pre></td></tr></table></figure>
+
+<p>所以，我将Es7的选主算法命名为类Raft算法，也就是类似Raft的算法。但是不是完全是Raft算法，这个我会在后面详细说明。</p>
+<h3 id="Raft算法的原理"><a href="#Raft算法的原理" class="headerlink" title="Raft算法的原理"></a>Raft算法的原理</h3><p>首先Es的选主算法基础是来源于Raft，还是有必要分析下Raft算法的机制和原理</p>
+<p>才有助于后期对Es 7 的核心源码进行解读分析</p>
+<h4 id="什么是Raft算法？"><a href="#什么是Raft算法？" class="headerlink" title="什么是Raft算法？"></a>什么是Raft算法？</h4><p>这个又涉及到了一致性问题，这是分布式系统的一个老调常谈的部分</p>
+<p>首先，Raft算法是用来解决分布式一致性问题，而编写出来的一种算法。</p>
+<h4 id="Raft算法是如何工作的？"><a href="#Raft算法是如何工作的？" class="headerlink" title="Raft算法是如何工作的？"></a>Raft算法是如何工作的？</h4><p>在Raft算法中，一个节点分别可能有三种角色</p>
+<ol>
+<li>Follower 跟随者</li>
+<li>Candidate 候选人</li>
+<li>Leader 领导者</li>
+</ol>
+<p>当初始化的时候，所有的节点都是Follower跟随者</p>
+<p>此时此刻，如果没有收到leader的消息，那么节点将会自动转换为Candidate候选人的身份</p>
+<p>这时，成为候选人的节点，将向其他节点发送选举投票请求</p>
+<p>这时，接收到信号的节点，将会回复这次投票请求</p>
+<p>如果大多数节点都赞成选举这个节点为leader，那么这个节点将会成为集群leader节点</p>
+<p>这就是领导者选举的步骤，通俗来讲，也就是选主步骤，这也是我今天要讲的核心。</p>
+<p>这里我画了个图，将步骤完全简化，大家，凑合看下吧，聪明的你，一定一看就懂！</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%96%B0%E6%97%A7%E7%AE%97%E6%B3%95/3.png" alt></p>
+<p>开始选举的条件是：</p>
+<ol>
+<li>当follower节点接收不到leader节点的心跳</li>
+<li>leader节点超时</li>
+</ol>
+<p>但是要注意，当follower节点收不到leader节点心跳的时候，需要等待一点时间切换为Candidate候选人，才可以开始选举。</p>
+<p>看下图吧，大概，也许差不离，就是这么选举。</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%96%B0%E6%97%A7%E7%AE%97%E6%B3%95/4.jpg" alt></p>
+<h3 id="类Raft算法在ElasticSearch中如何运用"><a href="#类Raft算法在ElasticSearch中如何运用" class="headerlink" title="类Raft算法在ElasticSearch中如何运用"></a>类Raft算法在ElasticSearch中如何运用</h3><p>大概知道了Raft算法的选举原理，那么在Es里面，如何使用新的算法去选举leader呢？</p>
+<p>这里就需要追一下源码了，下面又到了追源码的路子了，大家要看不了的话，真没办法了！</p>
+<p>首先，ElasticSearch的选举算法套了Raft的壳子，但是不是真的Raft逻辑</p>
+<p>相比于Raft算法，Es的选主算法有如下不同</p>
+<ol>
+<li>初始为 Candidate状态</li>
+<li>允许多次投票，也就是每个有投票资格的节点可以投多票</li>
+<li>候选人可以有投票的机会</li>
+<li>可能会产生多个主节点</li>
+</ol>
+<p>举例来说，如果node1，node2，node3进行选主</p>
+<p>如果node1当选leader，但是node2发来了投票要求，那么node1无条件退出leader状态，node2选为主节点，但是node3也发来了投票要求，那么node2退出leader状态，node3当选主节点。</p>
+<p>说明白了，就是<strong>保证最后当选的leader为主leader</strong></p>
+<p>那么，综上所述，选举的流程为</p>
+<p>节点的初始状态，为Candidate，当加入集群的时候，如果我们的discovery发现集群已经存在 leader，那么新加入的节点自动转换为follower。</p>
+<p>假设Candidate开始，那么节点收到足够的投票数量，转换为leader，假设其他节点发送了拉票请求，此节点辞去leader，转换为Candidate，直到选出leader，转换为follower。</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%96%B0%E6%97%A7%E7%AE%97%E6%B3%95/5.jpg" alt></p>
+<h3 id="类Raft算法的优点"><a href="#类Raft算法的优点" class="headerlink" title="类Raft算法的优点"></a>类Raft算法的优点</h3><p>这个资料上面有，我就直接说了</p>
+<ol>
+<li>免去了 Zen Discovery 的 discovery.zen.minimum_master_nodes 配置，es 会自己选择可以形成仲裁的节点，用户只需配置一个初始 master 节点列表即可。也即集群扩容或缩容的过程中，不要再担心遗漏或配错 discovery.zen.minimum_master_nodes 配置</li>
+<li>新版 Leader 选举速度极大快于旧版。在旧版 Zen Discovery 中，每个节点都需要先通过 3 轮的 ZenPing 才能完成节点发现和 Leader 选举，而新版的算法通常只需要在 100ms 以内</li>
+<li>修复了 Zen Discovery 下的疑难问题，如重复的网络分区可能导致群集状态更新丢失问题</li>
+</ol>
+<h3 id="类Raft算法的缺点"><a href="#类Raft算法的缺点" class="headerlink" title="类Raft算法的缺点"></a>类Raft算法的缺点</h3><ol>
+<li>节点多的情况下，会造成重复选主多次，选主缓慢</li>
+</ol>
+<p>暂时缺少资料支撑，只有些英文的。并且还TM不全。。回头补上。</p>
+<h3 id="其他Raft算法的实现（哪些知名项目也使用了Raft）"><a href="#其他Raft算法的实现（哪些知名项目也使用了Raft）" class="headerlink" title="其他Raft算法的实现（哪些知名项目也使用了Raft）"></a>其他Raft算法的实现（哪些知名项目也使用了Raft）</h3><p>这个就有话说了</p>
+<p>除开我研究过一阵的ETCD，ETCD是把Raft协议用到核心层的分布式数据库</p>
+<p>这个我原来写过文章</p>
+<p><a href="https://yemilice.com/2021/04/04/%E5%AD%A6%E4%B9%A0etcd%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6raft%E5%8D%8F%E8%AE%AE%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/">学习etcd核心机制Raft协议的一点随想</a></p>
+<p>可以自己去翻一下。</p>
+<p>还有<strong>kafka</strong></p>
+<p>kafka原有的一致性算法是Zookeeper提供的ZAB协议，但是2.8被替换成了Raft，说明Zookeeper已经被抛弃了，Raft的一些机制的确是好于ZAB</p>
+<p>当然也有RocketMQ，内部核心来源于dledger源码，也是基于Raft的。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>草草写完，过于浅显，入个门也够了，也作为我自己的笔记</p>
+<p>希望有大佬看见，能给予指点，这次借鉴了<strong>张超</strong>老师的很多博客，包括他写的<strong>Es源码解析</strong>这本书，对我的帮助非常非常大！感谢您！张超老师！</p>
+<p>6月第一篇blog，我还在不断努力，你们呢？</p>
+<p>希望自己，努力的这段时间，会有好的结果，希望自己可以换个好点的工作。希望大家也是！看到博客的人，爱你们！</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">踌躇不前，</span><br><span class="line"></span><br><span class="line">总是妄想能一步登天</span><br><span class="line"></span><br><span class="line">登上山峰发觉</span><br><span class="line"></span><br><span class="line">我依旧在山脚前沿</span><br><span class="line"></span><br><span class="line">抬目望眼</span><br><span class="line"></span><br><span class="line">所见皆是虚无贪念</span><br><span class="line"></span><br><span class="line">停或走？</span><br><span class="line"></span><br><span class="line">或是将生活翻面</span><br><span class="line"></span><br><span class="line">直面内心懦弱的另一边。</span><br></pre></td></tr></table></figure>
+
+
+<p>参考文章</p>
+<blockquote>
+<p><a href="https://www.easyice.cn/archives/332" target="_blank" rel="noopener">深入理解 Elasticsearch 7.x 新的集群协调层</a><br><a href="https://helloyoubeautifulthing.net/blog/2019/08/20/new-cluster-coordination-in-elasticsearch/" target="_blank" rel="noopener">Elasticsearch 新版选主流程</a></p>
+</blockquote>
+
+      
+      <!-- reward -->
+      
+      <div id="reward-btn">
+        打赏
+      </div>
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2021/06/16/ElasticSearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/05/14/ElasticSearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">ElasticSearch检索的核心-倒排索引解读</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
