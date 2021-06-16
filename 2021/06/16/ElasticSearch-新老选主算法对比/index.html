@@ -202,7 +202,6 @@
 </ol>
 <p>但是要注意，当follower节点收不到leader节点心跳的时候，需要等待一点时间切换为Candidate候选人，才可以开始选举。</p>
 <p>看下图吧，大概，也许差不离，就是这么选举。</p>
-<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%96%B0%E6%97%A7%E7%AE%97%E6%B3%95/4.jpg" alt></p>
 <h3 id="类Raft算法在ElasticSearch中如何运用"><a href="#类Raft算法在ElasticSearch中如何运用" class="headerlink" title="类Raft算法在ElasticSearch中如何运用"></a>类Raft算法在ElasticSearch中如何运用</h3><p>大概知道了Raft算法的选举原理，那么在Es里面，如何使用新的算法去选举leader呢？</p>
 <p>这里就需要追一下源码了，下面又到了追源码的路子了，大家要看不了的话，真没办法了！</p>
 <p>首先，ElasticSearch的选举算法套了Raft的壳子，但是不是真的Raft逻辑</p>
@@ -218,7 +217,10 @@
 <p>说明白了，就是<strong>保证最后当选的leader为主leader</strong></p>
 <p>那么，综上所述，选举的流程为</p>
 <p>节点的初始状态，为Candidate，当加入集群的时候，如果我们的discovery发现集群已经存在 leader，那么新加入的节点自动转换为follower。</p>
+<p>类似下图：</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%96%B0%E6%97%A7%E7%AE%97%E6%B3%95/4.jpg" alt></p>
 <p>假设Candidate开始，那么节点收到足够的投票数量，转换为leader，假设其他节点发送了拉票请求，此节点辞去leader，转换为Candidate，直到选出leader，转换为follower。</p>
+<p>角色转变类似这张图：</p>
 <p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%96%B0%E6%97%A7%E7%AE%97%E6%B3%95/5.jpg" alt></p>
 <h3 id="类Raft算法的优点"><a href="#类Raft算法的优点" class="headerlink" title="类Raft算法的优点"></a>类Raft算法的优点</h3><p>这个资料上面有，我就直接说了</p>
 <ol>
