@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://yemilice.com/about/index.html</loc>
+    
+    <lastmod>2021-08-18T02:25:07.522Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://yemilice.com/2021/06/23/%25E5%2588%25B7KPI%25E7%259A%2584HR%25E5%25B0%25B1%25E4%25B8%258D%25E8%25A6%2581%25E7%25BB%2599%25E6%2588%2591%25E5%258F%2591%25E9%259D%25A2%25E8%25AF%2595%25E9%2582%2580%25E8%25AF%25B7%25E4%25BA%2586%25E5%2590%25A7/</loc>
     
     <lastmod>2021-06-24T02:27:04.611Z</lastmod>
@@ -271,13 +278,6 @@
     <loc>https://yemilice.com/2020/03/20/Golang%25E5%2588%25A9%25E7%2594%25A8context%25E5%25AE%259E%25E7%258E%25B0%25E4%25B8%2580%25E4%25B8%25AA%25E4%25BB%25BB%25E5%258A%25A1%25E5%25B9%25B6%25E5%258F%2591%25E6%25A1%2586%25E6%259E%25B6/</loc>
     
     <lastmod>2020-05-19T08:28:05.669Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://yemilice.com/about/index.html</loc>
-    
-    <lastmod>2020-05-19T08:27:18.126Z</lastmod>
     
   </url>
   
