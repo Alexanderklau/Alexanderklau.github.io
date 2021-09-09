@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    设计高可用的ElasicSaerch索引 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-设计高可用的ElasicSaerch索引" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  设计高可用的ElasicSaerch索引
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/09/09/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84ElasicSaerch%E7%B4%A2%E5%BC%95/" class="article-date">
+  <time datetime="2021-09-09T07:36:23.000Z" itemprop="datePublished">2021-09-09</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">3k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">11 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>最近又是学习的爆发期，我戒除了上班划水和看知乎故事会，也戒除了游戏和小说</p>
+<p>也戒除了频繁参加外面的无用活动，也逐渐修复了寂寞侵蚀内心的恐惧</p>
+<p>将心思逐渐稳定下来，所以，我本月开始到年底，将会爆发式更新blog和歌曲</p>
+<p>请大家和我一起学习吧！对了，如果有机会，请不要忘记帮我看看是否有合适的工作</p>
+<p>我最近在换工作，走过路过，也别忘记我找份工作。</p>
+<p>开始！</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">从不去关心他人的定位</span><br><span class="line"></span><br><span class="line">对我喜欢讨厌或者是敬畏</span><br><span class="line"></span><br><span class="line">始终在不停的韬光养晦</span><br><span class="line"></span><br><span class="line">为我喜欢的事鞠躬尽瘁</span><br><span class="line"></span><br><span class="line">妈妈问我每天是否疲惫</span><br><span class="line"></span><br><span class="line">生活似好似坏前路隐晦</span><br><span class="line"></span><br><span class="line">希望的濒危物种不令人敬佩</span><br><span class="line"></span><br><span class="line">只想和路过的你说声幸会</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="当我们在说Es索引设计时，我们在说什么？"><a href="#当我们在说Es索引设计时，我们在说什么？" class="headerlink" title="当我们在说Es索引设计时，我们在说什么？"></a>当我们在说Es索引设计时，我们在说什么？</h2><p>在我的开发生涯中，我使用过Mysql，Etcd，Mongodb之类的数据库</p>
+<p>当我拿到一个数据库要进行开发任务的时候，我的第一件事往往就是查看数据结构，或者是查看表结构</p>
+<p>如果是Mysql一类的数据库，数据表中，表的字段类型是否合适，表设计是否合理，涉及到联合查询的机制是否完全？这往往就是数据库表设计的核心。</p>
+<p>嵌套到es当中，es的索引，你也可以理解为表</p>
+<p>当我们要设计索引的时候，我们就是设计表</p>
+<p>当我们说要设计高可用的的索引时，往往就是指索引</p>
+<ol>
+<li>可支撑大数据量</li>
+<li>性能影响小</li>
+<li>结合业务场景，全维度考虑增，删，改，查</li>
+</ol>
+<h2 id="ElasticSearch索引的基础知识"><a href="#ElasticSearch索引的基础知识" class="headerlink" title="ElasticSearch索引的基础知识"></a>ElasticSearch索引的基础知识</h2><p>索引，这个东西在数据库里面就是帮助加快检索速度的</p>
+<p>它是一种数据结构，这个我原来提过一点点</p>
+<p>具体的地址，请参看</p>
+<p><a href="https://yemilice.com/2021/05/14/elasticsearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/">ElasticSearch检索的核心-倒排索引解读</a></p>
+<p>今天我们的主题并不是原理，而是如何设计索引</p>
+<p>如何设计索引才能让我们的ES更加健壮，避免后期存入数据过多后还要更改结构</p>
+<p>这个才是这篇文章的核心。</p>
+<p>所以基础知识这里，我将不会表述太多，请大家见谅。</p>
+<p>默认你已经会用Es，就这样，Over。</p>
+<h2 id="Mapping的设计"><a href="#Mapping的设计" class="headerlink" title="Mapping的设计"></a>Mapping的设计</h2><h3 id="Mapping是什么"><a href="#Mapping是什么" class="headerlink" title="Mapping是什么?"></a>Mapping是什么?</h3><p>Mapping在Es里面，相当于表结构，我举个例子</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">"mappings": &#123;</span><br><span class="line">	"doc": &#123;</span><br><span class="line">		"properties": &#123;</span><br><span class="line">			"name": &#123;</span><br><span class="line">				"ignore_above": 256,</span><br><span class="line">				"type": "keyword"</span><br><span class="line">			&#125;,</span><br><span class="line">			"id": &#123;</span><br><span class="line">				"type": "keyword"</span><br><span class="line">			&#125;,</span><br><span class="line">			"size": &#123;</span><br><span class="line">				"type": "long"</span><br><span class="line">			&#125;,</span><br><span class="line">			"last_mod_time": &#123;</span><br><span class="line">				"format": "yyyy-MM-dd HH:mm:ss",</span><br><span class="line">				"type": "date"</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>我们定义的mapping里面有若干个字段，name，id…</li>
+<li>类型不同，有long，keyword，date</li>
+</ol>
+<p>Mapping在索引设计中是非常重要部分，就和表设计一样的，你需要定义字段</p>
+<p>一个好的字段能让我们的检索速度飞快，一个差的字段会让我们浪费很多平白无故的存储空间</p>
+<p>首先Mapping的基础知识可以参看这篇文章</p>
+<p><a href="https://www.cnblogs.com/wupeixuan/p/12514843.html#4667500" target="_blank" rel="noopener">一文搞懂 Elasticsearch 之 Mapping</a></p>
+<p>这篇文章的大佬把Mapping说的很清楚了</p>
+<p>Mapping 分为两种，静态Mapping和动态Mapping</p>
+<p>下面我分别说下静态和动态的几个优缺点</p>
+<h3 id="静态Mapping"><a href="#静态Mapping" class="headerlink" title="静态Mapping"></a>静态Mapping</h3><p>事先定义好字段，也就是定义好基础的Mapping格式，就像章节最开始我举的例子。</p>
+<p>静态Mapping，就相当于我们创建Mysql表，事先建表，规定好所有的字段和类型</p>
+<p>静态Mapping的优点如下</p>
+<ol>
+<li>可选可控</li>
+<li>节约存储空间</li>
+</ol>
+<p>静态Mapping的缺点如下</p>
+<ol>
+<li>设计要求高，后期无法进行更改</li>
+<li>将数据格式全部规定死，不够动态</li>
+</ol>
+<h3 id="动态Mapping"><a href="#动态Mapping" class="headerlink" title="动态Mapping"></a>动态Mapping</h3><p>我们不创表，直接传入数据，Es会根据你传入的数据自动匹配合适的类型，也就是自动识别数据</p>
+<p>说白了，就是你，传个json过来，Es根据你的json自动匹配类型，然后创建Mapping</p>
+<p>动态Mapping这东西，其实我是不推荐用的，因为相当于，你把数据类型的判断逻辑交给了Es，这是很不可取的，因为Es，很傻，说下原因</p>
+<ol>
+<li>当你不想检索一些字段的时候，你可以通过设置mapping事先指定，但是动态的不行</li>
+<li>动态Mapping可控性没那么高，你往里导数据，要保证数据的一致性</li>
+</ol>
+<h3 id="高可用Mapping设计的流程"><a href="#高可用Mapping设计的流程" class="headerlink" title="高可用Mapping设计的流程"></a>高可用Mapping设计的流程</h3><p>查了一些资料，其实大家可以看一下铭毅天下这个老哥的公众号</p>
+<p>他的公众号给了我很大启发！</p>
+<p><a href="https://github.com/mingyitianxia/deep_elasticsearch/wiki/%E3%80%8A%E6%AD%BB%E7%A3%95Elasticsearch%E6%96%B9%E6%B3%95%E8%AE%BA%E3%80%8B%E2%80%94%E2%80%94%E9%93%AD%E6%AF%85%E5%A4%A9%E4%B8%8B%E5%87%BA%E5%93%81" target="_blank" rel="noopener">铭毅天下-死磕Elasticsearch方法论</a></p>
+<p>首先，设计Mapping，需要预先考虑如下几点</p>
+<ol>
+<li>是否需要进行全文检索</li>
+<li>是否需要排序</li>
+<li>数据类型的多重选择</li>
+</ol>
+<p>首先，先将Mapping里的几个参数及其基础设置梳理</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>具体说明</th>
+<th>传入参数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>enabled</td>
+<td>设置是否需要检索</td>
+<td>True/False</td>
+</tr>
+<tr>
+<td>index</td>
+<td>设置是否构建倒排索引</td>
+<td>True/False</td>
+</tr>
+<tr>
+<td>index_option</td>
+<td>设置存储倒排索引的哪些信息</td>
+<td>True/False</td>
+</tr>
+<tr>
+<td>doc_values</td>
+<td>是否开启聚合分析</td>
+<td>True/False</td>
+</tr>
+<tr>
+<td>dynamic</td>
+<td>动态更新mapping</td>
+<td>True/False</td>
+</tr>
+<tr>
+<td>data_detection</td>
+<td>自动识别日期类型</td>
+<td>True/False</td>
+</tr>
+</tbody></table>
+<p>进行Mapping设计时，首先要考虑我们到底有多少字段，这些字段的属性是什么</p>
+<p>这里非常重要，因为，当你创建完Index的时候，Es是不许更新表结构，也就是Mapping的，</p>
+<p>如果要选择更新，则需要重建Index，当数据量很大的时候，这种方案肯定是不可以的。</p>
+<p>所以，我这里定义的流程如下</p>
+<h4 id="第一步：确定存储的数据类型"><a href="#第一步：确定存储的数据类型" class="headerlink" title="第一步：确定存储的数据类型"></a>第一步：确定存储的数据类型</h4><p>先细分析一波，先根据我们的需求，确定建立好我们的数据类型</p>
+<p>一般的数据类型如下</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/index/1.png" alt></p>
+<p>根据我们的需求去梳理数据类型</p>
+<p>这里提几点选择策略</p>
+<ol>
+<li>如果你有很多文字，不需要分词，选text，需要分词，选keyword</li>
+<li>如果你未来不确定你到底有多少数据，将类型设置为long是比较合适的</li>
+<li>keyword检索比较短的字符会更快，如果字符很大，那么会增加存储和检索成本</li>
+</ol>
+<h4 id="第二步：确定哪些字段需要检索"><a href="#第二步：确定哪些字段需要检索" class="headerlink" title="第二步：确定哪些字段需要检索"></a>第二步：确定哪些字段需要检索</h4><p>如果我们存储的一个json十分巨大，例如content是一篇文章，或者我们的Mapping字段非常的多，那么如果全部默认检索，那我们会搜出一大堆无用的东西</p>
+<p>这样既增加了存储成本，又减弱了检索效率，所以下一步，我们就要根据需求，确定哪些字段需要检索</p>
+<p>一些固定参数，或者不想给用户展示的参数也就没有检索价值</p>
+<p>例如ID一类的参数</p>
+<p>这里如果我们不想ID被检索，那么需要设置</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">"id":&#123;</span><br><span class="line">       "type": "text",</span><br><span class="line">       "index": false</span><br><span class="line">     &#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="第三步：检索的方式"><a href="#第三步：检索的方式" class="headerlink" title="第三步：检索的方式"></a>第三步：检索的方式</h4><p>这里一般指的是分词的设置，这里需要指定分词器</p>
+<p>分词器我以前的blog里面也讲过</p>
+<p><a href="https://yemilice.com/2020/12/08/elasticsearch%E5%AE%9A%E4%B9%89%E8%87%AA%E5%B7%B1%E7%9A%84%E5%88%86%E8%AF%8D%E5%99%A8%E8%AF%8D%E5%85%B8%EF%BC%88%E6%A3%80%E7%B4%A2%E7%94%9F%E5%83%BB%E8%AF%8D%EF%BC%89/">定义自己的分词器</a></p>
+<p>这里相当于是，给指定的字段，添加分词</p>
+<p>假如我们现在有一个字段，名字叫name，我们需要指定中文分词器IK</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">"name":&#123;</span><br><span class="line">       "type": "text",</span><br><span class="line">	"analyzer": "ik_smart</span><br><span class="line">     &#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="第四步：指定mapping的特殊设置"><a href="#第四步：指定mapping的特殊设置" class="headerlink" title="第四步：指定mapping的特殊设置"></a>第四步：指定mapping的特殊设置</h4><p>这里的设置，不针对某个字段，而是针对整个mapping的setting设置</p>
+<p>这里有如下几个常用设置</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">	<span class="attr">"settings"</span>: &#123;</span><br><span class="line">	// 分片数量</span><br><span class="line">	"number_of_shards": 5,</span><br><span class="line">	// 副本</span><br><span class="line">	"number_of_replicas": 1,</span><br><span class="line">	// 最好压缩</span><br><span class="line">	"codec": "best_compression",</span><br><span class="line">	// 最大展示条数</span><br><span class="line">	"max_result_window": "100000000",</span><br><span class="line">	// 刷新时间</span><br><span class="line">	"refresh_interval":"30s"</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>一般都是这么几个设置</p>
+<p>甭管那么多，直接上，不要怂</p>
+<p>这张图是铭毅天下那里找来的！爱你！</p>
+<p>这个流程，非常清楚了</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/index/3.jpg" alt></p>
+<h3 id="Mapping的模版"><a href="#Mapping的模版" class="headerlink" title="Mapping的模版"></a>Mapping的模版</h3><p>这里给出我自己开发时候的一个模版，这个模版扛住了千万数据量，直接上，不要怕</p>
+<p>大家拿过来改改字段就行</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">	<span class="attr">"settings"</span>: &#123;</span><br><span class="line">	  <span class="attr">"number_of_shards"</span>: <span class="number">5</span>,</span><br><span class="line">	  <span class="attr">"number_of_replicas"</span>: <span class="number">1</span>,</span><br><span class="line">	  <span class="attr">"codec"</span>: <span class="string">"best_compression"</span>,</span><br><span class="line">	  <span class="attr">"max_result_window"</span>: <span class="string">"100000000"</span>,</span><br><span class="line">	  <span class="attr">"refresh_interval"</span>:<span class="string">"30s"</span></span><br><span class="line">	&#125;,</span><br><span class="line">	<span class="attr">"mappings"</span>: &#123;</span><br><span class="line">	  <span class="attr">"doc"</span>: &#123;</span><br><span class="line">		<span class="attr">"properties"</span>: &#123;</span><br><span class="line">		  <span class="attr">"name"</span>: &#123;</span><br><span class="line">			<span class="attr">"type"</span>: <span class="string">"keyword"</span></span><br><span class="line">		  &#125;,</span><br><span class="line">		  <span class="attr">"id"</span>: &#123;</span><br><span class="line">			<span class="attr">"type"</span>: <span class="string">"keyword"</span></span><br><span class="line">		  &#125;,</span><br><span class="line">		  <span class="attr">"data"</span>: &#123;</span><br><span class="line">			<span class="attr">"type"</span>: <span class="string">"nested"</span>,</span><br><span class="line">			<span class="attr">"properties"</span>: &#123;</span><br><span class="line">			  <span class="attr">"value"</span>: &#123;</span><br><span class="line">				<span class="attr">"type"</span>: <span class="string">"text"</span>,</span><br><span class="line">				<span class="attr">"fields"</span>: &#123;</span><br><span class="line">				  <span class="attr">"keyword"</span>: &#123;</span><br><span class="line">					<span class="attr">"ignore_above"</span>: <span class="number">256</span>,</span><br><span class="line">					<span class="attr">"type"</span>: <span class="string">"keyword"</span></span><br><span class="line">				  &#125;</span><br><span class="line">				&#125;</span><br><span class="line">			  &#125;,</span><br><span class="line">			  <span class="attr">"key"</span>: &#123;</span><br><span class="line">				<span class="attr">"type"</span>: <span class="string">"text"</span>,</span><br><span class="line">				<span class="attr">"fields"</span>: &#123;</span><br><span class="line">				  <span class="attr">"keyword"</span>: &#123;</span><br><span class="line">					<span class="attr">"ignore_above"</span>: <span class="number">256</span>,</span><br><span class="line">					<span class="attr">"type"</span>: <span class="string">"keyword"</span></span><br><span class="line">				  &#125;</span><br><span class="line">				&#125;</span><br><span class="line">			  &#125;</span><br><span class="line">			&#125;</span><br><span class="line">		  &#125;,</span><br><span class="line">		  <span class="attr">"size"</span>: &#123;</span><br><span class="line">			<span class="attr">"type"</span>: <span class="string">"long"</span></span><br><span class="line">		  &#125;,</span><br><span class="line">		  <span class="attr">"last_mod_time"</span>: &#123;</span><br><span class="line">			<span class="attr">"format"</span>: <span class="string">"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd || epoch_millis"</span>,</span><br><span class="line">			<span class="attr">"type"</span>: <span class="string">"date"</span></span><br><span class="line">		  &#125;,</span><br><span class="line">		  <span class="attr">"user"</span>: &#123;</span><br><span class="line">			<span class="attr">"type"</span>: <span class="string">"keyword"</span></span><br><span class="line">		  &#125;,</span><br><span class="line">		  <span class="attr">"content"</span>: &#123;</span><br><span class="line">			<span class="attr">"analyzer"</span>: <span class="string">"ik_smart"</span>,</span><br><span class="line">			<span class="attr">"term_vector"</span>: <span class="string">"with_positions_offsets"</span>,</span><br><span class="line">			<span class="attr">"type"</span>: <span class="string">"text"</span></span><br><span class="line">		  &#125;</span><br><span class="line">		&#125;</span><br><span class="line">	  &#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="大数据下索引的切分"><a href="#大数据下索引的切分" class="headerlink" title="大数据下索引的切分"></a>大数据下索引的切分</h2><p>当我通过filebeat或者logstash倒入数据到Es中的时候</p>
+<p>传输到Es中，创建的index是可以自己控制的</p>
+<p>一般的划分方法是：</p>
+<ol>
+<li>年</li>
+<li>月</li>
+<li>日</li>
+<li>自定义</li>
+</ol>
+<p>举例来说</p>
+<p>假如我们的log索引，名字叫”log-2021-09”</p>
+<p>那么每天的数据量都有千万，那么这个索引就会越来越大，越来越大</p>
+<p>你做检索的时候，就会在一个非常大的索引中进行</p>
+<p>这样检索的时候，卡，慢就出现了</p>
+<p>万一这索引坏了，那。。。丢数据吧</p>
+<p>所以，如何进行切分，或者优化索引，势在必行</p>
+<p>下面我这里将给出一些我自己实战的手法，给大家一些建议。</p>
+<h3 id="动态创建索引"><a href="#动态创建索引" class="headerlink" title="动态创建索引"></a>动态创建索引</h3><p>首先，上一节我们讲了Mapping模版，这里我就不再多说</p>
+<p>我们需要结合模版去动态创建索引</p>
+<p>方法如下</p>
+<h4 id="rollver滚动创建索引"><a href="#rollver滚动创建索引" class="headerlink" title="rollver滚动创建索引"></a>rollver滚动创建索引</h4><p>现在开始设定 log-2021-09 这个索引</p>
+<p>这步的意思是创一个索引，名字叫做log-2021-09-00001，别名为logs_write</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">curl -XPUT 'localhost:9200/log-2021-09-00001 ?pretty' -d'</span><br><span class="line">&#123;</span><br><span class="line">  <span class="attr">"aliases"</span>: &#123;</span><br><span class="line">    <span class="attr">"logs_write"</span>: &#123;&#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;'</span><br></pre></td></tr></table></figure>
+
+<p>现在开始设置动态索引创建</p>
+<p>这步的意思是，设定logs_write，当天数大于7天，或者文档数量大于100000，或者大小大于5gb，创建一个新的log-2021-09-00002 索引</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">POST /logs_write/_rollover </span><br><span class="line">&#123;</span><br><span class="line">  <span class="attr">"conditions"</span>: &#123;</span><br><span class="line">    <span class="attr">"max_age"</span>:   <span class="string">"7d"</span>,</span><br><span class="line">    <span class="attr">"max_docs"</span>:  <span class="number">100000</span>,</span><br><span class="line">    <span class="attr">"max_size"</span>:  <span class="string">"5gb"</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="定时清理过期数据"><a href="#定时清理过期数据" class="headerlink" title="定时清理过期数据"></a>定时清理过期数据</h3><h4 id="Curator索引管理工具"><a href="#Curator索引管理工具" class="headerlink" title="Curator索引管理工具"></a>Curator索引管理工具</h4><p>这个工具，可以进行索引管理</p>
+<p>安装的方法，网上找RPM包直接安就得了</p>
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/client/curator/current/yum-repository.html" target="_blank" rel="noopener">https://www.elastic.co/guide/en/elasticsearch/client/curator/current/yum-repository.html</a></p>
+<p>它的功能有</p>
+<ol>
+<li>关闭索引</li>
+<li>创建快照</li>
+<li>创建索引</li>
+<li>打开索引<br>…..</li>
+</ol>
+<p>这里，我们可以通过Curator来进行索引创建，定时配置删除等等</p>
+<p>例如我们要动态删除7天前的索引</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Remember, leave a key empty if there is no value.  None will be a string,</span></span><br><span class="line"><span class="comment"># not a Python "NoneType"</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Also remember that all examples have 'disable_action' set to True.  If you</span></span><br><span class="line"><span class="comment"># want to use this action as a template, be sure to set this to False after</span></span><br><span class="line"><span class="comment"># copying it.</span></span><br><span class="line"><span class="attr">actions:</span></span><br><span class="line">  <span class="number">1</span><span class="string">:</span></span><br><span class="line"><span class="attr">    action:</span> <span class="string">delete_indices</span>　　　　　　　　<span class="comment"># 这里执行操作类型为删除索引</span></span><br><span class="line"><span class="attr">    description:</span> <span class="string">&gt;-</span></span><br><span class="line">      <span class="string">Delete</span> <span class="string">metric</span> <span class="string">indices</span> <span class="string">older</span> <span class="string">than</span> <span class="number">3</span> <span class="string">days</span> <span class="string">(based</span> <span class="string">on</span> <span class="string">index</span> <span class="string">name),</span> <span class="string">for</span> <span class="string">zou_data-2018-05-01</span></span><br><span class="line">      <span class="string">prefixed</span> <span class="string">indices.</span> <span class="string">Ignore</span> <span class="string">the</span> <span class="string">error</span> <span class="string">if</span> <span class="string">the</span> <span class="string">filter</span> <span class="string">does</span> <span class="string">not</span> <span class="string">result</span> <span class="string">in</span> <span class="string">an</span></span><br><span class="line">      <span class="string">actionable</span> <span class="string">list</span> <span class="string">of</span> <span class="string">indices</span> <span class="string">(ignore_empty_list)</span> <span class="string">and</span> <span class="string">exit</span> <span class="string">cleanly.</span></span><br><span class="line"><span class="attr">    options:</span></span><br><span class="line"><span class="attr">      ignore_empty_list:</span> <span class="literal">True</span></span><br><span class="line"><span class="attr">    filters:</span></span><br><span class="line"><span class="attr">    - filtertype:</span> <span class="string">pattern</span></span><br><span class="line"><span class="attr">      kind:</span> <span class="string">prefix</span></span><br><span class="line"><span class="attr">      value:</span> <span class="string">logs-</span>　　　　　　　　<span class="comment"># 这里是指匹配前缀为 “order_” 的索引，还可以支持正则匹配等，详见官方文档</span></span><br><span class="line"><span class="attr">    - filtertype:</span> <span class="string">age</span>　　　　　　　　　　　 <span class="comment"># 这里匹配时间</span></span><br><span class="line"><span class="attr">      source:</span> <span class="string">name</span>　　　　　　　　　　　　　 <span class="comment"># 这里根据索引name来匹配，还可以根据字段等，详见官方文档</span></span><br><span class="line"><span class="attr">      direction:</span> <span class="string">older</span></span><br><span class="line"><span class="attr">      timestring:</span> <span class="string">'%Y-%m-%d'</span>　　　　　　　 <span class="comment"># 用于匹配和提取索引或快照名称中的时间戳</span></span><br><span class="line"><span class="attr">      unit:</span> <span class="string">days</span>　　　　　　　　　　　　　　　<span class="comment"># 这里定义的是days，还有weeks,months等，总时间为unit * unit_count</span></span><br><span class="line"><span class="attr">      unit_count:</span> <span class="number">7</span></span><br></pre></td></tr></table></figure>
+
+<p>以上命令删除了7天前，以log-*开头的索引</p>
+<p>可以看下这篇文章</p>
+<p><a href="https://www.cnblogs.com/caoweixiong/p/11995525.html" target="_blank" rel="noopener">ElasticSearch——Curator索引管理</a></p>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>这些大概就是我实战遇到的一些问题，结合网上的一些资料</p>
+<p>我输出了这篇blog</p>
+<p>最近我开始疯狂学习，希望未来会有突破吧</p>
+<p>狗公司不发年终，淦，还是赶紧找机会跑路，才是最重要的。</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/index/2.jpg" alt></p>
+<p>大家加油吧！写算法Ing！</p>
+
+      
+      <!-- reward -->
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2021/09/09/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84ElasicSaerch%E7%B4%A2%E5%BC%95/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/08/30/%E5%86%99%E4%B8%80%E4%B8%AA%E9%AB%98%E5%8F%AF%E7%94%A8Rpc%E6%9C%8D%E5%8A%A1%EF%BC%88%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E7%AF%87%EF%BC%89/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">写一个高可用Rpc服务（基础知识篇）</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
