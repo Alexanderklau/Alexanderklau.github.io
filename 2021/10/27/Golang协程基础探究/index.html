@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    Golang协程基础探究 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-Golang协程基础探究" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Golang协程基础探究
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/10/27/Golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/" class="article-date">
+  <time datetime="2021-10-27T03:39:17.000Z" itemprop="datePublished">2021-10-27</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.4k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">8 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>最近我把Go重新过了一遍，特别是Go的协程这一块，我感觉任何事都是从简单到复杂</p>
+<p>包括现在，所以我重新开始学习基础，后序我会出一个系列</p>
+<p>分别为</p>
+<ol>
+<li><strong>Golang协程基础 （已经完成！）</strong></li>
+<li>Golang协程调度 </li>
+<li>Golang协程控制</li>
+<li>Golang协程通信</li>
+<li>Golang垃圾回收机制</li>
+</ol>
+<p>所以我会持续更新，大家请期待吧，爱你们！</p>
+<h2 id="Go里的协程是什么"><a href="#Go里的协程是什么" class="headerlink" title="Go里的协程是什么"></a>Go里的协程是什么</h2><p>写Go这么长时间了，在开发项目当中，感觉Golang的好处还是很多的</p>
+<p>Golang为什么被推崇，核心就是在并发和协程方面有很大的优势</p>
+<p>协程这个概念其实不陌生，我在大学看Python的时候就看过这方面的资料</p>
+<p>就是<strong>轻量级的线程</strong></p>
+<p>但是Go的协程其实和Python又不太一样了，这里我还是认真讲一下协程是个什么玩意儿吧</p>
+<h2 id="进程和线程"><a href="#进程和线程" class="headerlink" title="进程和线程"></a>进程和线程</h2><p>协程是轻量级的线程，但是线程又和进程有不能说的PY交易</p>
+<p>所以我首先来过一遍进程和线程的基础概念</p>
+<p>首先直接说概念，这个是核心，记住就完事</p>
+<ol>
+<li>线程是进程的组成部分</li>
+<li>一个线程只能有一个进程</li>
+<li>但是一个进程可以有多个线程</li>
+<li>进程死了，线程一起死</li>
+<li>进程之间相互独立</li>
+<li>进程开销比线程大</li>
+</ol>
+<p>可以这么理解，线程是进程的崽，进程是独立个体，可以随意下崽（创建线程）</p>
+<p>操作系统里面，调度到CPU中执行的最小单位就是线程</p>
+<p>有多核处理器的计算机，线程可以分布在多个CPU上，实现真正的并行逻辑。</p>
+<p>看图，这就是多核处理器和单核处理器的差别（Python就是上面那个。。。GIL让他永远用不了多核</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B1/1.png" alt></p>
+<h3 id="线程的切换和调度"><a href="#线程的切换和调度" class="headerlink" title="线程的切换和调度"></a>线程的切换和调度</h3><p>这里还是分析线程，是为后序分析协程逻辑打好基础，要是大家伙不想看，直接跳过即可</p>
+<p>线程好用，但是不能一下开无数个，也不能全开，也不能不返回就持续等待</p>
+<p>所以，为了最大化利用CPU资源，操作系统需要通过定时器，IO设备，上下文切换等动作去控制线程</p>
+<p>一般的切换逻辑是</p>
+<p>当A线程发生切换的时候，会从用户态转移到内核中，记录寄存器值，进程状态之类的信息到操作系统线程的控制块当中</p>
+<p>然后进行切换，切换到下一个执行线程B，加载刚刚保存那得那些寄存器值，然后从内核转移到用户态中</p>
+<p>如果线程A和线程B不属于同一个线程，切换的时候将会更新额外的状态信息和内存地址，然后导入页表到内存里面。</p>
+<p>可以看见一点，就是线程切换需要记录一大堆东西</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B1/6.png" alt></p>
+<p>这就是线程切换的一点点知识。</p>
+<h2 id="线程和协程的关系"><a href="#线程和协程的关系" class="headerlink" title="线程和协程的关系"></a>线程和协程的关系</h2><p>协程，轻量级线程，相当于线程PLUS</p>
+<p>但是它和线程不同的一点，人家切换或者是做别的操作</p>
+<p>不依赖操作系统内核，而依赖自身（Go）的调度器</p>
+<p>其实就是内部执行的一串代码</p>
+<p>协程其实是线程的从属</p>
+<p>下面分析下他们的具体区别还有联系</p>
+<h3 id="GMP模型-线程和协程的核心关系"><a href="#GMP模型-线程和协程的核心关系" class="headerlink" title="GMP模型-线程和协程的核心关系"></a>GMP模型-线程和协程的核心关系</h3><p>首先看个图</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B1/7.png" alt></p>
+<p>这个图就是GMP模型的核心图，这个图其实说的挺明白了</p>
+<p>首先</p>
+<ol>
+<li><p>G就是协程</p>
+</li>
+<li><p>P就是Go的调度器</p>
+</li>
+<li><p>M就是线程</p>
+</li>
+</ol>
+<p>可以看见，Go的协程依托线程</p>
+<p>一个P可能包含了多个协程，一个P在任何时候只能有一个M</p>
+<p>这就说明了线程和协程的关系应该是 m:n</p>
+<p>相关的知识我也在其他的文章里说过</p>
+<p><a href="https://yemilice.com/2020/11/27/golang%E7%9A%84%E5%B9%B6%E5%8F%91%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/">golang的并发机制探究</a></p>
+<p>但是我后续还是会细化一下GMP模型</p>
+<h3 id="协程的调度方式"><a href="#协程的调度方式" class="headerlink" title="协程的调度方式"></a>协程的调度方式</h3><p>首先看个图</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/1.jpg" alt></p>
+<p>协程和线程的关系为M：N，为多对多关系</p>
+<p>调度器P可以将多个协程调度到一个线程中，也可以切换一个协程到多个线程中运行</p>
+<h3 id="协程的切换"><a href="#协程的切换" class="headerlink" title="协程的切换"></a>协程的切换</h3><p>协程为什么叫轻量级线程，因为它的切换速度比线程快，根据上面我讲的线程切换</p>
+<p>线程切换需要操作系统用户态和内核态，并且需要存储寄存器的变量值，保留额外的一些变量值（上面有说</p>
+<p>协程切换只需要保留极少的状态值和寄存器变量值，并且一切都有Go调度器去操作，免去用户态和操作系统态交互的麻烦逻辑</p>
+<p>线程切换的速度大概是 1-2微秒</p>
+<p>协程切换的速度为 0.2 微秒</p>
+<h3 id="协程的调度策略"><a href="#协程的调度策略" class="headerlink" title="协程的调度策略"></a>协程的调度策略</h3><p>这里后面我的Blog也会讲，在这我就简单描述一下吧</p>
+<p>线程的调度大部分都是抢占式的，为了平衡资源，操作系统的调度器会定时发出中断信号，来进行线程切换</p>
+<p>协程的调度是协作式的，当一个协程处理完任务的时候，可以将执行权限交还给其他协程，不会被轻易抢占，并且协程切换也是有一定的方法，比如抢占队列，偷窃任务等等，这个我后面会另开一篇好好讲述</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B1/2.png" alt></p>
+<h3 id="协程栈的大小"><a href="#协程栈的大小" class="headerlink" title="协程栈的大小"></a>协程栈的大小</h3><p>线程栈大小，一般是创建时指定的，为了避免溢出，默认一个栈会比较大（2MB）</p>
+<p>这样就大大限制了线程栈的数量，如果1000个线程就需要占用2GB虚拟内存</p>
+<p>但是协程栈大小默认为2KB，这样就可以创建一大堆协程，并且协程可以动态扩容栈大小</p>
+<p>而线程只能固定一个栈大小</p>
+<p>协程栈扩容的算法我后面会说（自己老开坑。。。</p>
+<h2 id="并发和并行"><a href="#并发和并行" class="headerlink" title="并发和并行"></a>并发和并行</h2><p>并发，并行是老生常态的话题了</p>
+<p>我这简单说下</p>
+<p>并发：谁先执行任务我不管，但是，某个时间段内，所有的任务都能执行完毕</p>
+<p>并行：一起执行任务，大家一起出发</p>
+<p>在我开发的生涯里面，这种情况不只是单纯的并发并行，一般都是一起用的</p>
+<p>除开Python（有GIL锁）</p>
+<p>基本都是多核并行处理多个线程任务，但是单核里面也在负责多个线程任务</p>
+<p>所以这样的关系类似</p>
+<p>转回Go部分，Go的调度器，会把协程分给多个线程，这些线程又很可能被分发给了不同的进程，这样的关系就类似</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B1/5.png" alt></p>
+<p>这样也说明，在多核的环境下，Go的并发，并行是同时存在且不冲突的。</p>
+<h2 id="写一个协程实例"><a href="#写一个协程实例" class="headerlink" title="写一个协程实例"></a>写一个协程实例</h2><p>这个我相信大家玩Go的人都会写，其实Go的协程非常简单</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">go</span> test()</span><br></pre></td></tr></table></figure>
+
+<p>那么现在咱们要实现一个并发协程，首先实现一个线性流程</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">"fmt"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">FmtSmg</span><span class="params">(name <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	fmt.Println(name)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	z := []<span class="keyword">string</span>&#123;<span class="string">"yemilice"</span>, <span class="string">"fuck"</span>, <span class="string">"day"</span>&#125;</span><br><span class="line">	<span class="keyword">for</span> _, i := <span class="keyword">range</span> z &#123;</span><br><span class="line">		FmtSmg(i)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这边输出</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">yemilice</span><br><span class="line">fuck</span><br><span class="line">day</span><br></pre></td></tr></table></figure>
+
+<p>现在我们改写成协程模式</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"time"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">FmtSmg</span><span class="params">(name <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	fmt.Println(name)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	z := []<span class="keyword">string</span>&#123;<span class="string">"yemilice"</span>, <span class="string">"fuck"</span>, <span class="string">"day"</span>&#125;</span><br><span class="line">	<span class="keyword">for</span> _, i := <span class="keyword">range</span> z &#123;</span><br><span class="line">		<span class="keyword">go</span> FmtSmg(i)</span><br><span class="line">	&#125;</span><br><span class="line">	time.Sleep(time.Second * <span class="number">2</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>得到输出</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">day</span><br><span class="line">yemilice</span><br><span class="line">fuck</span><br></pre></td></tr></table></figure>
+
+<p>这就是一个简单的协程，这部分我用了time.sleep做通信等待，这个比较low，我后续会在协程通信的blog里面更详细的描述介绍</p>
+<p>例如channel，waitgroup等</p>
+<h2 id="Go的并发模型"><a href="#Go的并发模型" class="headerlink" title="Go的并发模型"></a>Go的并发模型</h2><p>上一节我们实现了一个Go的协程实例，但是似乎我们并不了解为什么Go要这么设计</p>
+<p>这一节我将告诉你什么是Go的并发模型，也就是Go执行的流程，这一节也是为下次的文章做好基础，比较重要</p>
+<p>其实Go遵循的是<strong>fork-join</strong>的一种并发模型</p>
+<p>fork可以指程序中任何地方，这里将子协程和主协程分开执行</p>
+<p>join指的是某个时候，子协程和主协程执行分支合并在一起</p>
+<p>看个图</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B1/3.png" alt></p>
+<p>这就是<strong>fork-join</strong>的并发模型</p>
+<p>举个简单的例子</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">work</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">go</span> work()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里我们去执行，但是什么都没有返回</p>
+<p>这里如果用<strong>fork-join</strong>表示，画图如下</p>
+<p>可见我们需要连接点</p>
+<p>将代码改写</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">work</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">	wg.Add(<span class="number">1</span>)</span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">defer</span> wg.Done()</span><br><span class="line">		work()</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="comment">// 这是连接点</span></span><br><span class="line">	wg.Wait()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里有了连接点，用<strong>fork-join</strong>表示一下就是</p>
+<p>这里的代码不用深究，这里属于协程控制，这里后面我会单开博客讲</p>
+<p>这里只是为了让大家直观看到<strong>fork-join</strong>这种并发模型，这是Go预言需要遵循的并发哲学</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这次主要是把协程的基础概念讲了一下</p>
+<ol>
+<li>讲了协程和线程的关系</li>
+<li>讲了协程是怎么来的，怎么实现一个协程</li>
+<li>讲了Go的并发模型</li>
+</ol>
+<h2 id="下集预告"><a href="#下集预告" class="headerlink" title="下集预告"></a>下集预告</h2><p>下一节我将深入到Go协程之间的调度当中</p>
+<ol>
+<li>整明白Go协程的调度原理</li>
+<li>整明白Go协程的调度策略</li>
+<li>整明白Go协程的几种状态</li>
+</ol>
+
+      
+      <!-- reward -->
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2021/10/27/Golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/09/09/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84ElasicSaerch%E7%B4%A2%E5%BC%95/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">设计高可用的ElasicSearch索引</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
