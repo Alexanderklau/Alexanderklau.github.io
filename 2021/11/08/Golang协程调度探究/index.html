@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    Golang协程调度探究 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-Golang协程调度探究" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Golang协程调度探究
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/11/08/Golang%E5%8D%8F%E7%A8%8B%E8%B0%83%E5%BA%A6%E6%8E%A2%E7%A9%B6/" class="article-date">
+  <time datetime="2021-11-08T01:43:19.000Z" itemprop="datePublished">2021-11-08</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">6.1k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">24 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这几天攻关了一下go协程的调度，然后写了这篇文章</p>
+<p>这篇文章的工作量真挺大的，我看的也很累，找资料也很累</p>
+<p>这篇文章，需要感谢《Go语言底层原理剖析》这本书的作者，这本书给了我很大启发</p>
+<p>并且这本书写的非常好，这本书类似我这篇文章的大纲，对我非常有帮助！</p>
+<p>希望大家支持这本书的作者！</p>
+<p>我的Go系列已经完成如下部分</p>
+<p>分别为</p>
+<ol>
+<li><strong><a href="https://yemilice.com/2021/10/27/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/">Golang协程基础 （已经完成！）</a></strong></li>
+<li><strong>Golang协程调度 （已经完成！）</strong></li>
+<li>Golang协程控制</li>
+<li>Golang协程通信</li>
+<li>Golang垃圾回收机制</li>
+</ol>
+<p>所以我会持续更新，大家请期待吧，爱你们！</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">总是笃定成功必有收获</span><br><span class="line"></span><br><span class="line">每次都是竹篮打水得过且过</span><br><span class="line"></span><br><span class="line">总在幻想能写出什么旷世杰作</span><br><span class="line"></span><br><span class="line">咽下苦果，传道而授业解惑</span><br></pre></td></tr></table></figure>
+
+<h2 id="协程的几种状态"><a href="#协程的几种状态" class="headerlink" title="协程的几种状态"></a>协程的几种状态</h2><h3 id="Gidle"><a href="#Gidle" class="headerlink" title="Gidle"></a>Gidle</h3><p>表示协程刚开始创建的状态</p>
+<h3 id="Gdead"><a href="#Gdead" class="headerlink" title="Gdead"></a>Gdead</h3><p>当新的协程初始化后,会转为Gdead状态,被销毁的时候也是这个状态</p>
+<h3 id="Grunnable"><a href="#Grunnable" class="headerlink" title="Grunnable"></a>Grunnable</h3><p>表示协程在运行队列中,正在等待运行</p>
+<h3 id="Grunning"><a href="#Grunning" class="headerlink" title="Grunning"></a>Grunning</h3><p>表示协程正在运行,已经分配好了线程 </p>
+<h3 id="Gwaiting"><a href="#Gwaiting" class="headerlink" title="Gwaiting"></a>Gwaiting</h3><p>表示协程被所动,不能执行代码,一般垃圾回收,channel通信的时候会出现这种状态</p>
+<h3 id="Gsyscall"><a href="#Gsyscall" class="headerlink" title="Gsyscall"></a>Gsyscall</h3><p>表示协程正在执行系统调用</p>
+<h3 id="Gpreempted"><a href="#Gpreempted" class="headerlink" title="Gpreempted"></a>Gpreempted</h3><p>表示协程被强制抢占的状态</p>
+<h3 id="Gcopystack"><a href="#Gcopystack" class="headerlink" title="Gcopystack"></a>Gcopystack</h3><p>表示发现需要扩容/缩小协程栈空间,转移到新栈的状态</p>
+<h2 id="协程的状态转移"><a href="#协程的状态转移" class="headerlink" title="协程的状态转移"></a>协程的状态转移</h2><p>首先看个图</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B2/8.png" alt></p>
+<p>解释下这个图,首先,协程被创建,状态为Gidle</p>
+<p>然后协程的状态转为Gdead,再转为Grunnable,等待运行</p>
+<p>然后执行协程,状态为Grunning,此时可能出现多个状态</p>
+<p>第一个,协程被抢占,转为状态Gpreempted</p>
+<p>第二个,协程正在调用,转为状态Gsyscall</p>
+<p>第三个,协程正常执行结束,转为状态Gdead</p>
+<p>这就是基础的协程状态转移过程,这也是协程的生命周期</p>
+<h2 id="g0协程是什么"><a href="#g0协程是什么" class="headerlink" title="g0协程是什么"></a>g0协程是什么</h2><p>在Golang当中，协程分为两种</p>
+<p>一种是主协程main</p>
+<p>另一种是子协程</p>
+<p>主协程只能有一个，但是翻阅一下Golang的源码，每个线程里面都有一个g0协程</p>
+<p>首先看下m（线程）的源码</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> m <span class="keyword">struct</span> &#123;</span><br><span class="line">    g0      *g     <span class="comment">// 带有调度栈的goroutine</span></span><br><span class="line">    gsignal       *g         <span class="comment">// 处理信号的goroutine</span></span><br><span class="line">    tls           [<span class="number">6</span>]<span class="keyword">uintptr</span> <span class="comment">// thread-local storage</span></span><br><span class="line">    mstartfn      <span class="function"><span class="keyword">func</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    <span class="title">curg</span>          *<span class="title">g</span>       // 当前运行的<span class="title">goroutine</span></span></span><br><span class="line"><span class="function">    <span class="title">caughtsig</span>     <span class="title">guintptr</span></span></span><br><span class="line"><span class="function">    <span class="title">p</span>             <span class="title">puintptr</span> // 关联<span class="title">p</span>和执行的<span class="title">go</span>代码</span></span><br><span class="line"><span class="function">    <span class="title">nextp</span>         <span class="title">puintptr</span></span></span><br><span class="line"><span class="function">    <span class="title">id</span>            <span class="title">int32</span></span></span><br><span class="line"><span class="function">    <span class="title">mallocing</span>     <span class="title">int32</span> // 状态</span></span><br><span class="line"><span class="function">    <span class="title">spinning</span>      <span class="title">bool</span> // <span class="title">m</span>是否<span class="title">out</span> <span class="title">of</span> <span class="title">work</span></span></span><br><span class="line"><span class="function">    <span class="title">blocked</span>       <span class="title">bool</span> // <span class="title">m</span>是否被阻塞</span></span><br><span class="line"><span class="function">    <span class="title">inwb</span>          <span class="title">bool</span> // <span class="title">m</span>是否在执行写屏蔽</span></span><br><span class="line"><span class="function">    .........</span></span><br><span class="line"><span class="function">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看到g0在工作线程m当中，也就是g0协程运行在操作系统栈上</p>
+<p>g0，类似于一个特殊角色，每一个m都会有一个g0如影随形，这是每个m被创建开始的第一个协程</p>
+<p>它的主要作用就是执行协程调度部分的代码，也就是控制协程切换的</p>
+<p>下面我就讲一下g0是怎么搞协程调度和切换的</p>
+<h2 id="g0和协程切换"><a href="#g0和协程切换" class="headerlink" title="g0和协程切换"></a>g0和协程切换</h2><p>首先先复习一下GMP原理</p>
+<p>这个上一篇博客我有讲过,翻一下就得了</p>
+<p><a href="https://yemilice.com/2021/10/27/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/">Golang协程基础探究</a></p>
+<p>我们可以知道，P是产生M的，而M产生G，g0是创建的第一个协程goroutine</p>
+<p>看个图，最初始的创建状态应该如下所示</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B2/4.png" alt></p>
+<p>然后我们假设现在开始执行一个协程g1，如下图所示</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B2/1.png" alt></p>
+<p>现在g1出现了问题（超时，停止等）</p>
+<p>g2通过g0进行调度，替换g1为最新的执行goroutine</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B2/2.png" alt></p>
+<p>g2成为正在执行的goroutine</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B2/3.png" alt></p>
+<p>所以它和协程的关系大概就类似这样，如图所示</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B2/5.png" alt></p>
+<p>协程的切换过程就是 <strong>g1 -&gt; g0 -&gt; g2</strong></p>
+<p>协程的切换，被称为<strong>协程的上下文切换</strong></p>
+<p>协程g1执行切换的时候，需要保存当前的<strong>执行现场</strong>，这是保证协程切换回来的时候能够正常执行</p>
+<p><strong>执行现场</strong>的源码存储在gobuf的结构体当中，这里面分别保存了rsp，rbp， rip等重要信息，它们是CPU重要的寄存器值。</p>
+<p>执行现场gobuf的源码如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> gobuf <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">// 保存CPU的rsp的寄存器值</span></span><br><span class="line">	sp   <span class="keyword">uintptr</span></span><br><span class="line">    <span class="comment">// 保存CPU的rip寄存器值</span></span><br><span class="line">	pc   <span class="keyword">uintptr</span></span><br><span class="line">    <span class="comment">// 记录gobuf 属于哪个 协程goroutine</span></span><br><span class="line">	g    guintptr</span><br><span class="line">	ctxt unsafe.Pointer</span><br><span class="line">    <span class="comment">// 保存调用的返回值</span></span><br><span class="line">	ret  <span class="keyword">uintptr</span></span><br><span class="line">	lr   <span class="keyword">uintptr</span></span><br><span class="line">    <span class="comment">// 保存rbp寄存器的值</span></span><br><span class="line">	bp   <span class="keyword">uintptr</span> <span class="comment">// for framepointer-enabled architectures</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>解释下几个重要名词</p>
+<p>rsp：始终指向函数调用栈栈顶</p>
+<p>rip：执行程序要执行的下一条指令的地址</p>
+<p>rbp：存储函数栈帧的起始位置</p>
+<p>这几个东西相当于犯罪现场的笔录</p>
+<p>当你重返犯罪现场的时候，开启笔录，你依旧可以开始调查，不会停止。</p>
+<h2 id="g0的总结"><a href="#g0的总结" class="headerlink" title="g0的总结"></a>g0的总结</h2><p>所以，调度协程g0和普通的协程g完全不同</p>
+<p>g0作为调度协程，执行的函数和流程是固定的，并且为了避免栈溢出</p>
+<p>g0栈是会重复使用的</p>
+<p>g0不仅负责协程调度，还负责</p>
+<ol>
+<li>垃圾回收</li>
+<li>动态栈增长</li>
+</ol>
+<p>这就是调度协程g0的主要功能</p>
+<h2 id="工作线程的绑定"><a href="#工作线程的绑定" class="headerlink" title="工作线程的绑定"></a>工作线程的绑定</h2><p>工作线程是什么鬼</p>
+<p>通俗来说，GMP里面，M就是工作线程</p>
+<p>一般Go的调度器，使用<strong>线程本地存储</strong>将操作系统线程和代表线程的M结构体绑定在一起，然后才能继续其他的操作</p>
+<p>所以我们现在就来研究下<strong>线程本地存储</strong>这个东西</p>
+<p>首先看下M结构体的源码</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> m <span class="keyword">struct</span> &#123;</span><br><span class="line">    ......</span><br><span class="line">    tls           [tlsSlots]<span class="keyword">uintptr</span> <span class="comment">// thread-local storage (for x86 extern register)</span></span><br><span class="line">    ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我这里截取了关键代码，tls指向的是<strong>本地存储的线程的地址</strong></p>
+<p>艹，太绕了，我们来追一下下<strong>本地存储的线程的地址</strong>是个什么鸟玩意儿</p>
+<p>首先，线程本地存储是一种计算机方法，使用线程本地的静态和全局内存，线程本地存储的变量值，仅仅只对当前线程可见</p>
+<p>所以这种线程存储变量是<strong>私有的</strong>，操作系统使用的是FS/GS存储线程本地变量</p>
+<p>现在，替换一下我们前面的理解</p>
+<p>结构体M存储的是线程本地存储中线程的地址，所以在线程内部，我们可以获取当前线程的协程g, 逻辑处理器p等信息。</p>
+<p>结构体M存储在Fs寄存器当中，FS寄存器里面又存储了本地的线程变量，因为这个关系，从而实现工作线程和结构体M之间的绑定</p>
+<p>太TM饶了这个</p>
+<h2 id="调度循环"><a href="#调度循环" class="headerlink" title="调度循环"></a>调度循环</h2><p>那啥，这里不是重复一遍，上面讲的是协程切换</p>
+<p>这里是协程调度循环，是一个循环的流程，全称叫做调度循环</p>
+<p>我简单说一下吧</p>
+<p>就是从协程调度g0开始，找到要运行的协程g1进行切换</p>
+<p>然后切换回g0，通过不通的调度策略，获取其他的g，进行切换，直到没有g为止</p>
+<p>这里和协程切换不一样的一点是，协程切换关心的是协程状态，调度循环关注的是调度流程</p>
+<p>我拿蒋校长微操举个例子</p>
+<p>蒋校长告诉你我们要打徐州会战</p>
+<p>协程切换管的是切换的具体状态，</p>
+<p>协程切换就是开打，部队冲，打输了，退下来，优势在我这种状态</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B2/7.png" alt></p>
+<p>协程调度循环管的是切换的具体流程，</p>
+<p>也就是怎么打，换谁上，先打哪里，先调谁，后用谁，机枪右移50米，空投手令之类的。</p>
+<p>这就是协程调度循环</p>
+<h3 id="细化协程调度循环"><a href="#细化协程调度循环" class="headerlink" title="细化协程调度循环"></a>细化协程调度循环</h3><p>调度循环的流程，可以参看下图，我将它们分为两个阶段进行解说</p>
+<p>看图，这里是个具体流程</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B2/5.png" alt></p>
+<p>开始分析</p>
+<p>首先，协程g0切换到用户协程g，经历了schedule函数到execute函数再到gogo函数的过程</p>
+<p>其中用到的函数功能如下</p>
+<ol>
+<li>schedule函数 调度策略合集，处理调度</li>
+<li>execute函数 状态转移，g和m之间的绑定</li>
+<li>gogo函数 操作系统函数，完成栈切换和CPU寄存器的恢复等</li>
+</ol>
+<p>这里细化一下流程图</p>
+<p>接下来进入第二阶段</p>
+<p>切换到协程g之后，g开始执行，当g出现了主动让渡，抢占，退出之后，将会执行到协程g0开始第二轮调度</p>
+<p>首先，从协程g切换到协程g0的时候，mcall用来保存当前协程的执行现场，这个我们上两节说过，gobuf存储了执行现场。然后进行切换，切换到g0之后，会根据切换的原因进行不同的函数选择</p>
+<p>具体的状态有如下几种</p>
+<ol>
+<li>主动让渡 这时候需要调用Gosched函数</li>
+<li>协程退出 这时候需要调用Goexit函数</li>
+</ol>
+<p>执行完毕之后，将会切换回g0函数，执行第一步阶段，开始下一个循环，形成闭环，无限重回</p>
+<h2 id="调度策略"><a href="#调度策略" class="headerlink" title="调度策略"></a>调度策略</h2><p>上面我讲了调度循环，里面讲到一个函数<strong>schedule</strong></p>
+<p>这个函数是总管协程的调度策略的，相当于国防部</p>
+<p>这个代码的放置位置是 “runtime/proc.go”</p>
+<p>这里简单给大家看几个重要的函数</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">schedule</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">// 获取到当前的goroutine</span></span><br><span class="line">	_g_ := getg()</span><br><span class="line">        ...</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> gp *g</span><br><span class="line">	<span class="keyword">var</span> inheritTime <span class="keyword">bool</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 检查goroutine是否需要唤醒</span></span><br><span class="line">	tryWakeP := <span class="literal">false</span></span><br><span class="line">	<span class="keyword">if</span> trace.enabled || trace.shutdown &#123;</span><br><span class="line">		gp = traceReader()</span><br><span class="line">		<span class="keyword">if</span> gp != <span class="literal">nil</span> &#123;</span><br><span class="line">			casgstatus(gp, _Gwaiting, _Grunnable)</span><br><span class="line">			traceGoUnpark(gp, <span class="number">0</span>)</span><br><span class="line">			tryWakeP = <span class="literal">true</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> gp == <span class="literal">nil</span> &amp;&amp; gcBlackenEnabled != <span class="number">0</span> &#123;</span><br><span class="line">		gp = gcController.findRunnableGCWorker(_g_.m.p.ptr())</span><br><span class="line">		<span class="keyword">if</span> gp != <span class="literal">nil</span> &#123;</span><br><span class="line">			tryWakeP = <span class="literal">true</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> gp == <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="comment">// 检查全局队列，每隔一段时间</span></span><br><span class="line">		<span class="comment">// Check the global runnable queue once in a while to ensure fairness.</span></span><br><span class="line">		<span class="comment">// Otherwise two goroutines can completely occupy the local runqueue</span></span><br><span class="line">		<span class="comment">// by constantly respawning each other.</span></span><br><span class="line">		<span class="keyword">if</span> _g_.m.p.ptr().schedtick%<span class="number">61</span> == <span class="number">0</span> &amp;&amp; sched.runqsize &gt; <span class="number">0</span> &#123;</span><br><span class="line">			lock(&amp;sched.lock)</span><br><span class="line">			gp = globrunqget(_g_.m.p.ptr(), <span class="number">1</span>)</span><br><span class="line">			unlock(&amp;sched.lock)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> gp == <span class="literal">nil</span> &#123;</span><br><span class="line">		gp, inheritTime = runqget(_g_.m.p.ptr())</span><br><span class="line">		<span class="comment">// We can see gp != nil here even if the M is spinning,</span></span><br><span class="line">		<span class="comment">// if checkTimers added a local goroutine via goready.</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> gp == <span class="literal">nil</span> &#123;</span><br><span class="line">		gp, inheritTime = findrunnable() <span class="comment">// blocks until work is available</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这个函数里面，首先会检测程序是否处于垃圾回收阶段，然后再检测是否需要标记协程</p>
+<p>接下来是几个重点概念</p>
+<ol>
+<li>Go会使用队列，将等待执行的协程存放在其中</li>
+<li>Go的协程队列分为<strong>局部运行队列</strong>和<strong>全局运行队列</strong></li>
+<li>Go的运行队列是一个<strong>先入先出</strong>的队列</li>
+</ol>
+<p>来看一下Go调度器P的源码</p>
+<p>局部队列源码</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> p <span class="keyword">struct</span> &#123;</span><br><span class="line">	id          <span class="keyword">int32</span></span><br><span class="line">	status      <span class="keyword">uint32</span> <span class="comment">// one of pidle/prunning/...</span></span><br><span class="line">        .....</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Queue of runnable goroutines. Accessed without lock.</span></span><br><span class="line">        <span class="comment">// 可运行的协程队列</span></span><br><span class="line">	runqhead <span class="keyword">uint32</span></span><br><span class="line">	runqtail <span class="keyword">uint32</span></span><br><span class="line">        <span class="comment">// 256个局部运行队列</span></span><br><span class="line">	runq     [<span class="number">256</span>]guintptr</span><br><span class="line">        <span class="comment">// 指向下一个要执行的协程</span></span><br><span class="line">	runnext guintptr</span><br><span class="line">        .....</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>全局队列源码</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 有一个头，看起来类似next的链表</span></span><br><span class="line"><span class="keyword">type</span> gQueue <span class="keyword">struct</span> &#123;</span><br><span class="line">	head guintptr</span><br><span class="line">	tail guintptr</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 这里是全局列表的代码</span></span><br><span class="line"><span class="keyword">type</span> schedt <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">// accessed atomically. keep at top to ensure alignment on 32-bit systems.</span></span><br><span class="line">	goidgen   <span class="keyword">uint64</span></span><br><span class="line">	<span class="comment">// Global runnable queue.</span></span><br><span class="line">        <span class="comment">// 全局队列源码</span></span><br><span class="line">	runq     gQueue</span><br><span class="line">	runqsize <span class="keyword">int32</span></span><br><span class="line">        ....</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>现在我们有了全局队列和局部队列</p>
+<h3 id="调度的优先级"><a href="#调度的优先级" class="headerlink" title="调度的优先级"></a>调度的优先级</h3><p>上面我们引入了两个很重要的概念，<strong>全局队列</strong> 和 <strong>局部队列</strong></p>
+<p>那么我们原有的Golang的GMP模型就可以进行一下修改</p>
+<p>看个图</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B2/9.png" alt></p>
+<p>首先，M生成P，P会去<strong>局部队列</strong>里获取G，然后<strong>全局队列</strong>在此处Stand By。</p>
+<p>所以可以总结出一般的调用逻辑</p>
+<p>根据上述的那张图，一般的思路是先去查找每个P的局部队列获取G，当局部队列为空的时候，再从全局队列中获取G，直到都没有G为止</p>
+<p>但是这里涉及一个很大的问题，<strong>就是很可能如果循环执行局部队列的G，就可能导致全局队列的G永远不会被运行获取。</strong></p>
+<p>差了一些资料，Go里解决这个问题的策略是：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">当P中执行了61次调度之后，就必须从全局队列获取一个G，到当前P中执行</span><br></pre></td></tr></table></figure>
+
+<p>这里看下源码</p>
+<p>源码位置在：src/runtime/proc.go ，依旧还是那个调度函数schedule</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> gp == <span class="literal">nil</span> &#123;</span><br><span class="line">	<span class="comment">// Check the global runnable queue once in a while to ensure fairness.</span></span><br><span class="line">	<span class="comment">// Otherwise two goroutines can completely occupy the local runqueue</span></span><br><span class="line">	<span class="comment">// by constantly respawning each other.</span></span><br><span class="line">	<span class="comment">// 如果可以被61整除并且全局队列的数量大于0</span></span><br><span class="line">	<span class="keyword">if</span> _g_.m.p.ptr().schedtick%<span class="number">61</span> == <span class="number">0</span> &amp;&amp; sched.runqsize &gt; <span class="number">0</span> &#123;</span><br><span class="line">		lock(&amp;sched.lock)</span><br><span class="line">		<span class="comment">// 获取一个g</span></span><br><span class="line">		gp = globrunqget(_g_.m.p.ptr(), <span class="number">1</span>)</span><br><span class="line">		unlock(&amp;sched.lock)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们分析了队列调度的先后，那么就可以规划出来队列调度的优先级顺序了</p>
+<p>梳理了一下，有个图，大家伙看看</p>
+<p><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B2/10.png" alt></p>
+<p>首先，P执行调度的时候，首先会通过runnext获取下一个可执行的G，如果获取不到</p>
+<p>那么将尝试从局部队列寻找G，如果局部队列没有G了,就会从全局队列寻找G</p>
+<p>如果全局队列也没有G，那么将会从其他的P中窃取G进行运行</p>
+<p>如果都找不到G，那么P将会解除和M的绑定，M也进入休眠状态中</p>
+<h3 id="获取局部队列"><a href="#获取局部队列" class="headerlink" title="获取局部队列"></a>获取局部队列</h3><p>上一节我们梳理了什么是局部队列，什么是全局队列，以及他们的优先度，这段我就来说下他们是怎么获取的</p>
+<p>先看一下源码</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">runqget</span><span class="params">(_p_ *p)</span> <span class="params">(gp *g, inheritTime <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">// 获取下一个可用的G</span></span><br><span class="line">	next := _p_.runnext</span><br><span class="line">	<span class="comment">// 如果下一个next地址不等于0并且cas成功，直接返回一个G</span></span><br><span class="line">	<span class="comment">// 如果下一个next地址不等于0并且cas失败，那么它只能被另一个P抢夺</span></span><br><span class="line">	<span class="comment">// 其他P可以设置为0，当前只有P可以设置非0</span></span><br><span class="line">	<span class="comment">// 只有CAS失败，则不需要重试</span></span><br><span class="line">	<span class="keyword">if</span> next != <span class="number">0</span> &amp;&amp; _p_.runnext.cas(next, <span class="number">0</span>) &#123;</span><br><span class="line">		<span class="keyword">return</span> next.ptr(), <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="comment">// 获取头部</span></span><br><span class="line">		h := atomic.LoadAcq(&amp;_p_.runqhead) <span class="comment">// 加载，获取，和其他P同步</span></span><br><span class="line">		<span class="comment">// 获取尾部</span></span><br><span class="line">		t := _p_.runqtail</span><br><span class="line">		<span class="comment">// 如果头尾相等，那么没有协程可以运行</span></span><br><span class="line">		<span class="keyword">if</span> t == h &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="literal">nil</span>, <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 访问加锁</span></span><br><span class="line">		gp := _p_.runq[h%<span class="keyword">uint32</span>(<span class="built_in">len</span>(_p_.runq))].ptr()</span><br><span class="line">		<span class="keyword">if</span> atomic.CasRel(&amp;_p_.runqhead, h, h+<span class="number">1</span>) &#123; <span class="comment">// 推送执行了多少G</span></span><br><span class="line">			<span class="keyword">return</span> gp, <span class="literal">false</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>首先这里先检查runnext是否为空，如果不为空就直接拿出G</p>
+<p>如果为空就从局部队列进行查找，从队列头部获取到一个G然后返回</p>
+<p>循环获取头部尾部，头尾相等，证明没有协程可用，返回nil和false</p>
+<p>返回有个访问加锁，这里是避免其他P窃取任务时和当前P进行同时访问</p>
+<p>这里大概就是获取局部队列的一些相关知识了，这里看的很累，比较复杂</p>
+<h3 id="获取全局队列"><a href="#获取全局队列" class="headerlink" title="获取全局队列"></a>获取全局队列</h3><p>前面说过，当P执行了61次调度的时候，就会从全局队列里面拿取G优先执行</p>
+<p>全局队列，其实就是全局链表，每个P都可以从里面拿东西，有点类似消费者生产者的模型</p>
+<p>梳理一下队列转移的方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">首先，我们要先统计P的数量，然后根据P的数量平均分配全局队列的G，</span><br><span class="line"></span><br><span class="line">但是要拿取的数量不能超过局部队列的一半，当前是 256 / 2 = 128，</span><br><span class="line"></span><br><span class="line">也就是说，不能一次性拿走超过128个G放到自己的局部队列里</span><br><span class="line"></span><br><span class="line">获取到G之后，再通过循环将全局队列的G放入平均分配的P的局部队列当中</span><br></pre></td></tr></table></figure>
+
+<p>下面看一些源码</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Try get a batch of G's from the global runnable queue.</span></span><br><span class="line"><span class="comment">// sched.lock must be held.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">globrunqget</span><span class="params">(_p_ *p, max <span class="keyword">int32</span>)</span> *<span class="title">g</span></span> &#123;</span><br><span class="line">	assertLockHeld(&amp;sched.lock)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> sched.runqsize == <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 平均分配</span></span><br><span class="line">	<span class="comment">// n就是每个p获取的g的数量</span></span><br><span class="line">	n := sched.runqsize/gomaxprocs + <span class="number">1</span></span><br><span class="line">	<span class="keyword">if</span> n &gt; sched.runqsize &#123;</span><br><span class="line">		n = sched.runqsize</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> max &gt; <span class="number">0</span> &amp;&amp; n &gt; max &#123;</span><br><span class="line">		n = max</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> n &gt; <span class="keyword">int32</span>(<span class="built_in">len</span>(_p_.runq))/<span class="number">2</span> &#123;</span><br><span class="line">		n = <span class="keyword">int32</span>(<span class="built_in">len</span>(_p_.runq)) / <span class="number">2</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 全局队列 - n</span></span><br><span class="line">	sched.runqsize -= n</span><br><span class="line"></span><br><span class="line">	<span class="comment">// gp = 队伍的最后一个</span></span><br><span class="line">	gp := sched.runq.pop()</span><br><span class="line">	<span class="comment">// 递减</span></span><br><span class="line">	n--</span><br><span class="line">	<span class="comment">// 如果 n &gt; 0</span></span><br><span class="line">	<span class="keyword">for</span> ; n &gt; <span class="number">0</span>; n-- &#123;</span><br><span class="line">		gp1 := sched.runq.pop()</span><br><span class="line">		<span class="comment">// 上传</span></span><br><span class="line">		runqput(_p_, gp1, <span class="literal">false</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> gp</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h3 id="协程窃取"><a href="#协程窃取" class="headerlink" title="协程窃取"></a>协程窃取</h3><p>如果一个P，获取不到它自己的局部队列的G，并且全局队列的G他也拿不到，那么他就可以去其他的P里面拿G过来跑</p>
+<p>这是Go很巧妙的一个设计逻辑，避免的持续性等待，空放P在那什么也不做</p>
+<p>首先这里分为两个部分讲解</p>
+<p>第一个是从其他P获取到G</p>
+<p>第二个是窃取G到自己的P</p>
+<p>那么，开始吧</p>
+<h4 id="从其他P获取G"><a href="#从其他P获取G" class="headerlink" title="从其他P获取G"></a>从其他P获取G</h4><p>当自己的局部队列和全局队列都拿不到G的时候，则会开启这个分支剧情</p>
+<p>首先需要获取到所有的P，然后通过P获取到他们的局部队列</p>
+<p>这里最重要的几个特性就是</p>
+<ol>
+<li>随机性</li>
+<li>公平性</li>
+</ol>
+<p>首先P存储在全局的allp[] 里面，这是一个全局变量</p>
+<p>获取P的源码如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//从任何P中进行窃取的函数</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">stealWork</span><span class="params">(now <span class="keyword">int64</span>)</span> <span class="params">(gp *g, inheritTime <span class="keyword">bool</span>, rnow, pollUntil <span class="keyword">int64</span>, newWork <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">//获取到G</span></span><br><span class="line">	pp := getg().m.p.ptr()</span><br><span class="line"></span><br><span class="line">	ranTimer := <span class="literal">false</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">//重复4次操作</span></span><br><span class="line">	<span class="keyword">const</span> stealTries = <span class="number">4</span></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; stealTries; i++ &#123;</span><br><span class="line">		stealTimersOrRunNextG := i == stealTries<span class="number">-1</span></span><br><span class="line"></span><br><span class="line">		<span class="comment">// 二层循环，找到可窃取的P马上返回</span></span><br><span class="line">		<span class="keyword">for</span> enum := stealOrder.start(fastrand()); !enum.done(); enum.next() &#123;</span><br><span class="line">			<span class="keyword">if</span> sched.gcwaiting != <span class="number">0</span> &#123;</span><br><span class="line">				<span class="comment">// GC work may be available.</span></span><br><span class="line">				<span class="keyword">return</span> <span class="literal">nil</span>, <span class="literal">false</span>, now, pollUntil, <span class="literal">true</span></span><br><span class="line">			&#125;</span><br><span class="line">			p2 := allp[enum.position()]</span><br><span class="line">			<span class="keyword">if</span> pp == p2 &#123;</span><br><span class="line">				<span class="keyword">continue</span></span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			<span class="comment">// 从P2里面进行窃取</span></span><br><span class="line">			<span class="keyword">if</span> stealTimersOrRunNextG &amp;&amp; timerpMask.read(enum.position()) &#123;</span><br><span class="line">				tnow, w, ran := checkTimers(p2, now)</span><br><span class="line">				now = tnow</span><br><span class="line">				<span class="keyword">if</span> w != <span class="number">0</span> &amp;&amp; (pollUntil == <span class="number">0</span> || w &lt; pollUntil) &#123;</span><br><span class="line">					pollUntil = w</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">if</span> ran &#123;</span><br><span class="line">					<span class="comment">// 检查现在是否要运行的本地G</span></span><br><span class="line">					<span class="keyword">if</span> gp, inheritTime := runqget(pp); gp != <span class="literal">nil</span> &#123;</span><br><span class="line">						<span class="keyword">return</span> gp, inheritTime, now, pollUntil, ranTimer</span><br><span class="line">					&#125;</span><br><span class="line">					ranTimer = <span class="literal">true</span></span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			<span class="comment">//如果P2空闲，不进行窃取</span></span><br><span class="line">			<span class="keyword">if</span> !idlepMask.read(enum.position()) &#123;</span><br><span class="line">				<span class="keyword">if</span> gp := runqsteal(pp, p2, stealTimersOrRunNextG); gp != <span class="literal">nil</span> &#123;</span><br><span class="line">					<span class="keyword">return</span> gp, <span class="literal">false</span>, now, pollUntil, ranTimer</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 没有发现的协程G，持续等待或者推出</span></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span>, <span class="literal">false</span>, now, pollUntil, ranTimer</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里的代码比较难整，简单说一下意思</p>
+<p>第一层For循环，意思就是重复执行4次循环逻辑，至于循环什么呢。。。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> stealTries = <span class="number">4</span></span><br><span class="line"><span class="keyword">for</span> i := <span class="number">0</span>; i &lt; stealTries; i++ &#123;</span><br><span class="line">	stealTimersOrRunNextG := i == stealTries<span class="number">-1</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 二层循环，找到可窃取的P马上返回</span></span><br><span class="line">	<span class="keyword">for</span> enum := stealOrder.start(fastrand()); !enum.done(); enum.next() &#123;</span><br><span class="line">		<span class="keyword">if</span> sched.gcwaiting != <span class="number">0</span> &#123;</span><br><span class="line">			<span class="comment">// GC work may be available</span></span><br><span class="line">.....</span><br></pre></td></tr></table></figure>
+
+<p>这里有一个二层循环</p>
+<p>二层循环里面用了一个随机算法，这里我直接讲一下这个随机算法吧</p>
+<p>我们用一个例子来说明， 假设一共有8个P， </p>
+<p>第1步: fastrand 函数 选择一个随机数并对8取模， 算法选择了一个0 - 8之间的随机数，假设为6</p>
+<p>第2步，找到一个比8小且与8互质的 数。 比8小且与8互质的数有4个： </p>
+<p>coprimes=[1，3，5，7]， </p>
+<p>代码中取coprimes[6%4]= 5， 这4个数中任取一个都有相同的数学特性。</p>
+<p>大概就是这样，这部分我直接参考了 <strong>Go语言底层剖析</strong>这本书，我属实没看明白这段。</p>
+<h4 id="窃取G到现在的P"><a href="#窃取G到现在的P" class="headerlink" title="窃取G到现在的P"></a>窃取G到现在的P</h4><p>这部分的源码如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">runqgrab</span><span class="params">(_p_ *p, batch *[256]guintptr, batchHead <span class="keyword">uint32</span>, stealRunNextG <span class="keyword">bool</span>)</span> <span class="title">uint32</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		h := atomic.LoadAcq(&amp;_p_.runqhead) <span class="comment">// load-acquire, synchronize with other consumers</span></span><br><span class="line">		t := atomic.LoadAcq(&amp;_p_.runqtail) <span class="comment">// load-acquire, synchronize with the producer</span></span><br><span class="line">		n := t - h</span><br><span class="line">		<span class="comment">// 偷取一半的G个数</span></span><br><span class="line">		n = n - n/<span class="number">2</span></span><br><span class="line">		.....</span><br><span class="line">		<span class="comment">// 放入自己的队列</span></span><br><span class="line">		<span class="keyword">for</span> i := <span class="keyword">uint32</span>(<span class="number">0</span>); i &lt; n; i++ &#123;</span><br><span class="line">			g := _p_.runq[(h+i)%<span class="keyword">uint32</span>(<span class="built_in">len</span>(_p_.runq))]</span><br><span class="line">			batch[(batchHead+i)%<span class="keyword">uint32</span>(<span class="built_in">len</span>(batch))] = g</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> atomic.CasRel(&amp;_p_.runqhead, h, h+n) &#123; <span class="comment">// cas-release, commits consume</span></span><br><span class="line">			<span class="keyword">return</span> n</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里窃取了其他指定P一般的G的个数到自己队列当中，这段核心代码大概就是这个意思</p>
+<p>上一节讲了调度策略，讲的是大战略方针，调度时机就是讲的什么时候发生调度</p>
+<p>还是拿蒋公举个例子</p>
+<p>蒋公定了徐州战役，现在要打，订好了策略，那什么时候打？</p>
+<p>调度时机就是说明了时间，也就是什么时候发生调度，生效调度策略之类的。</p>
+<p>一般来说，调度时机分为几种</p>
+<ol>
+<li>主动调度</li>
+<li>被动调度</li>
+<li>抢占调度</li>
+</ol>
+<p>下面就分别来讲一下这三种调度时机</p>
+<h3 id="主动调度"><a href="#主动调度" class="headerlink" title="主动调度"></a>主动调度</h3><p>协程可以主动选择过渡自己的执行权利，也就是让出自己的执行权利给其他的G协程。</p>
+<p>在大多数情况下，我们（开发人员）是不会去执行这种调度的，因为Go会默认的主动检查调用函数，判断G是否被抢占</p>
+<p>主动调度的核心代码如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">goschedImpl</span><span class="params">(gp *g)</span></span> &#123;</span><br><span class="line">	<span class="comment">// 判断g的状态</span></span><br><span class="line">	status := readgstatus(gp)</span><br><span class="line">	<span class="comment">// 如果g不是_Grunning状态</span></span><br><span class="line">	<span class="keyword">if</span> status&amp;^_Gscan != _Grunning &#123;</span><br><span class="line">		<span class="comment">// 获取g的详细信息</span></span><br><span class="line">		dumpgstatus(gp)</span><br><span class="line">		<span class="comment">// 输出提示</span></span><br><span class="line">		throw(<span class="string">"bad g status"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 取消g和m之间的绑定关系</span></span><br><span class="line">	casgstatus(gp, _Grunning, _Grunnable)</span><br><span class="line">	dropg()</span><br><span class="line">	<span class="comment">// 加锁g</span></span><br><span class="line">	lock(&amp;sched.lock)</span><br><span class="line">	<span class="comment">// g放入全局运行队列</span></span><br><span class="line">	globrunqput(gp)</span><br><span class="line">	<span class="comment">// 关闭锁</span></span><br><span class="line">	unlock(&amp;sched.lock)</span><br><span class="line">	<span class="comment">// 新一轮调度</span></span><br><span class="line">	schedule()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里的大致意思就是，首先检查g的状态，然后从当前协程切换到g0</p>
+<p>首先取消g和m的绑定关系，然后把g放入全局队列，然后开始新一轮循环（调用schedule函数）</p>
+<h3 id="被动调度"><a href="#被动调度" class="headerlink" title="被动调度"></a>被动调度</h3><p>这里就是可以被我们（开发人员）所控制的调度了</p>
+<p>一般我们在开发里面会遇到例如应用休眠，timeout，堵塞等情况</p>
+<p>所以应用内部的协程这时候就会被动的将自己的执行权限交出去</p>
+<p>因为不同的原因，调度器可能执行的操作也不同</p>
+<p>被动调度是协程内部发起的操作</p>
+<p>它的源码如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">gopark</span><span class="params">(unlockf <span class="keyword">func</span>(*g, unsafe.Pointer)</span> <span class="title">bool</span>, <span class="title">lock</span> <span class="title">unsafe</span>.<span class="title">Pointer</span>, <span class="title">reason</span> <span class="title">waitReason</span>, <span class="title">traceEv</span> <span class="title">byte</span>, <span class="title">traceskip</span> <span class="title">int</span>)</span> &#123;</span><br><span class="line">	<span class="keyword">if</span> reason != waitReasonSleep &#123;</span><br><span class="line">		checkTimeouts() <span class="comment">// timeouts may expire while two goroutines keep the scheduler busy</span></span><br><span class="line">	&#125;</span><br><span class="line">	mp := acquirem()</span><br><span class="line">	gp := mp.curg</span><br><span class="line">	status := readgstatus(gp)</span><br><span class="line">	<span class="keyword">if</span> status != _Grunning &amp;&amp; status != _Gscanrunning &#123;</span><br><span class="line">		throw(<span class="string">"gopark: bad g status"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	mp.waitlock = lock</span><br><span class="line">	mp.waitunlockf = unlockf</span><br><span class="line">	gp.waitreason = reason</span><br><span class="line">	mp.waittraceev = traceEv</span><br><span class="line">	mp.waittraceskip = traceskip</span><br><span class="line">	releasem(mp)</span><br><span class="line">	<span class="comment">//执行被动调度</span></span><br><span class="line">	mcall(park_m)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个函数会去执行park_m这个函数</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">park_m</span><span class="params">(gp *g)</span></span> &#123;</span><br><span class="line">	_g_ := getg()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> trace.enabled &#123;</span><br><span class="line">		traceGoPark(_g_.m.waittraceev, _g_.m.waittraceskip)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 解除G和M的关系</span></span><br><span class="line">	casgstatus(gp, _Grunning, _Gwaiting)</span><br><span class="line">	dropg()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 判定执行被动调度的原因</span></span><br><span class="line">	<span class="keyword">if</span> fn := _g_.m.waitunlockf; fn != <span class="literal">nil</span> &#123;</span><br><span class="line">		ok := fn(gp, _g_.m.waitlock)</span><br><span class="line">		<span class="comment">// 执行waitlock</span></span><br><span class="line">		_g_.m.waitunlockf = <span class="literal">nil</span></span><br><span class="line">		_g_.m.waitlock = <span class="literal">nil</span></span><br><span class="line">		<span class="keyword">if</span> !ok &#123;</span><br><span class="line">			<span class="keyword">if</span> trace.enabled &#123;</span><br><span class="line">				traceGoUnpark(gp, <span class="number">2</span>)</span><br><span class="line">			&#125;</span><br><span class="line">			casgstatus(gp, _Gwaiting, _Grunnable)</span><br><span class="line">			execute(gp, <span class="literal">true</span>) <span class="comment">// Schedule it back, never returns.</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 重新调度</span></span><br><span class="line">	schedule()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>首先，还是老样子，切换协程到g0，然后解除G和M的关系，根据执行被动调度的不同原因，执行不同的wautunlockf函数</p>
+<p>但是要注意一点，被动调度的函数不会放入全局队列</p>
+<p>协程的状态会从_Gwaiting转换为_Grunnable</p>
+<p>然后放入当前P的局部队列当中，开始执行。</p>
+<h3 id="抢占调度"><a href="#抢占调度" class="headerlink" title="抢占调度"></a>抢占调度</h3><p>抢占调度的源码如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">retake</span><span class="params">(now <span class="keyword">int64</span>)</span> <span class="title">uint32</span></span> &#123;</span><br><span class="line">	n := <span class="number">0</span></span><br><span class="line">	lock(&amp;allpLock)</span><br><span class="line">	<span class="comment">// 重新获取allp</span></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="built_in">len</span>(allp); i++ &#123;</span><br><span class="line">		_p_ := allp[i]</span><br><span class="line">		<span class="keyword">if</span> _p_ == <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="comment">// This can happen if procresize has grown</span></span><br><span class="line">			<span class="comment">// allp but not yet created new Ps.</span></span><br><span class="line">			<span class="keyword">continue</span></span><br><span class="line">		&#125;</span><br><span class="line">		pd := &amp;_p_.sysmontick</span><br><span class="line">		s := _p_.status</span><br><span class="line">		sysretake := <span class="literal">false</span></span><br><span class="line">		<span class="keyword">if</span> s == _Prunning || s == _Psyscall &#123;</span><br><span class="line">			<span class="comment">// Preempt G if it's running for too long.</span></span><br><span class="line">			t := <span class="keyword">int64</span>(_p_.schedtick)</span><br><span class="line">			<span class="keyword">if</span> <span class="keyword">int64</span>(pd.schedtick) != t &#123;</span><br><span class="line">				pd.schedtick = <span class="keyword">uint32</span>(t)</span><br><span class="line">				pd.schedwhen = now</span><br><span class="line">			&#125; <span class="keyword">else</span> <span class="keyword">if</span> pd.schedwhen+forcePreemptNS &lt;= now &#123;</span><br><span class="line">				preemptone(_p_)</span><br><span class="line">				<span class="comment">// 系统调用 没有连接到P的M</span></span><br><span class="line">				sysretake = <span class="literal">true</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> s == _Psyscall &#123;</span><br><span class="line">			<span class="comment">// 如果存在1个sysmon，从系统调用中获取P</span></span><br><span class="line">			t := <span class="keyword">int64</span>(_p_.syscalltick)</span><br><span class="line">			<span class="keyword">if</span> !sysretake &amp;&amp; <span class="keyword">int64</span>(pd.syscalltick) != t &#123;</span><br><span class="line">				pd.syscalltick = <span class="keyword">uint32</span>(t)</span><br><span class="line">				pd.syscallwhen = now</span><br><span class="line">				<span class="keyword">continue</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">// 防止进入深度睡眠无法huan'x</span></span><br><span class="line">			<span class="keyword">if</span> runqempty(_p_) &amp;&amp; atomic.Load(&amp;sched.nmspinning)+atomic.Load(&amp;sched.npidle) &gt; <span class="number">0</span> &amp;&amp; pd.syscallwhen+<span class="number">10</span>*<span class="number">1000</span>*<span class="number">1000</span> &gt; now &#123;</span><br><span class="line">				<span class="keyword">continue</span></span><br><span class="line">			&#125;</span><br><span class="line">			unlock(&amp;allpLock)</span><br><span class="line">			<span class="comment">// 较少空闲锁定M的数量</span></span><br><span class="line">			<span class="comment">// 增加nmidle报告死锁</span></span><br><span class="line">			incidlelocked(<span class="number">-1</span>)</span><br><span class="line">			<span class="keyword">if</span> atomic.Cas(&amp;_p_.status, s, _Pidle) &#123;</span><br><span class="line">				<span class="keyword">if</span> trace.enabled &#123;</span><br><span class="line">					traceGoSysBlock(_p_)</span><br><span class="line">					traceProcStop(_p_)</span><br><span class="line">				&#125;</span><br><span class="line">				n++</span><br><span class="line">				_p_.syscalltick++</span><br><span class="line">				handoffp(_p_)</span><br><span class="line">			&#125;</span><br><span class="line">			incidlelocked(<span class="number">1</span>)</span><br><span class="line">			lock(&amp;allpLock)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	unlock(&amp;allpLock)</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">uint32</span>(n)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这段代码头晕了，大致意思就是如果协程运行时间过长，或者处于系统调度阶段</p>
+<p>则会抢占当前G的执行</p>
+
+      
+      <!-- reward -->
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2021/11/08/Golang%E5%8D%8F%E7%A8%8B%E8%B0%83%E5%BA%A6%E6%8E%A2%E7%A9%B6/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/10/27/Golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Golang协程基础探究</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
