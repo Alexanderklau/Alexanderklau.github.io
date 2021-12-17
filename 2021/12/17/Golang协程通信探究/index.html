@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    Golang协程通信探究 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-Golang协程通信探究" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Golang协程通信探究
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/12/17/Golang%E5%8D%8F%E7%A8%8B%E9%80%9A%E4%BF%A1%E6%8E%A2%E7%A9%B6/" class="article-date">
+  <time datetime="2021-12-17T08:40:00.000Z" itemprop="datePublished">2021-12-17</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">4.8k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">19 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这几天攻关了一下协程通信，也顺利完成了</p>
+<p>我觉得每次学习都是一个新的经验</p>
+<p>狗公司今年没有年终</p>
+<p>我肯定是要走的，没必要继续停留</p>
+<ol>
+<li><strong><a href="https://yemilice.com/2021/10/27/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/">Golang协程基础 （已经完成！）</a></strong></li>
+<li><strong><a href="https://yemilice.com/2021/11/08/golang%E5%8D%8F%E7%A8%8B%E8%B0%83%E5%BA%A6%E6%8E%A2%E7%A9%B6/">Golang协程调度 （已经完成！）</a></strong></li>
+<li>Golang协程通信 (已经完成)</li>
+<li>Golang协程控制</li>
+<li>Golang垃圾回收机制</li>
+</ol>
+<h2 id="CSP思想"><a href="#CSP思想" class="headerlink" title="CSP思想"></a>CSP思想</h2><p>要了解协程通信，首先就要了解CSP思想</p>
+<p>CSP全称是 Communicating Sequential Processes，意思是通信顺序过程</p>
+<p>这个的核心就是并发过程中进行交互，需要通过<strong>通道</strong>传递信息</p>
+<p>在CSP的设计思想当中，通过指定的通道发送信息或者接收信息完成通信</p>
+<p>CSP思想是Go并发的设计思想，所以Go语言里面定义了<strong>通道</strong>这种重要机制，这也是我们必须面对和掌握的</p>
+<p>我们也可以这么理解：<strong>Go的通道是实现Go协程通信的重要媒介</strong></p>
+<h2 id="Go语言的通道是什么"><a href="#Go语言的通道是什么" class="headerlink" title="Go语言的通道是什么"></a>Go语言的通道是什么</h2><p>直接了当的说明吧</p>
+<p>我们会在Go代码里面看到很多类似下面这种代码</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> work <span class="keyword">chan</span> T</span><br><span class="line"><span class="keyword">chan</span> &lt;- float</span><br><span class="line">&lt;-<span class="keyword">chan</span> <span class="keyword">string</span></span><br></pre></td></tr></table></figure>
+
+<p>但凡带有chan的，全都是通道的东西，也就是说，当你们看到chan的时候</p>
+<p>就要明白，通道它来了。</p>
+<h2 id="Go预言通道的使用方法"><a href="#Go预言通道的使用方法" class="headerlink" title="Go预言通道的使用方法"></a>Go预言通道的使用方法</h2><p>我在这里默认大家都懂Go，都写过Go，知道Go的基本语法。所以基础的语法，我这就不讲了。。大家不懂得回去再学一阵</p>
+<h3 id="声明通道"><a href="#声明通道" class="headerlink" title="声明通道"></a>声明通道</h3><p>声明一个名叫work的chan，通道里存储的数据类型为int</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> work <span class="keyword">chan</span> <span class="keyword">int</span></span><br></pre></td></tr></table></figure>
+
+<p>声明一个chan 存储int，不带箭头表示可读可写</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">chan</span> <span class="keyword">int</span></span><br></pre></td></tr></table></figure>
+
+<p>声明一个chan，只能写入int，不能读</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">chan</span> &lt;- <span class="keyword">int</span></span><br></pre></td></tr></table></figure>
+
+<p>声明一个chan，只能读int，不能写</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;- <span class="keyword">chan</span> <span class="keyword">int</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="初始化通道"><a href="#初始化通道" class="headerlink" title="初始化通道"></a>初始化通道</h3><p>我们声明完通道之后，不能马上使用，如果你用了，往里面写东西，就类似</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">"fmt"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> message <span class="keyword">chan</span> <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		message &lt;- <span class="string">"work"</span></span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	msg := &lt;-message</span><br><span class="line"></span><br><span class="line">	fmt.Println(msg)</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>你就会得到一个错误返回</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">fatal error: all goroutines are asleep - deadlock!</span><br><span class="line"></span><br><span class="line">goroutine <span class="number">1</span> [<span class="keyword">chan</span> send (<span class="literal">nil</span> <span class="keyword">chan</span>)]:</span><br><span class="line">main.main()</span><br><span class="line">	.....</span><br><span class="line">exit status <span class="number">2</span></span><br></pre></td></tr></table></figure>
+
+<p>这他喵就是Go的一个固定逻辑，当你不初始化的时候，你是没发往里写东西的</p>
+<p>初始化的操作就是</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">message := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">string</span>)</span><br></pre></td></tr></table></figure>
+
+<p>修改下上面的代码</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">......</span><br><span class="line">message := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">string</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">    message &lt;- <span class="string">"work"</span></span><br><span class="line">&#125;()</span><br><span class="line"></span><br><span class="line">msg := &lt;-message</span><br><span class="line"></span><br><span class="line">fmt.Println(msg)</span><br></pre></td></tr></table></figure>
+
+<p>现在的返回完全正常了</p>
+<h3 id="通道写入数据"><a href="#通道写入数据" class="headerlink" title="通道写入数据"></a>通道写入数据</h3><p>前面我已经举了个简单的代码例子了</p>
+<p>其实再讲明白点，箭头代表你要干嘛</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">通道变量 &lt;- 值</span><br></pre></td></tr></table></figure>
+
+
+<p>把信息写入到channel里面</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">messages &lt;- <span class="string">"ping"</span></span><br></pre></td></tr></table></figure>
+
+<p>这就是写入，简单吧</p>
+<h3 id="通道读取数据"><a href="#通道读取数据" class="headerlink" title="通道读取数据"></a>通道读取数据</h3><p>读取，一般的用法，是把取出来的值赋值出去</p>
+<p>类似</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msg := &lt;-message</span><br></pre></td></tr></table></figure>
+
+<p>读取分为两种方式</p>
+<h4 id="阻塞式接收"><a href="#阻塞式接收" class="headerlink" title="阻塞式接收"></a>阻塞式接收</h4><p>这种就类似上面那种形式</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msg := &lt;-message</span><br></pre></td></tr></table></figure>
+
+<p>这里的message如果为空，是不会退出的，会持续性阻塞在这里</p>
+<p>直到获取到message之后，才会完全退出</p>
+<h4 id="非阻塞接收"><a href="#非阻塞接收" class="headerlink" title="非阻塞接收"></a>非阻塞接收</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msg, ok := &lt;-message</span><br></pre></td></tr></table></figure>
+<p>这里的ok是一个bool类型，如果获取到bool为false，则通道完全关闭</p>
+<h3 id="关闭通道"><a href="#关闭通道" class="headerlink" title="关闭通道"></a>关闭通道</h3><p>很简单，直接close通道</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">close</span>(message)</span><br></pre></td></tr></table></figure>
+
+<p>如果你往一个close的通道里面持续写入</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	message := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">string</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		message &lt;- <span class="string">"work"</span></span><br><span class="line">		<span class="built_in">close</span>(message)</span><br><span class="line">	&#125;()</span><br><span class="line">	msg, ok := &lt;-message</span><br><span class="line">	message &lt;- <span class="string">"sda"</span></span><br><span class="line">	fmt.Println(msg, ok)</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里会报错</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">panic: send on closed channel</span><br><span class="line"></span><br><span class="line">goroutine 1 [running]:</span><br><span class="line">main.main()</span><br><span class="line">	....</span><br><span class="line">exit status 2</span><br></pre></td></tr></table></figure>
+
+
+<p>你不可以向一个已经关闭的通道写数据，但是！但是！但是！</p>
+<p>你可以向一个已经关闭的通道读数据！</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	message := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		message &lt;- <span class="number">1</span></span><br><span class="line">		<span class="built_in">close</span>(message)</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	msg := &lt;-message</span><br><span class="line"></span><br><span class="line">	fmt.Println(msg)</span><br><span class="line"></span><br><span class="line">	time.Sleep(time.Second * <span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">	msg2 := &lt;-message</span><br><span class="line"></span><br><span class="line">	fmt.Println(msg2)</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里返回</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1</span> <span class="literal">true</span></span><br><span class="line"><span class="number">0</span> <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+
+<p>看到没，即使已经关闭，我们都可以读到一个0值</p>
+<p><strong>如果我们不去判断通道是否关闭，而是只获取值，那么函数将永远不会结束</strong></p>
+<p>所以这里就需要我们上面的判断了</p>
+<p>改写一下代码</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">msg2, ok := &lt;-message</span><br><span class="line"><span class="keyword">if</span> !ok &#123;</span><br><span class="line">	fmt.Println(<span class="string">"stop"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样写不够优雅，我们后面更新一个优雅的写法</p>
+<h3 id="通道只读-只写"><a href="#通道只读-只写" class="headerlink" title="通道只读/只写"></a>通道只读/只写</h3><p>这个前面咱们讲过，可以根据箭头指定写入还是读取</p>
+<p>那么建立的时候，咱们也可以通过箭头给它规定死到底是读还是写</p>
+<h4 id="只写通道"><a href="#只写通道" class="headerlink" title="只写通道"></a>只写通道</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> c = <span class="built_in">make</span>(<span class="keyword">chan</span> &lt;- <span class="keyword">int</span>)</span><br></pre></td></tr></table></figure>
+
+<p>这句的意思就是，这个通道只能写入不能读取整数</p>
+<h4 id="只读通道"><a href="#只读通道" class="headerlink" title="只读通道"></a>只读通道</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> c = <span class="built_in">make</span>( &lt;- <span class="keyword">chan</span> <span class="keyword">int</span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="普通通道（可读可写）"><a href="#普通通道（可读可写）" class="headerlink" title="普通通道（可读可写）"></a>普通通道（可读可写）</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> c = <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="通道缓冲（限制通道大小）"><a href="#通道缓冲（限制通道大小）" class="headerlink" title="通道缓冲（限制通道大小）"></a>通道缓冲（限制通道大小）</h3><p>这里的通道缓冲，可以理解为控制消息数量，你将它理解为队列机制</p>
+<p>假设我们的机器处理能力有限，需要限制接收的消息</p>
+<p>限制为最大接收3个消息</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">work := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>， <span class="number">3</span>)</span><br></pre></td></tr></table></figure>
+
+<p>当超过这个消息的时候，则会发生阻塞</p>
+<p>所以我们可以利用chan来控制消息数量</p>
+<p>或者限制协程执行数量</p>
+<p>或者实现一个简单的协程池</p>
+<h2 id="根据用例深入了解通道"><a href="#根据用例深入了解通道" class="headerlink" title="根据用例深入了解通道"></a>根据用例深入了解通道</h2><p>上面我们讲了什么是通道，或者通道是怎么使用的，下面我们找一段代码来逐渐分析下</p>
+<p>通道一般在代码里面是怎么使用的</p>
+<p>写一段简单的生产者-消费者模型代码</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">"fmt"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">work</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 创建一个无缓存的chan 队列，往里面写int数据</span></span><br><span class="line">	g := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line">	<span class="comment">// 创建一个quit，传输状态</span></span><br><span class="line">	quit := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">bool</span>)</span><br><span class="line">	<span class="comment">// 创建一个全局判断状态，传输状态</span></span><br><span class="line">	quitwork := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">bool</span>)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 启动一个线程开始监听</span></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="comment">// 走一个无限循环</span></span><br><span class="line">		<span class="keyword">for</span> &#123;</span><br><span class="line">			<span class="comment">// select循环机制</span></span><br><span class="line">			<span class="keyword">select</span> &#123;</span><br><span class="line">			<span class="comment">// 如果我们可以持续获取到g</span></span><br><span class="line">			<span class="keyword">case</span> v := &lt;-g:</span><br><span class="line">				<span class="comment">// 打印一发</span></span><br><span class="line">				fmt.Println(v)</span><br><span class="line">			<span class="comment">// 如果我们检测到quit == true，则退出</span></span><br><span class="line">			<span class="keyword">case</span> &lt;-quit:</span><br><span class="line">				fmt.Println(<span class="string">"读取协程 end"</span>)</span><br><span class="line">				<span class="comment">// 将主状态定为true</span></span><br><span class="line">				quitwork &lt;- <span class="literal">true</span></span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 启动一个写入协程，开始写数据</span></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="comment">// 往g里面塞数据逻辑的协程</span></span><br><span class="line">		<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">10</span>; i++ &#123;</span><br><span class="line">			g &lt;- i</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 给quit赋个值为true</span></span><br><span class="line">		fmt.Println(<span class="string">"写入协程，读取协程退出"</span>)</span><br><span class="line">		quit &lt;- <span class="literal">true</span></span><br><span class="line">	&#125;()</span><br><span class="line">	&lt;-quitwork</span><br><span class="line">	fmt.Println(<span class="string">"work end"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	work()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面我完成了一个协程写入，一个协程监听的逻辑</p>
+<p>所以说，如果，我们要进行chan的开发</p>
+<p>我们需要两个协程</p>
+<p>一个往里写</p>
+<p>一个往外读</p>
+<p>往里写我已经讲明白了，现在我讲一下往外读的逻辑</p>
+<p>各位发现了没，协程监听逻辑里面有一段代码</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 启动一个线程开始监听</span></span><br><span class="line"><span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 走一个无限循环</span></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="comment">// select循环机制</span></span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="comment">// 如果我们可以持续获取到g</span></span><br><span class="line">		<span class="keyword">case</span> v := &lt;-g:</span><br><span class="line">			<span class="comment">// 打印一发</span></span><br><span class="line">			fmt.Println(v)</span><br><span class="line">		<span class="comment">// 如果我们检测到quit == true，则退出</span></span><br><span class="line">		<span class="keyword">case</span> &lt;-quit:</span><br><span class="line">			fmt.Println(<span class="string">"读取协程 end"</span>)</span><br><span class="line">			<span class="comment">// 将主状态定为true</span></span><br><span class="line">			quitwork &lt;- <span class="literal">true</span></span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;()</span><br></pre></td></tr></table></figure>
+
+<p>这段代码就是<strong>往外读</strong>的核心机制</p>
+<p>我把它改写一些，让它不要看着那么复杂</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">ReadChan</span><span class="params">(g <span class="keyword">chan</span> <span class="keyword">int</span>, quit <span class="keyword">chan</span> <span class="keyword">bool</span>, quitwork <span class="keyword">chan</span> <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="comment">// select循环机制</span></span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="comment">// 如果我们可以持续获取到g</span></span><br><span class="line">		<span class="keyword">case</span> v := &lt;-g:</span><br><span class="line">			<span class="comment">// 打印一发</span></span><br><span class="line">			fmt.Println(v)</span><br><span class="line">		<span class="comment">// 如果我们检测到quit == true，则退出</span></span><br><span class="line">		<span class="keyword">case</span> &lt;-quit:</span><br><span class="line">			fmt.Println(<span class="string">"读取协程 end"</span>)</span><br><span class="line">			<span class="comment">// 将主状态定为true</span></span><br><span class="line">			quitwork &lt;- <span class="literal">true</span></span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>好了，核心就是在那个<strong>for-select</strong>部分，下面，我就来讲一下这里吧。</p>
+<h2 id="select"><a href="#select" class="headerlink" title="select"></a>select</h2><p>首先，当我们需要和多个通道进行通信，或者需要对通道进行判断的时候</p>
+<p>我们一定会用到select，select使用的核心就是一个通道读写阻塞的时候，不会影响其他通道进行work</p>
+<p>select的使用方法有些像switch</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> &#123;</span><br><span class="line">	<span class="keyword">case</span> &lt;-ch1:</span><br><span class="line">	 ...</span><br><span class="line">	<span class="keyword">case</span> &lt;-ch2:</span><br><span class="line">	 ...</span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">	 ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="select的随机性"><a href="#select的随机性" class="headerlink" title="select的随机性"></a>select的随机性</h3><p>首先，select，意思是选择，如果我们有多个管道待执行，同时准备好操作</p>
+<p>那么select将会随机选择管道执行，举个例子</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, <span class="number">1</span>)</span><br><span class="line">c &lt;<span class="number">-1</span></span><br><span class="line"><span class="keyword">select</span> &#123;</span><br><span class="line">	<span class="keyword">case</span> &lt;-c:</span><br><span class="line">		fmt.Println(<span class="string">"work 1"</span>)</span><br><span class="line">	<span class="keyword">case</span> &lt;-c:</span><br><span class="line">		fmt.Println(<span class="string">"work 2"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里的返回，有时候输出 work 1，有时候输出work 2，这就是它的随机机制。</p>
+<h3 id="select的阻塞"><a href="#select的阻塞" class="headerlink" title="select的阻塞"></a>select的阻塞</h3><p>继续上面的代码，我把它改写一下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, <span class="number">1</span>)</span><br><span class="line"><span class="comment">// c &lt;-1</span></span><br><span class="line"><span class="keyword">select</span> &#123;</span><br><span class="line">	<span class="keyword">case</span> &lt;-c:</span><br><span class="line">		fmt.Println(<span class="string">"work 1"</span>)</span><br><span class="line">	<span class="keyword">case</span> &lt;-c:</span><br><span class="line">		fmt.Println(<span class="string">"work 2"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果select处没有任何通道能够符合要求，则会持续性阻塞下去，直到传入一个新的值为止</p>
+<p>那么如何处理这种问题呢？</p>
+<p>加一个default就行，这个意思就是，当都不满足要求，执行这个分支</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, <span class="number">1</span>)</span><br><span class="line"><span class="comment">// c &lt;-1</span></span><br><span class="line"><span class="keyword">select</span> &#123;</span><br><span class="line">	<span class="keyword">case</span> &lt;-c:</span><br><span class="line">		fmt.Println(<span class="string">"work 1"</span>)</span><br><span class="line">	<span class="keyword">case</span> &lt;-c:</span><br><span class="line">		fmt.Println(<span class="string">"work 2"</span>)</span><br><span class="line">	<span class="keyword">default</span>：</span><br><span class="line">		fmt.Println(<span class="string">"work 3"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="select的控制"><a href="#select的控制" class="headerlink" title="select的控制"></a>select的控制</h3><p>我们可以利用select控制管道，也可以自己指定规则进行退出，或者是下一步操作</p>
+<p>例如，假设我们要实现一个，如果300s没有消息传入，那么我们就退出这个select</p>
+<p>报告超时</p>
+<p>超时机制实现</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, <span class="number">1</span>)</span><br><span class="line"><span class="keyword">select</span> &#123;</span><br><span class="line">	<span class="keyword">case</span> &lt;-c:</span><br><span class="line">		fmt.Println(<span class="string">"work 1"</span>)</span><br><span class="line">	<span class="keyword">case</span> &lt;-c:</span><br><span class="line">		fmt.Println(<span class="string">"work 2"</span>)</span><br><span class="line">	<span class="keyword">case</span> &lt;-time.After(<span class="number">5</span> * time.Second):</span><br><span class="line">		fmt.Println(<span class="string">"timeout....."</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="for-select循环"><a href="#for-select循环" class="headerlink" title="for-select循环"></a>for-select循环</h3><p>这也就是我上面写的那个逻辑</p>
+<p>一般情况下，我们不希望它马上退出，而是希望它不断循环操作</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> &#123;</span><br><span class="line">	<span class="comment">// select循环机制</span></span><br><span class="line">	<span class="keyword">select</span> &#123;</span><br><span class="line">	<span class="comment">// 如果我们可以持续获取到g</span></span><br><span class="line">	<span class="keyword">case</span> v := &lt;-g:</span><br><span class="line">		<span class="comment">// 打印一发</span></span><br><span class="line">		fmt.Println(v)</span><br><span class="line">	<span class="comment">// 如果我们检测到quit == true，则退出</span></span><br><span class="line">	<span class="keyword">case</span> &lt;-quit:</span><br><span class="line">		fmt.Println(<span class="string">"读取协程 end"</span>)</span><br><span class="line">		<span class="comment">// 将主状态定为true</span></span><br><span class="line">		quitwork &lt;- <span class="literal">true</span></span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这种一般适用于生产者消费者模型，协程池等场景</p>
+<p>还有一种<strong>定时发送</strong>的场景</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 每隔2s发送一个信息，写入通道数据</span></span><br><span class="line">tick := time.Tick(time.Second * <span class="number">2</span>)</span><br><span class="line"><span class="keyword">for</span> &#123;</span><br><span class="line">	<span class="comment">// select循环机制</span></span><br><span class="line">	<span class="keyword">select</span> &#123;</span><br><span class="line">	<span class="comment">// 如果我们可以持续获取到g</span></span><br><span class="line">	<span class="keyword">case</span> v := &lt;-g:</span><br><span class="line">		<span class="comment">// 打印一发</span></span><br><span class="line">		fmt.Println(v)</span><br><span class="line">	<span class="comment">// 往里写东西</span></span><br><span class="line">	<span class="keyword">case</span> &lt;-tick:</span><br><span class="line">		fmt.Println(<span class="string">"tick"</span>)</span><br><span class="line">	<span class="comment">// 如果我们检测到quit == true，则退出</span></span><br><span class="line">	<span class="keyword">case</span> &lt;-quit:</span><br><span class="line">		fmt.Println(<span class="string">"读取协程 end"</span>)</span><br><span class="line">		<span class="comment">// 将主状态定为true</span></span><br><span class="line">		quitwork &lt;- <span class="literal">true</span></span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Go通道的原理"><a href="#Go通道的原理" class="headerlink" title="Go通道的原理"></a>Go通道的原理</h2><p>又到了喜闻乐见看源码的时间了，我每次看源码看完脑瓜仁都会痛。。。</p>
+<p>那就开始呗</p>
+<p>chan的源码，放置在/go/src/runtime/chan.go 下</p>
+<h3 id="chan的结构体"><a href="#chan的结构体" class="headerlink" title="chan的结构体"></a>chan的结构体</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> hchan <span class="keyword">struct</span> &#123;</span><br><span class="line">	qcount   <span class="keyword">uint</span>           <span class="comment">// 通道中的消息个数</span></span><br><span class="line">	dataqsiz <span class="keyword">uint</span>           <span class="comment">// 通道中的数据大小</span></span><br><span class="line">	buf      unsafe.Pointer <span class="comment">// 存放实际数据的指针</span></span><br><span class="line">	elemsize <span class="keyword">uint16</span>         <span class="comment">// 通道类型大小</span></span><br><span class="line">	closed   <span class="keyword">uint32</span>         <span class="comment">// 通道是否关闭</span></span><br><span class="line">	elemtype *_type 		<span class="comment">// 通道类型</span></span><br><span class="line">	sendx    <span class="keyword">uint</span>   		<span class="comment">// 发送者的序号（ID）</span></span><br><span class="line">	recvx    <span class="keyword">uint</span>   		<span class="comment">// 接受者的序号（ID）</span></span><br><span class="line">	recvq    waitq  		<span class="comment">// 读取的阻塞队列</span></span><br><span class="line">	sendq    waitq  		<span class="comment">// 写入的阻塞队列</span></span><br><span class="line">	lock mutex				<span class="comment">// 并发的保护锁</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> waitq <span class="keyword">struct</span> &#123;</span><br><span class="line">	first *sudog   <span class="comment">//代表等待列表中的一个g（开始）</span></span><br><span class="line">	last  *sudog   <span class="comment">//代表等待列表中的一个g（结束）</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>*sudog这个函数指的是某个g，这个g用于发送和接收</p>
+<p>这部分代码在/go/src/runtime/runtime2.go里</p>
+<p>我将chan结构体都做了解释翻译，看注释就行了</p>
+<p>其实，将chan理解为一个环形队列</p>
+<p>数组，序号recvx和revcq组成了一个环形队列</p>
+<p>recvx代表元素在通道里面的位置（读取位置）</p>
+<p>sendx代表写入通道时元素所在的位置（写入位置）</p>
+<p>recvx到sendex的距离就是通道里面的消息个数总数（读取位置+写入位置 = 消息总数）</p>
+<p>举个例子</p>
+<p>一个chan一共有4个缓存</p>
+<p>[0, 0, 0, 0]</p>
+<p>现在写入数据</p>
+<p>[1, 2, 3, 4]</p>
+<p>那么sendx = 1，recvx = 3</p>
+<p>所以count = sendx + recvx</p>
+<p>这块非常复杂，我看了源码和书都不太能整明白，只有后面继续学习了。</p>
+<h3 id="初始化chan的源码"><a href="#初始化chan的源码" class="headerlink" title="初始化chan的源码"></a>初始化chan的源码</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">makechan</span><span class="params">(t *chantype, size <span class="keyword">int</span>)</span> *<span class="title">hchan</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 检查 </span></span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 计算需要分配多少大小，根据你传入的size来决定</span></span><br><span class="line">	mem, overflow := math.MulUintptr(elem.size, <span class="keyword">uintptr</span>(size))</span><br><span class="line">	<span class="keyword">if</span> overflow || mem &gt; maxAlloc-hchanSize || size &lt; <span class="number">0</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(plainError(<span class="string">"makechan: size out of range"</span>))</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">var</span> c *hchan</span><br><span class="line">	<span class="keyword">switch</span> &#123;</span><br><span class="line">	<span class="comment">// 当分配的大小为0</span></span><br><span class="line">	<span class="keyword">case</span> mem == <span class="number">0</span>:</span><br><span class="line">		<span class="comment">//在内存中进行gc</span></span><br><span class="line">		<span class="comment">// mallocgc是分配内存的函数</span></span><br><span class="line">		c = (*hchan)(mallocgc(hchanSize, <span class="literal">nil</span>, <span class="literal">true</span>))</span><br><span class="line">		<span class="comment">// Race detector uses this location for synchronization.</span></span><br><span class="line">		c.buf = c.raceaddr()</span><br><span class="line">	<span class="comment">// 如果元素不包含指针</span></span><br><span class="line">	<span class="keyword">case</span> elem.ptrdata == <span class="number">0</span>:</span><br><span class="line">		<span class="comment">// hcahan 元素 和 size元素全相加</span></span><br><span class="line">		c = (*hchan)(mallocgc(hchanSize+mem, <span class="literal">nil</span>, <span class="literal">true</span>))</span><br><span class="line">		c.buf = add(unsafe.Pointer(c), hchanSize)</span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">		<span class="comment">// 默认情况,包含指针,单独分配内存空间</span></span><br><span class="line">		c = <span class="built_in">new</span>(hchan)</span><br><span class="line">		c.buf = mallocgc(mem, elem, <span class="literal">true</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里最核心的部分就是分配内存的地方</p>
+<p>首先,如果我们指定分配长度为10，那么就会计算10长度需要多少mem，分配指定大内存大小，单独分配内存空间才可以进行gc回收</p>
+<h3 id="写入chan的源码"><a href="#写入chan的源码" class="headerlink" title="写入chan的源码"></a>写入chan的源码</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">chansend</span><span class="params">(c *hchan, ep unsafe.Pointer, block <span class="keyword">bool</span>, callerpc <span class="keyword">uintptr</span>)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果通道关闭</span></span><br><span class="line">	<span class="keyword">if</span> c.closed != <span class="number">0</span> &#123;</span><br><span class="line">			unlock(&amp;c.lock)</span><br><span class="line">			<span class="built_in">panic</span>(plainError(<span class="string">"send on closed channel"</span>))</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果有正在等待的读取协程</span></span><br><span class="line">	<span class="keyword">if</span> sg := c.recvq.dequeue(); sg != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="comment">// 发送协程</span></span><br><span class="line">		send(c, sg, ep, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; unlock(&amp;c.lock) &#125;, <span class="number">3</span>)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果队列的总数小于通道的数量（缓冲区有可用空间）</span></span><br><span class="line">	<span class="keyword">if</span> c.qcount &lt; c.dataqsiz &#123;</span><br><span class="line">		qp := chanbuf(c, c.sendx)</span><br><span class="line">		<span class="keyword">if</span> raceenabled &#123;</span><br><span class="line">			racenotify(c, c.sendx, <span class="literal">nil</span>)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 分配内存，加入队列</span></span><br><span class="line">		typedmemmove(c.elemtype, qp, ep)</span><br><span class="line">		<span class="comment">// 修改链表的next + 1</span></span><br><span class="line">		c.sendx++</span><br><span class="line">		<span class="comment">// 如果增加之后就缓冲区满了</span></span><br><span class="line">		<span class="keyword">if</span> c.sendx == c.dataqsiz &#123;</span><br><span class="line">			<span class="comment">// 将sendx置换为0</span></span><br><span class="line">			c.sendx = <span class="number">0</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 将总量 + 1</span></span><br><span class="line">		c.qcount++</span><br><span class="line">		unlock(&amp;c.lock)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 阻塞通道操作</span></span><br><span class="line">	gp := getg()</span><br><span class="line">	mysg := acquireSudog()</span><br><span class="line">	mysg.releasetime = <span class="number">0</span></span><br><span class="line">	<span class="keyword">if</span> t0 != <span class="number">0</span> &#123;</span><br><span class="line">		mysg.releasetime = <span class="number">-1</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// No stack splits between assigning elem and enqueuing mysg</span></span><br><span class="line">	<span class="comment">// on gp.waiting where copystack can find it.</span></span><br><span class="line">	mysg.elem = ep</span><br><span class="line">	mysg.waitlink = <span class="literal">nil</span></span><br><span class="line">	mysg.g = gp</span><br><span class="line">	mysg.isSelect = <span class="literal">false</span></span><br><span class="line">	mysg.c = c</span><br><span class="line">	gp.waiting = mysg</span><br><span class="line">	gp.param = <span class="literal">nil</span></span><br><span class="line">	<span class="comment">// 发送消息到queue里面</span></span><br><span class="line">	c.sendq.enqueue(mysg)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>写入协程的时候，有三种不同状态，将进行下面的分析</p>
+<h4 id="直接写入协程"><a href="#直接写入协程" class="headerlink" title="直接写入协程"></a>直接写入协程</h4><p>如果我们不分配协程的缓存直接写入，会走到这个分支</p>
+<p>首先，hchan的recvq维护了一个协程链表</p>
+<p>recvq指的是等待的协程链表，每个协程就是一个*sudog，这个前面讲过，就是一个协程的表示方法</p>
+<p>首先，recvq会获取协程的元素指针，默认获取链表中的<strong>第一个</strong>协程</p>
+<p>会直接将sudog这个玩意儿复制给对应协程，然后进行协程唤醒操作（执行协程）</p>
+<h4 id="缓冲区写入协程"><a href="#缓冲区写入协程" class="headerlink" title="缓冲区写入协程"></a>缓冲区写入协程</h4><p>我们在meke协程的时候，如果指定了缓冲区，那么就会走到这个分支</p>
+<p>首先判断现有队列里面元素的总量：c.qcount</p>
+<p>然后获取到缓冲区的总量： c.dataqsiz</p>
+<p>如果小于总量，则认为缓冲区还有空间</p>
+<p>这时候执行分配内存的操作（向缓冲区写入数据）</p>
+<p>然后调整sendx,让它+1(理解链表)</p>
+<h4 id="阻塞协程（缓冲区无空余，阻塞操作）"><a href="#阻塞协程（缓冲区无空余，阻塞操作）" class="headerlink" title="阻塞协程（缓冲区无空余，阻塞操作）"></a>阻塞协程（缓冲区无空余，阻塞操作）</h4><p>这个操作就是咱们提到的阻塞</p>
+<p>如果缓冲区满了,或者协程通道没准备好,就会造成阻塞</p>
+<p>这里将sudog进行了赋值修正,然后调用<strong>c.sendq.enqueue(mysg)</strong>,这里是将sudog放入到链表的末尾,然后协程就会进入休眠状态 <strong>gp.waiting</strong></p>
+<h3 id="读取chan的源码"><a href="#读取chan的源码" class="headerlink" title="读取chan的源码"></a>读取chan的源码</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">chanrecv</span><span class="params">(c *hchan, ep unsafe.Pointer, block <span class="keyword">bool</span>)</span> <span class="params">(selected, received <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果为空</span></span><br><span class="line">	<span class="keyword">if</span> c == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> !block &#123;</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		gopark(<span class="literal">nil</span>, <span class="literal">nil</span>, waitReasonChanReceiveNilChan, traceEvGoStop, <span class="number">2</span>)</span><br><span class="line">		throw(<span class="string">"unreachable"</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果获取到了等待的协程（可以读取）</span></span><br><span class="line">	<span class="keyword">if</span> sg := c.sendq.dequeue(); sg != <span class="literal">nil</span> &#123;</span><br><span class="line">		recv(c, sg, ep, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; unlock(&amp;c.lock) &#125;, <span class="number">3</span>)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span>, <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 如果缓冲区里面有元素</span></span><br><span class="line">	<span class="keyword">if</span> c.qcount &gt; <span class="number">0</span> &#123;</span><br><span class="line">		<span class="comment">// Receive directly from queue</span></span><br><span class="line">		qp := chanbuf(c, c.recvx)</span><br><span class="line">		<span class="keyword">if</span> raceenabled &#123;</span><br><span class="line">			racenotify(c, c.recvx, <span class="literal">nil</span>)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> ep != <span class="literal">nil</span> &#123;</span><br><span class="line">			typedmemmove(c.elemtype, ep, qp)</span><br><span class="line">		&#125;</span><br><span class="line">		typedmemclr(c.elemtype, qp)</span><br><span class="line">		c.recvx++</span><br><span class="line">		<span class="keyword">if</span> c.recvx == c.dataqsiz &#123;</span><br><span class="line">			c.recvx = <span class="number">0</span></span><br><span class="line">		&#125;</span><br><span class="line">		c.qcount--</span><br><span class="line">		unlock(&amp;c.lock)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span>, <span class="literal">true</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	gp := getg()</span><br><span class="line">	mysg := acquireSudog()</span><br><span class="line">	mysg.releasetime = <span class="number">0</span></span><br><span class="line">	<span class="keyword">if</span> t0 != <span class="number">0</span> &#123;</span><br><span class="line">		mysg.releasetime = <span class="number">-1</span></span><br><span class="line">	&#125;</span><br><span class="line">	mysg.elem = ep</span><br><span class="line">	mysg.waitlink = <span class="literal">nil</span></span><br><span class="line">	gp.waiting = mysg</span><br><span class="line">	mysg.g = gp</span><br><span class="line">	mysg.isSelect = <span class="literal">false</span></span><br><span class="line">	mysg.c = c</span><br><span class="line">	gp.param = <span class="literal">nil</span></span><br><span class="line">	c.recvq.enqueue(mysg)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其实读取的代码和和写入的有点像，直接分析</p>
+<h3 id="读取正在等待的协程"><a href="#读取正在等待的协程" class="headerlink" title="读取正在等待的协程"></a>读取正在等待的协程</h3><p>还是默认操作，从协程链表rescv里面获取第一个协程</p>
+<p>然后复制，最后唤醒阻塞的写入协程</p>
+<h3 id="读取缓冲区里的协程"><a href="#读取缓冲区里的协程" class="headerlink" title="读取缓冲区里的协程"></a>读取缓冲区里的协程</h3><p>缓冲区里面有数据，直接读取，然后写入当前的读取协程中</p>
+<h3 id="阻塞协程（无法读取，缓冲区为空）"><a href="#阻塞协程（无法读取，缓冲区为空）" class="headerlink" title="阻塞协程（无法读取，缓冲区为空）"></a>阻塞协程（无法读取，缓冲区为空）</h3><p>缓冲区没数据，把sudog放入链表末尾，然后休眠协程，等待写入并且重新执行</p>
+<h2 id="Go通道的几个使用场景"><a href="#Go通道的几个使用场景" class="headerlink" title="Go通道的几个使用场景"></a>Go通道的几个使用场景</h2><p>因为篇幅，下面讲一下几个重要的应用场景，我这边会给出大致代码，实现的话我会附上我的GITHUB链接，如果需要的话直接去GITHUB里DOWN下来就行了</p>
+<h3 id="控制协程数"><a href="#控制协程数" class="headerlink" title="控制协程数"></a>控制协程数</h3><p>channel可以控制协程的数量，换句话说，我们可以通过控制channel缓存，来控制有几个协程执行</p>
+<p>所以我们可以根据这个特性弄个协程池出来</p>
+<p>首先，协程池已经有相关的第三方开源实现</p>
+<p>例如<a href https: github.com panjf2000 ants"">ants</a>就非常好用</p>
+<p>未来我会详细的读一下ants，然后出个blog给大家看</p>
+<p>我这里只是举个简单的例子，也就是通过chan去控制同时执行的协程</p>
+<p>假设我们现在写个代码，去并发执行一些逻辑</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">//Read 假装在执行一个逻辑</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Read</span><span class="params">(i <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	fmt.Printf(<span class="string">"go func: %d\n"</span>, i)</span><br><span class="line">	time.Sleep(time.Second)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	userCount := math.MaxInt64</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; userCount; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(i <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">			<span class="keyword">go</span> Read(i)</span><br><span class="line">		&#125;(i)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这时候，你不要去跑这段代码，因为你一定会卡死。因为你开了太多的协程。。。</p>
+<p>然后我们拿chan控制一下这个孙子</p>
+<p>说下我的思想</p>
+<ol>
+<li>首先make chan 造一个有缓存的通道</li>
+<li>传输通道， wg.add 一个协程</li>
+<li>通过通道控制并发</li>
+</ol>
+<p>改写一下代码，如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> wg = sync.WaitGroup&#123;&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Read</span><span class="params">(ch <span class="keyword">chan</span> <span class="keyword">bool</span>, i <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> wg.Done()</span><br><span class="line"></span><br><span class="line">	ch &lt;- <span class="literal">true</span></span><br><span class="line">	fmt.Printf(<span class="string">"go func: %d, time: %d\n"</span>, i, time.Now().Unix())</span><br><span class="line">	time.Sleep(time.Second)</span><br><span class="line">	&lt;-ch</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	userCount := <span class="number">10</span></span><br><span class="line">	ch := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">bool</span>, <span class="number">2</span>)</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; userCount; i++ &#123;</span><br><span class="line">		wg.Add(<span class="number">1</span>)</span><br><span class="line">		<span class="keyword">go</span> Read(ch, i)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	wg.Wait()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这就是大概的协程控制逻辑</p>
+<h3 id="超时操作"><a href="#超时操作" class="headerlink" title="超时操作"></a>超时操作</h3><p>这个前面我记得我讲过</p>
+<p>固定的time.After这个逻辑就行</p>
+<p>这部分代码套用了</p>
+<p><a href="https://eddycjy.gitbook.io/golang/di-1-ke-za-tan/control-goroutine#chang-shi-chan-+-sync" target="_blank" rel="noopener">https://eddycjy.gitbook.io/golang/di-1-ke-za-tan/control-goroutine#chang-shi-chan-+-sync</a></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">doWithTimeOut</span><span class="params">(timeout time.Duration)</span> <span class="params">(<span class="keyword">int</span>, error)</span></span> &#123;</span><br><span class="line">    <span class="keyword">select</span> &#123;</span><br><span class="line">    <span class="keyword">case</span> ret := &lt;-do():</span><br><span class="line">        <span class="keyword">return</span> ret, <span class="literal">nil</span></span><br><span class="line">    <span class="keyword">case</span> &lt;-time.After(timeout):</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>, errors.New(<span class="string">"timeout"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">do</span><span class="params">()</span> &lt;-<span class="title">chan</span> <span class="title">int</span></span> &#123;</span><br><span class="line">    outCh := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line">    <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">go</span> work()</span><br><span class="line">    &#125;()</span><br><span class="line">    <span class="keyword">return</span> outCh</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>其实这篇文章写挺久了。，。。</p>
+<p>但是我还是没把它好好写完</p>
+<p>我太懒了，不行，我要加倍努力，加油加油！！！！</p>
+
+      
+      <!-- reward -->
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2021/12/17/Golang%E5%8D%8F%E7%A8%8B%E9%80%9A%E4%BF%A1%E6%8E%A2%E7%A9%B6/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2021/12/14/ElasticSearch%E9%87%8D%E5%A4%A7%E6%BC%8F%E6%B4%9E-log4j%E7%9A%84%E5%A4%84%E7%90%86%E6%96%B9%E6%A1%88/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">ElasticSearch重大漏洞-log4j的处理方案</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2021
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
