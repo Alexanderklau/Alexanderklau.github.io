@@ -9,7 +9,7 @@
     
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>
-    ElasticSearch重大漏洞-log4j的处理方案 |  Yemilice
+    ElasticSearch重大漏洞-log4j的处理方案-12月20日更新！！！！！ |  Yemilice
   </title>
   <meta name="generator" content="hexo-theme-yilia-plus">
   
@@ -41,7 +41,7 @@
     <header class="article-header">
        
 <h1 class="article-title sea-center" style="border-left:0" itemprop="name">
-  ElasticSearch重大漏洞-log4j的处理方案
+  ElasticSearch重大漏洞-log4j的处理方案-12月20日更新！！！！！
 </h1>
  
 
@@ -61,7 +61,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">530</span>
+            <span class="post-count">574</span>
         </span>
     </span>
 
@@ -112,11 +112,13 @@
 </ul>
 <p>很不幸，鄙人维护的多个Es项目都在此内，需要立马处理并且解决问题</p>
 <h2 id="处理方案"><a href="#处理方案" class="headerlink" title="处理方案"></a>处理方案</h2><h3 id="处理方案（1）"><a href="#处理方案（1）" class="headerlink" title="处理方案（1）"></a>处理方案（1）</h3><ol>
-<li>检查所有使用了 Log4j 组件的系统，并且立即使用log4j-2.15进行替换</li>
+<li>检查所有使用了 Log4j 组件的系统，并且立即使用log4j-2.17进行替换</li>
 <li>重启 Elasticsearch 节点</li>
 </ol>
-<p>检查所有使用了 Log4j 组件的系统，并且立即使用log4j-2.15进行替换</p>
-<p>官方给出了具体链接：<a href="https://github.com/apache/logging-log4j2/releases/tag/log4j-2.15.0-rc2" target="_blank" rel="noopener">https://github.com/apache/logging-log4j2/releases/tag/log4j-2.15.0-rc2</a></p>
+<p>检查所有使用了 Log4j 组件的系统，并且立即使用log4j-2.17进行替换</p>
+<p>原来是2.15版本。但是2.15版本被暴露出有新的bug。。。</p>
+<p>这个修复起来属实没完了，所以我这里是最新的2.17版本！</p>
+<p>官方给出了具体链接：<a href="https://logging.apache.org/log4j/2.x/changes-report.html#a2.17.0" target="_blank" rel="noopener">https://logging.apache.org/log4j/2.x/changes-report.html#a2.17.0</a></p>
 <p>但是我寻思估计大家都比较懒。。。</p>
 <p>所以我写了个脚本去处理这个问题</p>
 <p>我把脚本和包都放置到了github里，直接调用bash就行了，应该是最简单的办法</p>
