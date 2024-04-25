@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    多人游戏网络技术基础 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-多人游戏技术基础" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  多人游戏网络技术基础
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2024/04/14/%E5%A4%9A%E4%BA%BA%E6%B8%B8%E6%88%8F%E6%8A%80%E6%9C%AF%E5%9F%BA%E7%A1%80/" class="article-date">
+  <time datetime="2024-04-14T01:06:47.000Z" itemprop="datePublished">2024-04-14</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">4.9k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">16 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>很久不更新Blog了，是自己懈怠了很多，所以在思考了一下之后明白，我需要继续加强学习</p>
+<p>加入ubisoft之后其实也没做什么值得称道的事儿</p>
+<p>只是一个基础的开发人员，不过工作当中有一些可以被记录和梳理的地方</p>
+<p>我也会更新到Blog当中</p>
+<p>我会把学习捡起来的，我会的。</p>
+<h2 id="开发多人游戏需要了解的概念"><a href="#开发多人游戏需要了解的概念" class="headerlink" title="开发多人游戏需要了解的概念"></a>开发多人游戏需要了解的概念</h2><p>首先，开发多人游戏会涉及到非常多的网络概念和机制，所以这里会梳理所有相关的网络机制</p>
+<p>梳理这些的原因，是将知识进一步拆分，免得掉入庞大的知识深渊，也可以帮助我们去定点学习</p>
+<p>在梳理完这些知识之后，我会根据每个技术单独写Blog（虽然已经开了很多坑了）</p>
+<h3 id="Server-和-Client"><a href="#Server-和-Client" class="headerlink" title="Server 和 Client"></a>Server 和 Client</h3><p>这个其实比较简单，因为无论是游戏，还是普通的web开发，或者是基础的网络操作，都离不开server和client</p>
+<h4 id="Server"><a href="#Server" class="headerlink" title="Server"></a>Server</h4><p>游戏的服务器，存储所有玩家数据，记录玩家行为，托管游戏数据，通常是由一组高性能的服务器组成（或者云）</p>
+<h4 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h4><p>从游戏的角度上通俗来讲，这里指的是玩家的个人设备，例如电脑，手机，主机等等</p>
+<p>一般玩家通过Client端连接到Server端进行游戏，它还负责根据从服务器收到的信息向玩家展示游戏世界中发生的事情。</p>
+<h4 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h4><ol>
+<li>玩家在他们的设备上（Client）开始游戏。</li>
+<li>客户端连接到游戏服务器(Server)。</li>
+<li>服务器(Server)运行游戏，跟踪所有玩家和游戏状态。</li>
+<li>客户端(Client)将它们的操作（如移动角色或开火）发送到服务器。</li>
+<li>服务器(Server)处理这些操作，更新游戏世界，并将结果发送回所有客户端。</li>
+<li>客户端(Client)向玩家显示更新后的游戏世界。</li>
+</ol>
+<h3 id="带宽（Bandwidth）"><a href="#带宽（Bandwidth）" class="headerlink" title="带宽（Bandwidth）"></a>带宽（Bandwidth）</h3><p>带宽就像是你的互联网连接的容量或“管道大小”。</p>
+<p>它决定了在任意给定时间内有多少数据可以通过你的互联网连接传输。</p>
+<p>假设你有一根水管。管道的直径代表着你的带宽。</p>
+<p>一根较宽的管道可以让更多的水同时流过，而一根较窄的管道则只能让较少的水通过。在互联网的情况下，较高的带宽意味着更多的数据可以通过你的连接传输，而较低的带宽则意味着较少的数据可以通过。</p>
+<p>在多人游戏的背景下，带宽是至关重要的，因为它直接影响了：</p>
+<ol>
+<li>数据传输：<br>多人游戏之间需要在玩家和服务器之间交换大量信息。这些数据包括玩家位置、动作、聊天消息和游戏更新。较高的带宽可以让这些数据快速而顺畅地流动。</li>
+<li>减少延迟：<br>低带宽可能导致游戏出现延迟。如果你的带宽太窄，数据在玩家和服务器之间传输的时间就会更长，从而导致游戏体验不够响应和愉快。</li>
+<li>多个玩家：<br>在多人游戏中，服务器经常需要同时与多个玩家通信。当有许多玩家参与时，较高的带宽至关重要，确保数据可以发送给所有人而没有显著的延迟。</li>
+<li>流媒体：<br>如果你在网络上直播游戏或分享你的游戏体验，较高的带宽可以让你以更高的质量将游戏体验广播给其他人。</li>
+</ol>
+<p>带宽通常以每秒比特数（bps）来衡量。<br>例如，当你订阅互联网服务时，你可能会看到不同连接速度的优惠，比如10 Mbps、100 Mbps或1 Gbps。</p>
+<p>这些数字代表了在一秒钟内可以传输的数据量。数字越高，带宽越大，你的互联网连接传输数据的速度就越快。</p>
+<h3 id="延迟-（Latency）"><a href="#延迟-（Latency）" class="headerlink" title="延迟 （Latency）"></a>延迟 （Latency）</h3><p>延迟就像是多人游戏中的延迟或卡顿。</p>
+<p>换句话说，它是你的操作到达游戏服务器（Server）（或其他玩家）并且服务器的响应返回到你的设备所花费的时间。</p>
+<p>你在玩一款赛车游戏，你按下“加速”按钮。在你按下按钮后，游戏中你的车加速所花费的时间就是延迟。它是你的动作和游戏反应之间的延迟。</p>
+<p>低延迟对于多人游戏是有益的，因为它意味着动作几乎会立即发生。相反，高延迟会导致延迟，并使游戏的乐趣降低。在某些情况下，高延迟甚至可能使游戏无法进行，特别是在需要分秒必争的快节奏游戏中。</p>
+<p>以下是一些可能影响延迟的因素：</p>
+<p>距离：<br>你距离游戏服务器越远，数据往返的时间就越长。可以把它想象成向一个远方的朋友发送消息 —— 得到回复需要更长的时间。</p>
+<p>互联网速度：<br>互联网连接速度可以影响延迟。更快的连接可以更快地传输数据，从而减少延迟。</p>
+<p>服务器性能：<br>服务器的性能也起着重要作用。如果服务器负载过重或速度较慢，它可能会给游戏引入延迟。</p>
+<h3 id="数据包"><a href="#数据包" class="headerlink" title="数据包"></a>数据包</h3><p>信息被划分成数据包以通过网络发送。</p>
+<p>可以将其想象成拼图的小块。它们被发送，在另一端被组装起来，并相应地采取行动。</p>
+<p>数据包的工作原理工作原理如下：</p>
+<ol>
+<li><p>数据分割：<br>当你通过互联网发送信息时，它会被分解成小数据包。每个数据包包含你正在发送的数据的一部分，比如视频的一部分、一封电子邮件或游戏命令的一部分。</p>
+</li>
+<li><p>寻址：<br>每个数据包都带有发送者的地址、接收者的地址和其他细节，就像你在信封上写地址一样。</p>
+</li>
+<li><p>发送和路由：<br>这些数据包被发送到互联网上，它们可以经过不同的路由到达目的地。想象每个数据包就像一辆汽车在不同的道路上行驶，以到达它的投递地址。</p>
+</li>
+<li><p>重组：<br>当数据包到达目的地时，它们将按正确的顺序重新组装，以重建原始数据。这就像收到拼图的所有部分并将它们组合在一起以看到完整的图像。</p>
+</li>
+</ol>
+<p>数据包在网络中被用于确保数据可以高效可靠地通过互联网发送。</p>
+<p>它们小巧易管理，这使得数据能够快速通过互联网复杂的设备和连接网络。</p>
+<p>如果一个数据包丢失或延迟，系统可以处理这个问题，而不会影响整个传输。</p>
+<p>这样，即使一些数据包遇到障碍或采取更长的路线，你的数据仍然可以到达目的地。</p>
+<h3 id="协议"><a href="#协议" class="headerlink" title="协议"></a>协议</h3><p>TCP（传输控制协议）和UDP（用户数据报协议）是两种不同的通信协议，各自具有优缺点。</p>
+<p>游戏开发者通常根据游戏的特定需求在它们之间进行选择。以下是它们与多人游戏相关的情况：</p>
+<h4 id="TCP（传输控制协议）："><a href="#TCP（传输控制协议）：" class="headerlink" title="TCP（传输控制协议）："></a>TCP（传输控制协议）：</h4><p>可靠性：<br>这个协议就像一次可靠的对话。它确保数据包按正确的顺序到达目的地。对于那些事件顺序至关重要的游戏（如策略游戏或回合制游戏），这是至关重要的。它保证了所有的动作都以正确的顺序被服务器和其他玩家接收到。<br>确认：<br>TCP要求接收方确认数据的接收，以便发送者知道数据是否已传送。在游戏中，这种确认有助于确保所有的动作、聊天消息和游戏更新都能可靠地接收和处理。<br>较慢：<br>由于其可靠性机制，与UDP相比，TCP可能会引入一些延迟，称为延迟。在快节奏的动作游戏中，这种额外的延迟可能会被注意到，并影响玩家的体验。</p>
+<h4 id="UDP（用户数据报协议）："><a href="#UDP（用户数据报协议）：" class="headerlink" title="UDP（用户数据报协议）："></a>UDP（用户数据报协议）：</h4><p>更快：<br>UDP更像是一张快速的便笺。它更快，但可靠性较低。当设备使用UDP时，它们发送数据时不太担心数据是否完美到达。它更快，因为它没有与TCP相同的可靠性和确认机制。在快节奏的动作游戏中，其中分秒必争的反应至关重要时，UDP可以提供更具响应性的体验。</p>
+<p>可靠性较低：<br>UDP不保证数据会按正确的顺序接收，并且不保证每个数据都会到达目的地。一些数据包可能会丢失，或者它们可能会以错误的顺序到达。</p>
+<p>用于实时游戏：<br>许多实时和动作导向型的游戏，如第一人称射击游戏、赛车游戏和大逃杀游戏，使用UDP，因为速度和响应性比确保每个数据都被接收更为重要。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>总之，TCP更可靠但可能会引入一些延迟，因此适用于准确性和事件顺序至关重要的游戏。</p>
+<p>UDP牺牲了一些可靠性，以换取速度，因此更适用于快节奏、实时多人游戏。</p>
+<p>游戏开发者通常根据游戏的特定要求和设计选择其中之一，甚至结合两者使用。</p>
+<h3 id="往返时间（RTT）"><a href="#往返时间（RTT）" class="headerlink" title="往返时间（RTT）"></a>往返时间（RTT）</h3><p>RTT（Round-Trip Time）是多人游戏中的一个重要概念，指的是数据包从你的计算机到游戏服务器再返回的时间。</p>
+<p>RTT对多人游戏的影响如下：</p>
+<ol>
+<li><p>延迟测量：<br>RTT是延迟的一种度量。在游戏中，较低的RTT意味着较少的延迟，而较高的RTT意味着更多的延迟。较低的RTT值是理想的，因为它们使游戏感觉更加响应。</p>
+</li>
+<li><p>游戏响应性：<br>在快节奏的多人游戏中，比如第一人称射击游戏、赛车游戏或实时策略游戏，低RTT至关重要。它确保你的动作，比如射击对手或移动角色，能够被服务器快速注册，并且你能够迅速在屏幕上看到结果。</p>
+</li>
+<li><p>服务器选择：<br>当你连接到一个多人游戏时，通常会选择一个RTT最低的游戏服务器。这确保你在一个物理上距离你更近的服务器上进行游戏，减少了数据往返所需的时间。许多游戏允许你选择服务器，或者自动连接到RTT最佳的服务器。</p>
+</li>
+<li><p>Ping：<br>“Ping”是用来测量RTT的命令。当你“ping”一个服务器时，你实际上是向它发送一个小消息，并测量接收到回复所需的时间。结果就是你的ping时间，它经常显示在在线游戏中，以帮助你评估你的连接质量。</p>
+</li>
+</ol>
+<h3 id="序列化"><a href="#序列化" class="headerlink" title="序列化"></a>序列化</h3><p>序列化是将复杂的游戏数据，比如玩家位置、角色属性或其他游戏中的信息，转换成一种可以在网络上传输的格式的过程。</p>
+<p>可以将其想象成将数据打包，以便可以从一个设备高效地发送到另一个设备，类似于将消息翻译成通用语言以便于交流。</p>
+<p>以下是序列化的重要性及其工作原理：</p>
+<ol>
+<li>数据传输<br>在多人游戏中，玩家的动作和游戏更新需要实时地传达给其他玩家和游戏服务器。这些数据可能非常复杂，包括角色的三维位置、游戏对象的状态等等。</li>
+<li>效率<br>序列化旨在使这些数据紧凑且高效地进行传输。它将数据转换为一种标准化的格式，易于通过网络发送，从而最小化数据量，并确保它能够快速传输。</li>
+<li>反序列化<br>在接收端，序列化的数据会被“反序列化”，也就是将其转换回其原始、可用的形式。这就像接收者将消息翻译回他们的语言以便理解一样。</li>
+</ol>
+<h3 id="同步机制"><a href="#同步机制" class="headerlink" title="同步机制"></a>同步机制</h3><p>在多人游戏中，<strong>同步</strong>指的是确保所有玩家在游戏中看到相同的游戏世界，并在同一时间经历相同的事件的过程。</p>
+<p>以下是同步的重要性及其工作原理：</p>
+<ol>
+<li><p>一致性：<br>在多人游戏中，确保所有玩家对游戏世界有一致的视角至关重要。这意味着如果一个玩家击中了一个敌人，所有其他玩家应该看到这个敌人被击中并做出相应的反应。如果同步没有正确发生，玩家可能会看到在游戏中发生不同的事情，这可能会令人沮丧和不公平。</p>
+</li>
+<li><p>时间：<br>同步还涉及时间。游戏中的事件和动作应该按照正确的顺序和在正确的时刻发生。例如，在赛车游戏中，确保所有玩家在同一时间经历相同的比赛事件（如转弯、障碍和道具），从而确保公平竞争。</p>
+</li>
+<li><p>延迟补偿：<br>为了实现同步，游戏开发者通常需要补偿玩家和服务器之间传输数据时产生的延迟。例如，如果一个玩家的连接速度较慢，游戏可能需要预测该玩家的动作，以使游戏对所有参与者仍然感觉顺畅。</p>
+</li>
+</ol>
+<h3 id="丢包"><a href="#丢包" class="headerlink" title="丢包"></a>丢包</h3><p>数据包丢失发生在你的计算机（客户端）和游戏服务器之间发送的某些数据包未被接收或确认的情况下。</p>
+<p>这些丢失的数据包可能是由于网络拥塞或其他网络问题导致的。</p>
+<p>在多人游戏的背景下，数据包丢失可能会产生显著影响：</p>
+<ol>
+<li><p>游戏状态不一致：<br>当数据包丢失时，游戏服务器和玩家可能会失去同步。例如，如果你的角色移动命令丢失，你的游戏内位置将不会与服务器的视图匹配，导致你的动作与其他人看到的不一致。</p>
+</li>
+<li><p>瞬移或抖动：<br>在某些情况下，数据包丢失可能导致玩家在游戏中出现“瞬移”或移动不稳定的情况。这是因为服务器和其他玩家正在尝试根据最后接收到的数据来估算你的位置。</p>
+</li>
+<li><p>不公平的游戏体验：<br>在竞争性游戏中，数据包丢失可能导致不公平的优势或劣势。例如，如果一个玩家持续经历数据包丢失，他们的角色可能会变得更难击中，因为他们的动作是不可预测的。</p>
+</li>
+</ol>
+<h3 id="航位推测（DR）"><a href="#航位推测（DR）" class="headerlink" title="航位推测（DR）"></a>航位推测（DR）</h3><p>DR是多人游戏中用来估计其他玩家的位置和动作的技术，当网络数据延迟或丢失时使用。</p>
+<p>这就像在游戏中预测某人将会在哪里，当你在一段时间内没有收到他们位置的更新时。</p>
+<p>以下是DR在多人游戏中的工作原理：</p>
+<ol>
+<li>预测：<br>当玩家的设备（客户端）向游戏服务器发送数据时，服务器知道他们的当前位置和动作。然而，数据需要一些时间通过网络传输，在这段延迟期间，游戏中的情况可能会发生变化。</li>
+<li>估算：<br>为了保持游戏运行的流畅，服务器估算当数据到达时玩家将会在哪里。这种估算是基于玩家之前的动作和当前游戏状态。就像根据朋友之前的移动来预测在游戏中标签游戏中朋友将会在哪里一样。</li>
+<li>校正：<br>当延迟的数据最终到达时，服务器将其与自己的估算进行比较。如果存在差异，服务器可以纠正玩家的位置或动作。这有助于确保游戏世界对所有玩家保持一致。</li>
+</ol>
+<h3 id="可扩展性（Scalability）"><a href="#可扩展性（Scalability）" class="headerlink" title="可扩展性（Scalability）"></a>可扩展性（Scalability）</h3><p>多人游戏中的可扩展性指的是游戏处理越来越多玩家的能力，确保随着更多参与者加入，游戏体验依然愉快顺畅。</p>
+<p>以下是可扩展性的重要性及其工作原理：</p>
+<ol>
+<li><p>玩家基数增长：<br>多人游戏的目标是随着时间吸引更多的玩家。随着更多人加入并开始游戏，游戏必须能够适应这种增长，而不会出现显著的性能下降。</p>
+</li>
+<li><p>服务器容量：<br>负责管理游戏世界和玩家互动的游戏服务器需要具备支持更大玩家群的能力。它应该处理更多的同时连接，处理更多的游戏数据，并在玩家数量增加时保持响应性。</p>
+</li>
+<li><p>网络基础设施：<br>可扩展性也涉及到网络基础设施。这意味着网络技术和服务器架构应设计为能够处理更多的流量和连接，随着玩家基数的增长。</p>
+</li>
+<li><p>负载测试：<br>游戏开发者通常进行负载测试来确定游戏的可扩展性。这涉及模拟大量玩家，并分析在高负载下游戏及其基础设施的表现。</p>
+</li>
+</ol>
+<h3 id="信息安全"><a href="#信息安全" class="headerlink" title="信息安全"></a>信息安全</h3><p>多人游戏中的安全性涉及保护游戏、玩家和整体游戏体验免受各种威胁，特别是作弊、黑客攻击和未经授权的访问。以下是安全性的重要性及其工作原理：</p>
+<ol>
+<li><p>防作弊：<br>作弊可能会严重干扰多人游戏。作弊者可能使用第三方软件或黑客手段获取不公平的优势，比如透视墙或自动瞄准。安全措施，如反作弊系统，被设置为检测和阻止此类活动。</p>
+</li>
+<li><p>账号保护：<br>玩家通常拥有带有有价值的游戏内物品、角色和进度的账户。这些账户需要防止未经授权的访问。安全功能，如双因素认证（2FA）和强密码要求有助于保护玩家账户。</p>
+</li>
+<li><p>服务器安全：<br>游戏服务器本身需要安全保护，以防止未经授权的访问、数据泄露和其他网络攻击。一个受到威胁的服务器可能会导致游戏体验受到损害。</p>
+</li>
+<li><p>安全交易：<br>在玩家可以购买游戏内物品或货币的游戏中，安全的支付处理对于保护金融信息并防止欺诈交易至关重要。</p>
+</li>
+<li><p>玩家举报：<br>游戏通常提供给玩家举报不端行为（如作弊或骚扰）的工具。有效的审核和响应机制是保持积极友好的游戏社区的安全策略的一部分。</p>
+</li>
+<li><p>网络安全：<br>支持多人游戏的网络基础设施也应该是安全的，以防止分布式拒绝服务（DDoS）攻击和其他基于网络的威胁。</p>
+</li>
+<li><p>游戏代码和数据安全：<br>保护游戏代码和数据的完整性对于防止篡改、黑客攻击和引入恶意代码以干扰游戏或伤害玩家至关重要。</p>
+</li>
+</ol>
+
+      
+      <!-- reward -->
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2024/04/14/%E5%A4%9A%E4%BA%BA%E6%B8%B8%E6%88%8F%E6%8A%80%E6%9C%AF%E5%9F%BA%E7%A1%80/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/" rel="tag">其他技术</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2022/02/27/2022%E5%B9%B4%E8%AE%A1%E5%88%92%E5%92%8C%E4%B8%80%E4%BA%9B%E9%9A%8F%E6%83%B3/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">2022年计划和一些随想</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2024
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
