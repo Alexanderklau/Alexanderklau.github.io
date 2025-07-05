@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN" >
+
+
+<head>
+  <meta charset="utf-8" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>
+    COD(使命召唤)-排位赛匹配机制详解 |  Yemilice
+  </title>
+  <meta name="generator" content="hexo-theme-yilia-plus">
+  
+  <link rel="shortcut icon" href="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/favicon.ico" />
+  
+  <link rel="stylesheet" href="/dist/main.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+  
+  
+
+  
+
+<link rel="alternate" href="/atom.xml" title="Yemilice" type="application/atom+xml">
+</head>
+
+</html>
+
+<body>
+  <div id="app">
+    <main class="content on">
+      <section class="outer">
+  <article id="post-COD(使命召唤) 排位赛匹配机制详解" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  COD(使命召唤)-排位赛匹配机制详解
+</h1>
+ 
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2025/04/21/COD(%E4%BD%BF%E5%91%BD%E5%8F%AC%E5%94%A4)%20%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/" class="article-date">
+  <time datetime="2025-04-21T01:40:45.000Z" itemprop="datePublished">2025-04-21</time>
+</a>
+      
+      
+      
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">3.4k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">12 分钟</span>
+        </span>
+    </span>
+</div>
+
+      
+    </div>
+    
+
+    
+    
+    <div class="tocbot"></div>
+
+
+
+
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>当使奴太久了，从cod8 - cod21，前几天卖了PS5，打算彻底脱坑，再也不玩了</p>
+<p><img src="/.com//image-7.png" alt="alt text"></p>
+<p>之前被折磨的太多了，现在真的不想玩了，动视的匹配机制真的是个迷</p>
+<p>有时候打一把，狂杀50人+，第二把露头就死，第三把杀人个位数，总感觉煞笔动视控制了什么</p>
+<p>对面杀我和杀孙子一样</p>
+<p><img src="/.com//image-6.png" alt="alt text"></p>
+<p>这几天读了一下动视的技术白皮书，搞懂了一些东西，那么，便有此记录</p>
+<p>纪念一下cod的这几年，和花出去的好几千块钱，over。</p>
+<h2 id="1-COD的段位和匹配机制"><a href="#1-COD的段位和匹配机制" class="headerlink" title="1. COD的段位和匹配机制"></a>1. COD的段位和匹配机制</h2><h3 id="1-1-COD的段位等级"><a href="#1-1-COD的段位等级" class="headerlink" title="1.1 COD的段位等级"></a>1.1 COD的段位等级</h3><table>
+<thead>
+<tr>
+<th align="center">​​段位名称​​</th>
+<th align="center">​​玩家分布​​</th>
+<th align="center">​​玩家分布​​</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">青铜 (Bronze)</td>
+<td align="center">新手/低活跃玩家</td>
+<td align="center">所有人起点段位</td>
+</tr>
+<tr>
+<td align="center">白银 (Silver)</td>
+<td align="center">入门级竞技玩家</td>
+<td align="center">允许与青铜/黄金组队</td>
+</tr>
+<tr>
+<td align="center">黄金 (Gold)</td>
+<td align="center">主流玩家集中段</td>
+<td align="center">可跨3段组队（青铜至铂金）</td>
+</tr>
+<tr>
+<td align="center">铂金 (Platinum)</td>
+<td align="center">实力前30%玩家</td>
+<td align="center">组队跨度收缩（银-钻）</td>
+</tr>
+<tr>
+<td align="center">钻石 (Diamond)</td>
+<td align="center">顶尖玩家守门员（前10%）</td>
+<td align="center">仅能与黄金/铂金/钻石组队</td>
+</tr>
+<tr>
+<td align="center">深红 (Crimson)</td>
+<td align="center">职业级预备役（前3%）</td>
+<td align="center">仅限钻石/深红组队</td>
+</tr>
+<tr>
+<td align="center">虹彩 (Iridescent)</td>
+<td align="center">全服Top 500（含Top 250榜单）</td>
+<td align="center">​​实际匹配按钻石+处理</td>
+</tr>
+</tbody></table>
+<p><strong>重要说明</strong></p>
+<ol>
+<li>Top 250玩家在匹配系统中视为钻石+段位（非独立段位），因人数过少需合并匹配池</li>
+<li>段位转换严格依赖<strong>​​SR数值</strong>门槛​​（如黄金→铂金需2500 SR）</li>
+</ol>
+<h3 id="1-2-段位的隔离机制"><a href="#1-2-段位的隔离机制" class="headerlink" title="1.2 段位的隔离机制"></a>1.2 段位的隔离机制</h3><h4 id="​组队硬约束​​策略"><a href="#​组队硬约束​​策略" class="headerlink" title="​组队硬约束​​策略"></a>​组队硬约束​​策略</h4><p>​1. ​跨段检测​​</p>
+<p>系统实时计算队伍”段位差”（Rank Disparity）<br>例：钻石（差值为0） + 黄金（差值2） → 整队段位差=2<br>​​<br>2. 动态组队锁​​</p>
+<p>钻石玩家邀请黄金队友 → 队伍​​立即禁止​​邀请白银玩家<br>虹彩玩家组队 → 全员必须为深红/虹彩</p>
+<h4 id="匹配池分层策略"><a href="#匹配池分层策略" class="headerlink" title="匹配池分层策略"></a>匹配池分层策略</h4><ol>
+<li>优先同段位匹配</li>
+</ol>
+<p>系统首先寻找同段位玩家（如铂金vs铂金）</p>
+<ol start="2">
+<li>超时降级机制</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">搜索开始 --&gt; 仅匹配同段位 --&gt; 超时 --&gt; 放宽至±1段 --&gt; 超时--&gt; 放宽至±2段 --&gt; 超时 --&gt; 启用跨区匹配+高延迟容忍</span><br></pre></td></tr></table></figure>
+
+<p><img src="/.com//image-1.png" alt="alt text"></p>
+<ol start="3">
+<li>高级段位容易触发降级：铂金以上玩家常遇跨段匹配</li>
+</ol>
+<h4 id="TOP250处理"><a href="#TOP250处理" class="headerlink" title="TOP250处理"></a>TOP250处理</h4><ol>
+<li>单独匹配池</li>
+</ol>
+<p>TOP250玩家自动进入候选池</p>
+<ol start="2">
+<li>匹配更新机制</li>
+</ol>
+<p>TOP250玩家匹配时视为<strong>钻石+</strong>段位，最低会匹配到钻石玩家</p>
+<h3 id="1-3-段位和Raw-Skill（真实战力）的关系"><a href="#1-3-段位和Raw-Skill（真实战力）的关系" class="headerlink" title="1.3 段位和Raw Skill（真实战力）的关系"></a>1.3 段位和Raw Skill（真实战力）的关系</h3><p>在玩游戏的时候，我们经常会进行掉分操作，例如自雷或者自杀，或者不停的频繁去送</p>
+<p>让系统对我们的技术评级降低，这样就能匹配到比较菜的玩家，大杀四方（我没这么干过就是了）</p>
+<p><img src="/.com//image.png" alt="alt text"></p>
+<p>根据白皮书的描述，可以看这张图，其实动视内部有个机制，是来判定你的真实战力（Raw Skill）的</p>
+<p>首先先说结论</p>
+<p>段位 <strong>不等于</strong> 游戏的真实实力</p>
+<p>看这张图，</p>
+<p>​​1. 高段位含金量高​​：深红(Crimson)以上玩家100%集中在技能前20%（0.8-0.9十分位）<br>​2. ​低段位鱼龙混杂​​：青铜(Bronze)中混有​​高技能玩家​​（0.7+技能分占比超5%）<br>​​3. 系统强制干预痕迹​​：黄金(Gold)段聚集大量​​被系统压制的中高技能玩家​​（0.5-0.7占比达13%）</p>
+<p>我们继续分析这张图</p>
+<p>在我玩游戏初期，经常能碰到一局杀几十个人的大神，甚至还有混战码头100多杀的大牛，这点我一开始就非常疑惑</p>
+<p>因为本身我的KD只有0.9，或者1，这种大牛我能匹配到真的非常逆天</p>
+<p>其实这张图就说明了很多东西</p>
+<table>
+<thead>
+<tr>
+<th align="center">技能分</th>
+<th align="center">青铜段占比</th>
+<th align="center">​​实际分布段位</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">0.7</td>
+<td align="center">0</td>
+<td align="center">黄金(2%)/白银(5%)</td>
+</tr>
+<tr>
+<td align="center">0.6</td>
+<td align="center">0</td>
+<td align="center">黄金(3%)/白银(5%)</td>
+</tr>
+<tr>
+<td align="center">0.5</td>
+<td align="center">1%</td>
+<td align="center">​​青铜最高技能分​​</td>
+</tr>
+</tbody></table>
+<p>这里可以看出来，动视其实是<strong>不允许技能分高于0.7</strong>的玩家到青铜段炸鱼的</p>
+<p>那么动视是如何让0.7+的战力玩家不能在青铜呆着呢？</p>
+<p>白皮书上也说了</p>
+<ol>
+<li>加速晋级（战力校准机制）</li>
+</ol>
+<p>如果Raw Skill ≥0.7的时候，那么就触发机制</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> current_rank == <span class="string">"Bronze"</span> <span class="keyword">and</span> raw_skill &gt;= <span class="number">0.7</span>:</span><br><span class="line">    SR_gain *= <span class="number">2.5</span>  <span class="comment"># SR获取效率翻倍</span></span><br><span class="line">    matchmaking_pool = <span class="string">"Gold/Platinum"</span>  <span class="comment"># 强制匹配更高段位</span></span><br></pre></td></tr></table></figure>
+
+<p>白皮书上描述：</p>
+<p>​​1. 0.7技能玩家在青铜段 单场胜利SR可超100点（普通玩家20-30点）</p>
+<ol>
+<li>5连胜内必升入白银</li>
+</ol>
+<ol start="2">
+<li>越段战斗（跨阶段战斗）</li>
+</ol>
+<p>在某个阶段内，给你匹配高段位玩家，根据你的raw_skill数值来判定你匹配的真实段位玩家</p>
+<p>有些时候会炸鱼，可能是你的匹配，把你匹到高段位玩家的池子了</p>
+<p>有一种经典的情况：</p>
+<p><strong>我上一把杀的嘎嘎爽，下一把马上成哈皮了</strong></p>
+<p>不是动视针对你 → 是系统检测到Raw Skill≥0.7</p>
+<p>绝壁你被划到高段位池子了，至于为什么这样做</p>
+<p><strong>青铜段存在大量高玩 → 新手退游</strong></p>
+<p>游戏属实就没法玩了，人全跑光了</p>
+<p>所以一般会安排一大堆傻人机哈哈哈哈。</p>
+<h3 id="1-4-玩家成长和段位关系"><a href="#1-4-玩家成长和段位关系" class="headerlink" title="1.4 玩家成长和段位关系"></a>1.4 玩家成长和段位关系</h3><p>从上面的分析可以看出来</p>
+<ol>
+<li>段位晋升≠线性成长</li>
+</ol>
+<p>黄金→铂金：需突破”SR收益衰减墙”（胜场SR从50→20）<br>钻石→虹彩：强制”地狱检验”（仅匹配前10%玩家）</p>
+<ol start="2">
+<li>系统强制干预场景</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th align="center">现象</th>
+<th align="center">触发条件</th>
+<th align="center">​​玩家感受</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">连胜后突然连败</td>
+<td align="center">当前SR &gt; 目标SR+15%</td>
+<td align="center">妈的搞我</td>
+</tr>
+<tr>
+<td align="center">青铜局遇大神狂杀</td>
+<td align="center">高潜力玩家检测（Raw Skill&gt;0.7</td>
+<td align="center">妈的搞我</td>
+</tr>
+<tr>
+<td align="center">钻石段匹配超时</td>
+<td align="center">段位差规则降级失败</td>
+<td align="center">妈的鬼服了</td>
+</tr>
+</tbody></table>
+<h2 id="2-COD的SR（Skill-Rating）机制"><a href="#2-COD的SR（Skill-Rating）机制" class="headerlink" title="2. COD的SR（Skill Rating）机制"></a>2. COD的SR（Skill Rating）机制</h2><p>SR我们已经在前面提过了</p>
+<p>这逼玩意儿简单来说，就是控制你什么时候该升到什么段位，或者是你该获取多少经验值的一种动态干预算法</p>
+<p>是不是有点子抽象，换个简单的语句来描述</p>
+<p>这表面是段位系统，实则是动视的 <strong>使奴驯化装置</strong>。</p>
+<h3 id="2-1-动视内部的段位操作"><a href="#2-1-动视内部的段位操作" class="headerlink" title="2.1 动视内部的段位操作"></a>2.1 动视内部的段位操作</h3><p>首先，动视会给你进行一个评估</p>
+<p>根据你每局的杀敌数/死亡数，算出一个真实的隐藏分数（Raw Skill），这是你无法看见的</p>
+<p>这里的计算公式是</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">raw_skill = (击杀×<span class="number">0.25</span> + 助攻×<span class="number">0.15</span> + 目标分×<span class="number">0.45</span> + 占点×<span class="number">0.15</span> - 死亡×<span class="number">0.3</span>) / √(对局时长)</span><br></pre></td></tr></table></figure>
+
+<p>​​1. 目标分权重最高(0.45)​​（控制点位/炸弹模式核心指标）<br>​2. ​对局时长开平方​​（防止刷时长影响）</p>
+<p>假设你现在的Raw Skill=0.6</p>
+<p>然后根据你的真实水平（Raw Skill），动视会算出一个 ​​你<strong>应该</strong>在的段位​（Target SR）​（比如黄金需要2500分）</p>
+<p>动视内部有个数值，我称之为：<strong>行为调整因子</strong>，这里是分析玩家行为数据的核心数据</p>
+<p>这个数值的主要影响因素有：</p>
+<table>
+<thead>
+<tr>
+<th>影响因素</th>
+<th>原描述</th>
+<th>修正公式（编程级精准）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>高活跃度(日&gt;4h)</td>
+<td>负向</td>
+<td>-0.15 * log2(当日游戏小时数)</td>
+</tr>
+<tr>
+<td>近期付费(7天消费)</td>
+<td>正向</td>
+<td>min(0.1, 消费金额($)/2000)</td>
+</tr>
+<tr>
+<td>弃游风险</td>
+<td>负向</td>
+<td>-0.3 * (1 - min(1, 当日活跃/周平均))</td>
+</tr>
+</tbody></table>
+<p>这里的Target SR计算公式是</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">base_SR = min(<span class="number">4500</span>, Raw_Skill × <span class="number">4500</span>)</span><br><span class="line">behavior_effect = behavior_factor × <span class="number">0.25</span> × base_SR/<span class="number">1000</span></span><br><span class="line">Target_SR = base_SR + behavior_effect</span><br></pre></td></tr></table></figure>
+
+
+<p>写一个伪代码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 计算Raw Skill（每局更新）</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">calc_raw_skill</span><span class="params">(match_data)</span>:</span></span><br><span class="line">    kills = match_data.kills</span><br><span class="line">    assists = match_data.assists</span><br><span class="line">    objectives = match_data.objective_points  <span class="comment"># 炸弹/点位控制分</span></span><br><span class="line">    zone_time = match_data.zone_seconds       <span class="comment"># 占点秒数</span></span><br><span class="line">    deaths = match_data.deaths</span><br><span class="line">    duration = match_data.duration_seconds / <span class="number">60</span>  <span class="comment"># 转为分钟</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> (kills*<span class="number">0.25</span> + assists*<span class="number">0.15</span> + objectives*<span class="number">0.45</span> + zone_time*<span class="number">0.15</span> - deaths*<span class="number">0.3</span>) / math.sqrt(duration)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 计算目标SR（每日更新）</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">calc_target_SR</span><span class="params">(raw_skill, behavior_data)</span>:</span></span><br><span class="line">    base_SR = min(<span class="number">4500</span>, raw_skill * <span class="number">4500</span>)  <span class="comment"># 基础映射，上限4500</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 计算行为影响值（每1000分±25%）</span></span><br><span class="line">    bh_factor = calc_behavior_factor(behavior_data)</span><br><span class="line">    behavior_effect = bh_factor * <span class="number">0.25</span> * (base_SR / <span class="number">1000</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> min(<span class="number">5500</span>, max(<span class="number">0</span>, base_SR + behavior_effect))  <span class="comment"># 全段位边界保护</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-2-动视关于输赢的操作"><a href="#2-2-动视关于输赢的操作" class="headerlink" title="2.2 动视关于输赢的操作"></a>2.2 动视关于输赢的操作</h3><p>SR系统本质是 ​​动态难度调节器​​——它决定你何时能赢，何时必须输。</p>
+<h4 id="连续胜"><a href="#连续胜" class="headerlink" title="连续胜"></a>连续胜</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">on_win_streak</span><span class="params">(streak_count)</span>:</span></span><br><span class="line">    <span class="keyword">if</span> streak_count &gt;= <span class="number">3</span>:  <span class="comment"># 触发三连胜协议</span></span><br><span class="line">        <span class="comment"># 1. 匹配系统启动"段位跃升测试"</span></span><br><span class="line">        matchmaking.set_opponent_rank(current_rank + <span class="number">2</span>)  <span class="comment"># 匹配高2段车队</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 2. SR收益压制系统激活</span></span><br><span class="line">        win_reward = max(<span class="number">10</span>, base_SR * <span class="number">0.4</span>)  <span class="comment"># 基础分打4折</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 3. 表现分封顶机制</span></span><br><span class="line">        performance_bonus = min(<span class="number">5</span>, raw_performance)  <span class="comment"># 杀50人只算5分</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> win_reward + performance_bonus</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>当你三连胜时，下局必遇 ​​钻石车队打黄金局​​（白皮书第5.2.3节称其为“confidence-based calibration”）</li>
+<li>就算你力挽狂澜赢了<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">原可获<span class="number">25</span>基础分+<span class="number">15</span>表现分=<span class="number">40</span>分  </span><br><span class="line">现强制压制为(<span class="number">25</span> * <span class="number">0.4</span>)+<span class="number">5</span>=<span class="number">15</span>分（砍掉<span class="number">62.5</span>%）</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<p>所以你赢了好几把之后，你是一定会输的，你打不到那前100，你输的概率都是非常大的。</p>
+<h4 id="连续输"><a href="#连续输" class="headerlink" title="连续输"></a>连续输</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">on_lose_streak</span><span class="params">(streak_count, player_type)</span>:</span></span><br><span class="line">    <span class="keyword">if</span> streak_count &gt;= <span class="number">3</span>:  <span class="comment"># 三连败触发救济</span></span><br><span class="line">        <span class="keyword">if</span> player_type == <span class="string">"NEWBIE"</span>:  <span class="comment"># 新手保护</span></span><br><span class="line">            spawn_bot_lobby()  <span class="comment"># 生成人机局</span></span><br><span class="line">            <span class="keyword">return</span> <span class="number">30</span>  <span class="comment"># 固定+30分（希望药剂）</span></span><br><span class="line">        <span class="keyword">else</span>:  <span class="comment"># 老油条处置</span></span><br><span class="line">            reduce_next_opponent_skill(<span class="number">40</span>)  <span class="comment"># 下局对手强度-40%</span></span><br><span class="line">            <span class="keyword">return</span> <span class="number">-10</span>  <span class="comment"># 扣分减半（从-18→-10）</span></span><br><span class="line">    <span class="keyword">elif</span> player_type == <span class="string">"WHALE"</span>:  <span class="comment"># 付费玩家特殊关怀</span></span><br><span class="line">        <span class="keyword">return</span> abs(base_SR) * <span class="number">0.3</span>  <span class="comment"># 扣分再打7折</span></span><br></pre></td></tr></table></figure>
+
+<p>白皮书上也说了：</p>
+<p>Loss streak interventions boost retention by 22%</p>
+<table>
+<thead>
+<tr>
+<th>玩家类型</th>
+<th>三连败救济方案</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>萌新</td>
+<td>人机局​​ → +30分</td>
+</tr>
+<tr>
+<td>老玩家</td>
+<td>对手强度-40% &amp; 扣分减半</td>
+</tr>
+<tr>
+<td>充值玩家</td>
+<td>扣分再打7折</td>
+</tr>
+</tbody></table>
+<h3 id="2-3-赛季控制的操作"><a href="#2-3-赛季控制的操作" class="headerlink" title="2.3 赛季控制的操作"></a>2.3 赛季控制的操作</h3><h4 id="赛季重置"><a href="#赛季重置" class="headerlink" title="赛季重置"></a>赛季重置</h4><p>​1. ​软性段位重置 (Soft Rank Reset)​<br>将所有玩家的可视段位重置至初始等级（如青铜），但保留隐藏实力分（Raw Skill）的90%</p>
+<p>2.​​差异化匹配处理 (Tiered Matchmaking Treatment)​<br>根据玩家历史实力划分匹配池，高竞争力玩家仍与原段位玩家对战</p>
+<p>​​3.加速晋升协议 (Accelerated Promotion Protocol)​<br>高竞争力玩家在重置后获得额外SR增益系数</p>
+<p>动视白皮书描述（Sec 7.2）：​​</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&quot;Rank resets apply cosmetic demotions while preserving core skill metrics, </span><br><span class="line">enabling high-skill players to rapidly return to appropriate tiers.&quot;</span><br><span class="line">（段位重置仅应用表面降级，同时保留核心技能指标，使高水平玩家能快速返回适当段位）</span><br></pre></td></tr></table></figure>
+
+<h4 id="控制晋级"><a href="#控制晋级" class="headerlink" title="控制晋级"></a>控制晋级</h4><p>1.​​动态难度校准 (Dynamic Difficulty Calibration)​<br>根据玩家实时状态调整晋升赛对手强度</p>
+<p>2.受控晋升率 (Controlled Promotion Rate)​<br>系统精确控制不同段位间的晋升成功率（通常53-58%）</p>
+<p>3.检验性匹配 (Validation Matching)<br>晋升关键局分配高强度对手验证玩家实力</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">动视白皮书描述（Sec 5.3）：​​</span><br><span class="line"></span><br><span class="line">&quot;Promotion matches trigger validation protocols, </span><br><span class="line"></span><br><span class="line">exposing players to marginally superior opponents to confirm tier readiness.&quot;</span><br><span class="line">（晋升赛触发检验协议，使玩家面对略强对手以确认段位准备度）</span><br></pre></td></tr></table></figure>
+
+<p>所以你会直接感受到如下的游玩体验</p>
+<table>
+<thead>
+<tr>
+<th>玩家视角</th>
+<th>技术术语</th>
+<th>真实目的</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>新赛季新开始</td>
+<td>软性段位重置</td>
+<td>维护高玩炸鱼特权</td>
+</tr>
+<tr>
+<td>晋级赛遇大神</td>
+<td>检验性匹配</td>
+<td>压制自然晋升率</td>
+</tr>
+<tr>
+<td>刚升段就连败</td>
+<td>段位适应性调节</td>
+<td>迫使玩家停留当前段位</td>
+</tr>
+<tr>
+<td>赛季初被血虐</td>
+<td>差异化匹配处理</td>
+<td>用低段玩家供养高玩留存</td>
+</tr>
+</tbody></table>
+<h2 id="3-三个重要匹配机制"><a href="#3-三个重要匹配机制" class="headerlink" title="3. 三个重要匹配机制"></a>3. 三个重要匹配机制</h2><h3 id="3-1-网络优先机制"><a href="#3-1-网络优先机制" class="headerlink" title="3.1 网络优先机制"></a>3.1 网络优先机制</h3><p><img src="/.com//image-2.png" alt="alt text"></p>
+<ol>
+<li>排位赛强制 ​​Delta Ping≤50ms​​（红线），而普通模式无限制</li>
+<li>当匹配超时后会强制放宽至15ms</li>
+</ol>
+<p>等于说玩游戏的人受两种折磨</p>
+<p>第一个就是，你会在低分段，受到来自匹配超时大佬的暴击（可能</p>
+<p>第二个就是，在高段位，你等待排队的时间只会更长/延迟更大</p>
+<p><img src="/.com//11a266797b5c3.png" alt="alt text"></p>
+<h3 id="3-2-段位-SR双过滤机制"><a href="#3-2-段位-SR双过滤机制" class="headerlink" title="3.2 段位/SR双过滤机制"></a>3.2 段位/SR双过滤机制</h3><p><img src="/.com//image-3.png" alt="alt text"></p>
+<table>
+<thead>
+<tr>
+<th align="center">坐标轴</th>
+<th align="center">技术含义</th>
+<th align="center">白皮书关联机制</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">​​横轴 Lobby Max SR​​</td>
+<td align="center">当局所有玩家中的​​最高SR值​​</td>
+<td align="center">决定匹配强度（3.2.1节）</td>
+</tr>
+<tr>
+<td align="center">​​纵轴 Count​​</td>
+<td align="center">遭遇该SR值的​​对局次数占比​​</td>
+<td align="center">组队惩罚算法（5.3节）</td>
+</tr>
+</tbody></table>
+<ol>
+<li>如果你是单排玩家，并且你的SR非常高（2000-3000R），你的匹配速度会更快，因为系统会加速校准</li>
+<li>如果你是组队玩家，你的SR出现异常高峰（队内有钻石大佬），就会触发跨段惩罚机制</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 单排青铜</span></span><br><span class="line"><span class="keyword">if</span> solo_player <span class="keyword">and</span> bronze_rank:</span><br><span class="line">    lobby_max_sr = target_sr * <span class="number">1.2</span>  <span class="comment"># 系统校准性匹配</span></span><br><span class="line">    <span class="comment"># 结果：集中于2000-3000（黄金段）</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 组队</span></span><br><span class="line"><span class="keyword">if</span> partied_with_diamond:</span><br><span class="line">    lobby_max_sr = max(diamond_sr)*<span class="number">1.5</span>  <span class="comment"># 惩罚系数</span></span><br><span class="line">    <span class="comment"># 结果：5000-8000异常峰（虹彩段）</span></span><br><span class="line">    <span class="comment"># 当青铜与钻石组队 → 按钻石SR×1.5匹配 → 青铜面对7500SR虹彩战神</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-Raw-Skill干预机制"><a href="#3-3-Raw-Skill干预机制" class="headerlink" title="3.3 Raw Skill干预机制"></a>3.3 Raw Skill干预机制</h3><p><img src="/.com//image-4.png" alt="alt text"></p>
+<table>
+<thead>
+<tr>
+<th align="center">坐标轴</th>
+<th align="center">技术含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">​​横轴 Lobby Max SR​​</td>
+<td align="center">当局最高SR值 → 代表对局强度等级</td>
+</tr>
+<tr>
+<td align="center">​​纵轴 Probability​​</td>
+<td align="center">玩家在该强度对局中的​​存活概率​​</td>
+</tr>
+</tbody></table>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 底层玩家封锁（白皮书4.3节）</span></span><br><span class="line"><span class="keyword">if</span> player.percentile &lt; <span class="number">0.25</span>:</span><br><span class="line">    target_sr = min(<span class="number">1500</span>, raw_skill*<span class="number">5000</span>)  <span class="comment"># 锁白银</span></span><br><span class="line">    allow_high_tier = <span class="literal">False</span>  <span class="comment"># 禁止接触高端局</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 顶尖玩家特权</span></span><br><span class="line"><span class="keyword">if</span> player.percentile &gt; <span class="number">0.95</span>:</span><br><span class="line">    bypass_rank_constraints = <span class="literal">True</span>  <span class="comment"># 可突破段位隔离</span></span><br></pre></td></tr></table></figure>
+
+<p>这个的核心意思就是，后25%玩家永远在青铜困住，真玩家胜率只会越来越低</p>
+<h2 id="4-结尾"><a href="#4-结尾" class="headerlink" title="4. 结尾"></a>4. 结尾</h2><p>动视的白皮书，一共出了三个部分</p>
+<ol>
+<li>排位赛匹配机制详解</li>
+<li>Ping机制详解</li>
+<li>SBMM（Skill-Based Matchmaking，基于技术水平的匹配机制）</li>
+</ol>
+<p>我这段时间，会依次把这些文章读完并且发出来</p>
+<p>脱坑cod之后，刹那天地宽</p>
+<p>再也不玩了，再也不买了，靠</p>
+
+      
+      <!-- reward -->
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+        <div class="declare">
+          <ul class="post-copyright">
+            <li>
+              <i class="ri-copyright-line"></i>
+              <strong>版权声明： </strong>
+              本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+            </li>
+          </ul>
+        </div>
+        
+    <footer class="article-footer">
+      
+          
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yemilice.com/2025/04/21/COD(%E4%BD%BF%E5%91%BD%E5%8F%AC%E5%94%A4)%20%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/" rel="tag">其他技术</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/" rel="tag">前后端</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+  
+  <nav class="article-nav">
+    
+    
+      <a href="/2024/07/30/GitLab-ArgoCD-Jenkins%E6%96%B9%E6%A1%88%E6%A2%B3%E7%90%86%E5%92%8C%E5%AF%B9%E6%AF%94/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">GitLab/ArgoCD/Jenkins CI/CD方案梳理和对比</div>
+      </a>
+    
+  </nav>
+
+
+  
+
+  
+  
+<!-- valine评论 -->
+<div id="vcomments-box">
+    <div id="vcomments">
+    </div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        app_id: 'j2C0ImEnKI1K2lhbIinl34tn-gzGzoHsz',
+        app_key: 'BXI6KlgeojX4R82TLkdGxsKJ',
+        path: window.location.pathname,
+        notify: 'false',
+        verify: 'false',
+        avatar: 'monsterid',
+        placeholder: '给我的文章加点评论吧~',
+        recordIP: true
+    });
+    const infoEle = document.querySelector('#vcomments .info');
+    if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+        infoEle.childNodes.forEach(function (item) {
+            item.parentNode.removeChild(item);
+        });
+    }
+</script>
+<style>
+    #vcomments-box {
+        padding: 5px 30px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #vcomments-box {
+            padding: 5px 0px;
+        }
+    }
+
+    #vcomments-box #vcomments {
+        background-color: #fff;
+    }
+
+    .v .vlist .vcard .vh {
+        padding-right: 20px;
+    }
+
+    .v .vlist .vcard {
+        padding-left: 10px;
+    }
+</style>
+
+  
+
+  
+  
+  
+  
+  
+
+</article>
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul class="list-inline">
+      <li>
+        &copy;
+        2019-2025
+        Yemilice lau
+      </li>
+      <li>
+        
+        Powered by
+        
+        
+        <a href="https://hexo.io" target="_blank">Hexo</a> Theme <a href="https://github.com/Shen-Yu/hexo-theme-ayer" target="_blank">Ayer</a>
+        
+      </li>
+    </ul>
+    <ul class="list-inline">
+      <li>
+        
+        
+        <span>
+  <i>PV:<span id="busuanzi_value_page_pv"></span></i>
+  <i>UV:<span id="busuanzi_value_site_uv"></span></i>
+</span>
+        
+      </li>
+      
+      <li>
+        <!-- cnzz统计 -->
+        
+        <script type="text/javascript" src='https://s9.cnzz.com/z_stat.php?id=1278069914&amp;web_id=1278069914'></script>
+        
+      </li>
+    </ul>
+  </div>
+</footer>
+      <div class="float_btns">
+        <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+      </div>
+    </main>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/avatar.jpg" alt="Yemilice"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E9%BB%91%E7%A7%91%E6%8A%80/">黑科技</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E8%AF%B4%E5%94%B1%E4%B9%8B%E8%B7%AF/">说唱之路</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags/%E7%BC%96%E6%9B%B2%E7%9B%B8%E5%85%B3/">编曲相关</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+      <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+        <i class="ri-rss-line"></i>
+      </a>
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <script>
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        document.querySelector('.content').classList.remove('on');
+        document.querySelector('.sidebar').classList.remove('on');
+      }
+    </script>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>觉得帮到你了么？赏我点儿~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/aipay.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/wechat.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+
+<script>
+  try {
+    var typed = new Typed("#subtitle", {
+      strings: ['书写仙路物语', '把野果咽入肚里', '梦里面咒语念几遍就会颠覆物理'],
+      startDelay: 0,
+      typeSpeed: 200,
+      loop: true,
+      backSpeed: 100,
+      showCursor: true
+    });
+  } catch (err) {
+  }
+
+</script>
+
+
+
+<script src="/js/tocbot.min.js"></script>
+<script>
+  // Tocbot_v4.7.0  http://tscanlin.github.io/tocbot/
+  tocbot.init({
+    tocSelector: '.tocbot',
+    contentSelector: '.article-entry',
+    headingSelector: 'h1, h2, h3, h4, h5, h6',
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: 'main',
+    positionFixedSelector: '.tocbot',
+    positionFixedClass: 'is-position-fixed',
+    fixedSidebarOffset: 'auto'
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css">
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+<script src="/dist/main.js"></script>
+
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script>
+
+
+
+
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+<script type="text/javascript" src="https://js.users.51.la/20544303.js"></script>
+
+
+<!-- 复制 -->
+
+  <link rel="stylesheet" href="/css/clipboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+
+
+
+
+    
+  </div>
+</body>
+
+</html>
