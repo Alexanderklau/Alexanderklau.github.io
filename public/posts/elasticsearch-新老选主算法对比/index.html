@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>ElasticSearch-新老选主算法对比 | yemilice</title>
+<meta name="keywords" content="前后端">
+<meta name="description" content="前言
+首先，ElasticSearch 7，也就是Es 7， 变动还是有点儿大，改了很多东西，例如取消了type，修改了选主算法之类的操作
+正好几天在钻研一些选主算法一类的东西，看了ETCD，rabbitmq，kafka之类的一些选主算法，想起来似乎对于Es，我还没有细致研究">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/elasticsearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/elasticsearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/elasticsearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="ElasticSearch-新老选主算法对比">
+  <meta property="og:description" content="前言 首先，ElasticSearch 7，也就是Es 7， 变动还是有点儿大，改了很多东西，例如取消了type，修改了选主算法之类的操作
+正好几天在钻研一些选主算法一类的东西，看了ETCD，rabbitmq，kafka之类的一些选主算法，想起来似乎对于Es，我还没有细致研究">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2021-06-16T15:17:06+00:00">
+    <meta property="article:modified_time" content="2021-06-16T15:17:06+00:00">
+    <meta property="article:tag" content="前后端">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="ElasticSearch-新老选主算法对比">
+  <meta name="twitter:description" content="前言 首先，ElasticSearch 7，也就是Es 7， 变动还是有点儿大，改了很多东西，例如取消了type，修改了选主算法之类的操作
+正好几天在钻研一些选主算法一类的东西，看了ETCD，rabbitmq，kafka之类的一些选主算法，想起来似乎对于Es，我还没有细致研究">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "ElasticSearch-新老选主算法对比",
+      "item": "http://localhost:1313/posts/elasticsearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "ElasticSearch-新老选主算法对比",
+  "name": "ElasticSearch-新老选主算法对比",
+  "description": "前言 首先，ElasticSearch 7，也就是Es 7， 变动还是有点儿大，改了很多东西，例如取消了type，修改了选主算法之类的操作\n正好几天在钻研一些选主算法一类的东西，看了ETCD，rabbitmq，kafka之类的一些选主算法，想起来似乎对于Es，我还没有细致研究\n",
+  "keywords": [
+    "前后端"
+  ],
+  "articleBody": "前言 首先，ElasticSearch 7，也就是Es 7， 变动还是有点儿大，改了很多东西，例如取消了type，修改了选主算法之类的操作\n正好几天在钻研一些选主算法一类的东西，看了ETCD，rabbitmq，kafka之类的一些选主算法，想起来似乎对于Es，我还没有细致研究\n于是产生了写这篇文章的动力，这篇文章，也是一篇新老选主算法的对比文章\n大概会描述一下Es的两种选主算法，然后分析一下新老算法的差异\n好了，我们开始把。\n老样子，一段freestyle\n黑暗笼罩着我的眼 看不清到底是黎明还是黑夜 时间依旧不会停歇滴答滴答 本质是仅仅如此还是始终如一？ 我问自己到底想要何物 夸父逐日 终于大泽之尾 停下来的风景似乎更美 老选主算法 Bully算法（在Es7之前的所有版本使用） Bully算法，在ElasticSearch 7.0之前，都是Es的选主算法，在7.0之后被替换。bully，顾名思义，霸道选举，也叫霸道选举算法（自己编的）\nBully算法的原理 首先，一句话概括：\nBully算法的基本原理就是，根据节点的ID大小来判定谁是leader\n这个直接点明本质\nBully算法的消息类型 Bully算法在选举的时候会发送三种消息类型\n选举消息 （Election Message: Sent to announce election.） 应答消息（Answer (Alive) Message: Responds to the Election message.） 选举成功消息 （Coordinator (Victory) Message: Sent by winner of the election to announce victory.） 这三种消息类型组成了Bully的基础消息类型，这也是Bully算法选举必须要了解的东西。请注意。\nBully算法的选举流程 还是用最熟悉的《黑社会》电影举例\n假设我们现在有node1（大D）, node2（阿乐）, node3（吉米）三个进程，现在开始选主。\nnode1的进程号比node2，node3都大，他会直接通知node2，node3,发送选举成功（Coordinator Message）消息，如果它的进程ID小于node2，node3，那么他将发送选举消息 （Election Message） 如果发送选举消息没有回应，这时候有两个原因，一个是其他节点的进程ID大于它，另一个是其他节点还在向集群内节点广播选举消息，也就是互相发送选举消息，就类似，大D和阿乐都自认自己是话事人。 如果node2的进程ID大于node1，那么node1就会收到应答消息（Answer (Alive) Message），表明，选举失败，你不是话事人，等待其他节点的选举成功（Coordinator Message）消息 如果node2进程ID小于node1，node1会返回一个应答消息（Answer (Alive) Message），启动选举进程，向更高的进程发送选举消息 （Election Message） 如果node1接受到了node2节点选举成功（Coordinator Message）消息，则说明，node1看node2是master节点。 为了方便阅读，这里有个图将bully算法选举流程列出如下\n分步解释\n节点1向节点，节点3发送选举，并且带上自己的序号1 节点2，3接收到消息之后，进行序号比较，发觉自己的序号更大，向节点1返回应答消息Answer (Alive) Message，告知节点1被踢出选主序列（大概是这个意思） 节点2向节点3发送选举请求，节点3找不到更高序号的节点发送选举请求了 节点3向节点2返回应答消息，节点3收不到其他节点的应答消息了 节点3被认为是leader，向其他节点发送Coordinator Message，选举成功的请求，将自己是master节点广播到节点1，节点2 Bully算法在ElasticSearch中如何运用（如何选出es的Master） 上面我已经把bully算法如何选举详细的说了，聪明的你应该明白了吧？\n要不明白可以给我发邮件或者留言\n下面说一下Es里面，bully如何选举出master的\n首先看一下基础步骤，这里很可能会贴出java源码，看不懂的我也米办法了，凑合看\n找到活动的active node 可以选举的节点，这个是在配置文件 elasticsearch.yml 里面的 discovery.zen.ping.unicast.hosts 定义的\n首先Es的Java实例会去直接调用ping逻辑检查可用的节点\nList\u003cDiscoveryNode\u003e activeMasters = new ArrayList\u003c\u003e(); for (ZenPing.PingResponse pingResponse : pingResponses) { // We can't include the local node in pingMasters list, otherwise we may up electing ourselves without // any check / verifications from other nodes in ZenDiscover#innerJoinCluster() if (pingResponse.master() != null \u0026\u0026 !localNode.equals(pingResponse.master())) { activeMasters.add(pingResponse.master()); } } 这里会直接去ping 那些节点，然后把除本节点以外的，能ping通的，可用的，正在活动的节点加入到activeMasters这一个链表里面\n找到可以成为master的node // nodes discovered during pinging List\u003cElectMasterService.MasterCandidate\u003e masterCandidates = new ArrayList\u003c\u003e(); for (ZenPing.PingResponse pingResponse : pingResponses) { if (pingResponse.node().isMasterNode()) { masterCandidates.add(new ElectMasterService.MasterCandidate(pingResponse.node(), pingResponse.getClusterStateVersion())); } } 这里是将所有的可以选举的节点（包括本节点），加入到了一个新的masterCandidates链表里面\nBully算法选举 看下代码\n如果刚才的那个活动选举的链表activeMasters为空，也就是说不存在活着的master节点，然后再去再去配置文件里面elasticsearch.yml，有个重要属性，discovery.zen.minimum_master_nodes，这代表着最小选举节点，当activeMasters为空，并且minimum_master_nodes \u003e masterCandidates，满足匹配数量，直接走bully的选举，选举出最小ID的节点成为master节点。\nif (activeMasters.isEmpty()) { if (electMaster.hasEnoughCandidates(masterCandidates)) { final ElectMasterService.MasterCandidate winner = electMaster.electMaster(masterCandidates); logger.trace(\"candidate {} won election\", winner); return winner.getNode(); } else { // if we don't have enough master nodes, we bail, because there are not enough master to elect from logger.warn(\"not enough master nodes discovered during pinging (found [{}], but needed [{}]), pinging again\", masterCandidates, electMaster.minimumMasterNodes()); return null; } } else { assert !activeMasters.contains(localNode) : \"local node should never be elected as master when other nodes indicate an active master\"; // lets tie break between discovered nodes return electMaster.tieBreakActiveMasters(activeMasters); } Bully算法的优点 其实Bully算法，简单粗暴，好处就是简单\n并且算法的难度低啊，怪不得Es最初几个版本要用它，简单就完事儿了\n而且bully的选举速度很快，相互通知，比对大小，就得了，所以我想这就是es最初几版用它的原因吧。\nBully算法的缺点 缺点的话。。。我感觉bully算法相比于其他主流算法，相对来说简单一些\n但是简单很可能就是一种原罪\n当有节点频繁加入或者退出的时候，主节点会频繁的进行切换，保存的节点信息的元数据也就会越来越大，越来越大\n所以Bully算法的缺点，从我的角度上来看的话，也就是无法满足复杂场景下的选主需求，因为复杂场景下的选主，需要强力的选主算法支撑\n因为主节点，能力越大，责任越大！必须保持稳定！包租婆，你说是吧！\n为什么要替换Bully算法 Es7 版本算是大改，不仅改了选主算法，连type都删了，这算是一个大变动，我记得很多人的Es都是5，或者6\n我查询了一些资料，发觉在Es官方的文章上说明了为什么替换的原因\nElasticsearch 6.x 及之前的版本使用了一个叫作 Zen Discovery 的集群协调子系统。 这个子系统经过多年的发展，成功地为大大小小的集群提供支持。 然而，我们想做出一些改进，这需要对它的工作方式作出一些根本性的修改。 Zen Discovery 允许用户通过设置 discovery.zen.minimum_master_nodes 来决定多少个符合主节点条件的节点可以形成仲裁。 在每个节点上一定要正确地配置这个参数，如果集群进行动态扩展，也需要正确地更新它，这一点非常重要。 系统不可能检测到用户是否错误配置了这个参数，而且在实践当中，在 添加或删除节点之后很容易忘记调整这个参数。 Zen Discovery 试图通过在每次主节点选举过程中等待几秒来防止出现这种错误配置。 这意味着，如果所选的主节点失败，在选择替代节点之前，集群至少在几秒钟内是不可用的。 如果集群无法选举出一个主节点，有时候很难知道是为什么。 这个翻译太蹩脚了，我来直接简单扼要的说明一下为什么要替换吧\n老版本里面有个discovery.zen.minimum_master_nodes，这个很重要，但是动态扩展的时候有些时候可能会忘记设置这个东西 如果不设置这个东西，Zen Discovery会在每次选举过程中等待一阵，大概是几秒时间来防止这种错误配置，这就造成集群暂时不可用 也有可能造成无法选主的问题，这个非常致命，所以我们要换这套算法。 新选主算法 类Raft算法（Es7之后更新） 接上节，那么，Es不用Bully之后，到底要用什么呢？\n官方给的文章也说明了这个问题\n我们重新设计并重建了 Elasticsearch 7.0 的集群协调子系统： 1. 移除 minimum_master_nodes 参数，让 Elasticsearch 自己选择可以形成仲裁的节点。 2. 典型的主节点选举现在只需要很短的时间就可以完成。 3. 集群的伸缩变得更安全、更容易，并且可能造成丢失数据的系统配置选项更少了。 4. 节点更清楚地记录它们的状态，有助于诊断为什么它们不能加入集群或为什么无法选举出主节点 这边说的很清楚，原有的Zen Discovery被替换了，不再使用\n那么新版采用的算法是什么呢？\n这个在官方文档里也有\n我们经常被问到的一个问题是，为什么不简单地“插入”像 Raft 一样的标准分布式共识算法。 有很多公认的算法，每种算法都有不同的利弊权衡。 我们仔细评估了所有可以找到的文献，并从中汲取灵感。 在我们早期的概念验证中，有一个概念便使用了非常接近 Raft 的协议。 所以，我将Es7的选主算法命名为类Raft算法，也就是类似Raft的算法。但是不是完全是Raft算法，这个我会在后面详细说明。\nRaft算法的原理 首先Es的选主算法基础是来源于Raft，还是有必要分析下Raft算法的机制和原理\n才有助于后期对Es 7 的核心源码进行解读分析\n什么是Raft算法？ 这个又涉及到了一致性问题，这是分布式系统的一个老调常谈的部分\n首先，Raft算法是用来解决分布式一致性问题，而编写出来的一种算法。\nRaft算法是如何工作的？ 在Raft算法中，一个节点分别可能有三种角色\nFollower 跟随者 Candidate 候选人 Leader 领导者 当初始化的时候，所有的节点都是Follower跟随者\n此时此刻，如果没有收到leader的消息，那么节点将会自动转换为Candidate候选人的身份\n这时，成为候选人的节点，将向其他节点发送选举投票请求\n这时，接收到信号的节点，将会回复这次投票请求\n如果大多数节点都赞成选举这个节点为leader，那么这个节点将会成为集群leader节点\n这就是领导者选举的步骤，通俗来讲，也就是选主步骤，这也是我今天要讲的核心。\n这里我画了个图，将步骤完全简化，大家，凑合看下吧，聪明的你，一定一看就懂！\n开始选举的条件是：\n当follower节点接收不到leader节点的心跳 leader节点超时 但是要注意，当follower节点收不到leader节点心跳的时候，需要等待一点时间切换为Candidate候选人，才可以开始选举。\n看下图吧，大概，也许差不离，就是这么选举。\n类Raft算法在ElasticSearch中如何运用 大概知道了Raft算法的选举原理，那么在Es里面，如何使用新的算法去选举leader呢？\n这里就需要追一下源码了，下面又到了追源码的路子了，大家要看不了的话，真没办法了！\n首先，ElasticSearch的选举算法套了Raft的壳子，但是不是真的Raft逻辑\n相比于Raft算法，Es的选主算法有如下不同\n初始为 Candidate状态 允许多次投票，也就是每个有投票资格的节点可以投多票 候选人可以有投票的机会 可能会产生多个主节点 举例来说，如果node1，node2，node3进行选主\n如果node1当选leader，但是node2发来了投票要求，那么node1无条件退出leader状态，node2选为主节点，但是node3也发来了投票要求，那么node2退出leader状态，node3当选主节点。\n说明白了，就是保证最后当选的leader为主leader\n那么，综上所述，选举的流程为\n节点的初始状态，为Candidate，当加入集群的时候，如果我们的discovery发现集群已经存在 leader，那么新加入的节点自动转换为follower。\n类似下图：\n假设Candidate开始，那么节点收到足够的投票数量，转换为leader，假设其他节点发送了拉票请求，此节点辞去leader，转换为Candidate，直到选出leader，转换为follower。\n角色转变类似这张图：\n类Raft算法的优点 这个资料上面有，我就直接说了\n免去了 Zen Discovery 的 discovery.zen.minimum_master_nodes 配置，es 会自己选择可以形成仲裁的节点，用户只需配置一个初始 master 节点列表即可。也即集群扩容或缩容的过程中，不要再担心遗漏或配错 discovery.zen.minimum_master_nodes 配置 新版 Leader 选举速度极大快于旧版。在旧版 Zen Discovery 中，每个节点都需要先通过 3 轮的 ZenPing 才能完成节点发现和 Leader 选举，而新版的算法通常只需要在 100ms 以内 修复了 Zen Discovery 下的疑难问题，如重复的网络分区可能导致群集状态更新丢失问题 类Raft算法的缺点 节点多的情况下，会造成重复选主多次，选主缓慢 暂时缺少资料支撑，只有些英文的。并且还TM不全。。回头补上。\n其他Raft算法的实现（哪些知名项目也使用了Raft） 这个就有话说了\n除开我研究过一阵的ETCD，ETCD是把Raft协议用到核心层的分布式数据库\n这个我原来写过文章\n学习etcd核心机制Raft协议的一点随想\n可以自己去翻一下。\n还有kafka\nkafka原有的一致性算法是Zookeeper提供的ZAB协议，但是2.8被替换成了Raft，说明Zookeeper已经被抛弃了，Raft的一些机制的确是好于ZAB\n当然也有RocketMQ，内部核心来源于dledger源码，也是基于Raft的。\n总结 草草写完，过于浅显，入个门也够了，也作为我自己的笔记\n希望有大佬看见，能给予指点，这次借鉴了张超老师的很多博客，包括他写的Es源码解析这本书，对我的帮助非常非常大！感谢您！张超老师！\n6月第一篇blog，我还在不断努力，你们呢？\n希望自己，努力的这段时间，会有好的结果，希望自己可以换个好点的工作。希望大家也是！看到博客的人，爱你们！\n踌躇不前， 总是妄想能一步登天 登上山峰发觉 我依旧在山脚前沿 抬目望眼 所见皆是虚无贪念 停或走？ 或是将生活翻面 直面内心懦弱的另一边。 参考文章\n深入理解 Elasticsearch 7.x 新的集群协调层 Elasticsearch 新版选主流程\n",
+  "wordCount" : "5505",
+  "inLanguage": "zh-cn",
+  "datePublished": "2021-06-16T15:17:06Z",
+  "dateModified": "2021-06-16T15:17:06Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/elasticsearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            ElasticSearch-新老选主算法对比
+        </h1>
+        <div class="post-meta"><span title='2021-06-16 15:17:06 +0000 UTC'>June 16, 2021</span>&nbsp;·&nbsp;<span>11 min</span>&nbsp;·&nbsp;<span>5505 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e5%89%8d%e8%a8%80" aria-label="前言">前言</a></li>
+            <li>
+                <a href="#%e8%80%81%e9%80%89%e4%b8%bb%e7%ae%97%e6%b3%95-bully%e7%ae%97%e6%b3%95%e5%9c%a8es7%e4%b9%8b%e5%89%8d%e7%9a%84%e6%89%80%e6%9c%89%e7%89%88%e6%9c%ac%e4%bd%bf%e7%94%a8" aria-label="老选主算法 Bully算法（在Es7之前的所有版本使用）">老选主算法 Bully算法（在Es7之前的所有版本使用）</a><ul>
+                    
+            <li>
+                <a href="#bully%e7%ae%97%e6%b3%95%e7%9a%84%e5%8e%9f%e7%90%86" aria-label="Bully算法的原理">Bully算法的原理</a><ul>
+                    
+            <li>
+                <a href="#bully%e7%ae%97%e6%b3%95%e7%9a%84%e6%b6%88%e6%81%af%e7%b1%bb%e5%9e%8b" aria-label="Bully算法的消息类型">Bully算法的消息类型</a></li>
+            <li>
+                <a href="#bully%e7%ae%97%e6%b3%95%e7%9a%84%e9%80%89%e4%b8%be%e6%b5%81%e7%a8%8b" aria-label="Bully算法的选举流程">Bully算法的选举流程</a></li></ul>
+            </li>
+            <li>
+                <a href="#bully%e7%ae%97%e6%b3%95%e5%9c%a8elasticsearch%e4%b8%ad%e5%a6%82%e4%bd%95%e8%bf%90%e7%94%a8%e5%a6%82%e4%bd%95%e9%80%89%e5%87%baes%e7%9a%84master" aria-label="Bully算法在ElasticSearch中如何运用（如何选出es的Master）">Bully算法在ElasticSearch中如何运用（如何选出es的Master）</a><ul>
+                    
+            <li>
+                <a href="#%e6%89%be%e5%88%b0%e6%b4%bb%e5%8a%a8%e7%9a%84active-node" aria-label="找到活动的active node">找到活动的active node</a></li>
+            <li>
+                <a href="#%e6%89%be%e5%88%b0%e5%8f%af%e4%bb%a5%e6%88%90%e4%b8%bamaster%e7%9a%84node" aria-label="找到可以成为master的node">找到可以成为master的node</a></li>
+            <li>
+                <a href="#bully%e7%ae%97%e6%b3%95%e9%80%89%e4%b8%be" aria-label="Bully算法选举">Bully算法选举</a></li></ul>
+            </li>
+            <li>
+                <a href="#bully%e7%ae%97%e6%b3%95%e7%9a%84%e4%bc%98%e7%82%b9" aria-label="Bully算法的优点">Bully算法的优点</a></li>
+            <li>
+                <a href="#bully%e7%ae%97%e6%b3%95%e7%9a%84%e7%bc%ba%e7%82%b9" aria-label="Bully算法的缺点">Bully算法的缺点</a></li>
+            <li>
+                <a href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%a6%81%e6%9b%bf%e6%8d%a2bully%e7%ae%97%e6%b3%95" aria-label="为什么要替换Bully算法">为什么要替换Bully算法</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e6%96%b0%e9%80%89%e4%b8%bb%e7%ae%97%e6%b3%95-%e7%b1%bbraft%e7%ae%97%e6%b3%95es7%e4%b9%8b%e5%90%8e%e6%9b%b4%e6%96%b0" aria-label="新选主算法 类Raft算法（Es7之后更新）">新选主算法 类Raft算法（Es7之后更新）</a><ul>
+                    
+            <li>
+                <a href="#raft%e7%ae%97%e6%b3%95%e7%9a%84%e5%8e%9f%e7%90%86" aria-label="Raft算法的原理">Raft算法的原理</a><ul>
+                    
+            <li>
+                <a href="#%e4%bb%80%e4%b9%88%e6%98%afraft%e7%ae%97%e6%b3%95" aria-label="什么是Raft算法？">什么是Raft算法？</a></li>
+            <li>
+                <a href="#raft%e7%ae%97%e6%b3%95%e6%98%af%e5%a6%82%e4%bd%95%e5%b7%a5%e4%bd%9c%e7%9a%84" aria-label="Raft算法是如何工作的？">Raft算法是如何工作的？</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e7%b1%bbraft%e7%ae%97%e6%b3%95%e5%9c%a8elasticsearch%e4%b8%ad%e5%a6%82%e4%bd%95%e8%bf%90%e7%94%a8" aria-label="类Raft算法在ElasticSearch中如何运用">类Raft算法在ElasticSearch中如何运用</a></li>
+            <li>
+                <a href="#%e7%b1%bbraft%e7%ae%97%e6%b3%95%e7%9a%84%e4%bc%98%e7%82%b9" aria-label="类Raft算法的优点">类Raft算法的优点</a></li>
+            <li>
+                <a href="#%e7%b1%bbraft%e7%ae%97%e6%b3%95%e7%9a%84%e7%bc%ba%e7%82%b9" aria-label="类Raft算法的缺点">类Raft算法的缺点</a></li>
+            <li>
+                <a href="#%e5%85%b6%e4%bb%96raft%e7%ae%97%e6%b3%95%e7%9a%84%e5%ae%9e%e7%8e%b0%e5%93%aa%e4%ba%9b%e7%9f%a5%e5%90%8d%e9%a1%b9%e7%9b%ae%e4%b9%9f%e4%bd%bf%e7%94%a8%e4%ba%86raft" aria-label="其他Raft算法的实现（哪些知名项目也使用了Raft）">其他Raft算法的实现（哪些知名项目也使用了Raft）</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e6%80%bb%e7%bb%93" aria-label="总结">总结</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="前言">前言<a hidden class="anchor" aria-hidden="true" href="#前言">#</a></h2>
+<p>首先，ElasticSearch 7，也就是Es 7， 变动还是有点儿大，改了很多东西，例如取消了type，修改了选主算法之类的操作</p>
+<p>正好几天在钻研一些选主算法一类的东西，看了ETCD，rabbitmq，kafka之类的一些选主算法，想起来似乎对于Es，我还没有细致研究</p>
+<p>于是产生了写这篇文章的动力，这篇文章，也是一篇新老选主算法的对比文章</p>
+<p>大概会描述一下Es的两种选主算法，然后分析一下新老算法的差异</p>
+<p>好了，我们开始把。</p>
+<p>老样子，一段freestyle</p>
+<pre tabindex="0"><code>
+黑暗笼罩着我的眼
+
+看不清到底是黎明还是黑夜
+
+时间依旧不会停歇滴答滴答
+
+本质是仅仅如此还是始终如一？
+
+我问自己到底想要何物
+
+夸父逐日
+
+终于大泽之尾
+
+停下来的风景似乎更美
+</code></pre><h2 id="老选主算法-bully算法在es7之前的所有版本使用">老选主算法 Bully算法（在Es7之前的所有版本使用）<a hidden class="anchor" aria-hidden="true" href="#老选主算法-bully算法在es7之前的所有版本使用">#</a></h2>
+<p>Bully算法，在ElasticSearch 7.0之前，都是Es的选主算法，在7.0之后被替换。bully，顾名思义，霸道选举，也叫霸道选举算法（自己编的）</p>
+<h3 id="bully算法的原理">Bully算法的原理<a hidden class="anchor" aria-hidden="true" href="#bully算法的原理">#</a></h3>
+<p>首先，一句话概括：</p>
+<p><strong>Bully算法的基本原理就是，根据节点的ID大小来判定谁是leader</strong></p>
+<p>这个直接点明本质</p>
+<h4 id="bully算法的消息类型">Bully算法的消息类型<a hidden class="anchor" aria-hidden="true" href="#bully算法的消息类型">#</a></h4>
+<p>Bully算法在选举的时候会发送三种消息类型</p>
+<ol>
+<li>选举消息 （Election Message: Sent to announce election.）</li>
+<li>应答消息（Answer (Alive) Message: Responds to the Election message.）</li>
+<li>选举成功消息 （Coordinator (Victory) Message: Sent by winner of the election to announce victory.）</li>
+</ol>
+<p>这三种消息类型组成了Bully的基础消息类型，这也是Bully算法选举必须要了解的东西。请注意。</p>
+<h4 id="bully算法的选举流程">Bully算法的选举流程<a hidden class="anchor" aria-hidden="true" href="#bully算法的选举流程">#</a></h4>
+<p>还是用最熟悉的《黑社会》电影举例</p>
+<p>假设我们现在有node1（大D）, node2（阿乐）, node3（吉米）三个进程，现在开始选主。</p>
+<ol>
+<li>node1的进程号比node2，node3都大，他会直接通知node2，node3,发送选举成功（Coordinator Message）消息，如果它的进程ID小于node2，node3，那么他将发送选举消息 （Election Message）</li>
+<li>如果发送选举消息没有回应，这时候有两个原因，一个是其他节点的进程ID大于它，另一个是其他节点还在向集群内节点广播选举消息，也就是互相发送选举消息，就类似，大D和阿乐都自认自己是话事人。</li>
+<li>如果node2的进程ID大于node1，那么node1就会收到应答消息（Answer (Alive) Message），表明，选举失败，你不是话事人，等待其他节点的选举成功（Coordinator Message）消息</li>
+<li>如果node2进程ID小于node1，node1会返回一个应答消息（Answer (Alive) Message），启动选举进程，向更高的进程发送选举消息 （Election Message）</li>
+<li>如果node1接受到了node2节点选举成功（Coordinator Message）消息，则说明，node1看node2是master节点。</li>
+</ol>
+<p>为了方便阅读，这里有个图将bully算法选举流程列出如下</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%96%B0%E6%97%A7%E7%AE%97%E6%B3%95/1.png"></p>
+<p>分步解释</p>
+<ol>
+<li>节点1向节点，节点3发送选举，并且带上自己的序号<strong>1</strong></li>
+<li>节点2，3接收到消息之后，进行序号比较，发觉自己的序号更大，向节点1返回应答消息Answer (Alive) Message，告知节点1被踢出选主序列（大概是这个意思）</li>
+<li>节点2向节点3发送选举请求，节点3找不到更高序号的节点发送选举请求了</li>
+<li>节点3向节点2返回应答消息，节点3收不到其他节点的应答消息了</li>
+<li>节点3被认为是leader，向其他节点发送Coordinator Message，选举成功的请求，将自己是master节点广播到节点1，节点2</li>
+</ol>
+<h3 id="bully算法在elasticsearch中如何运用如何选出es的master">Bully算法在ElasticSearch中如何运用（如何选出es的Master）<a hidden class="anchor" aria-hidden="true" href="#bully算法在elasticsearch中如何运用如何选出es的master">#</a></h3>
+<p>上面我已经把bully算法如何选举详细的说了，聪明的你应该明白了吧？</p>
+<p>要不明白可以给我发邮件或者留言</p>
+<p>下面说一下Es里面，bully如何选举出master的</p>
+<p>首先看一下基础步骤，这里很可能会贴出java源码，看不懂的我也米办法了，凑合看</p>
+<h4 id="找到活动的active-node">找到活动的active node<a hidden class="anchor" aria-hidden="true" href="#找到活动的active-node">#</a></h4>
+<p>可以选举的节点，这个是在配置文件 elasticsearch.yml 里面的 <strong>discovery.zen.ping.unicast.hosts</strong> 定义的</p>
+<p>首先Es的Java实例会去直接调用ping逻辑检查可用的节点</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>  List<span style="color:#f92672">&lt;</span>DiscoveryNode<span style="color:#f92672">&gt;</span> activeMasters <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ArrayList<span style="color:#f92672">&lt;&gt;</span>();
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> (ZenPing.<span style="color:#a6e22e">PingResponse</span> pingResponse : pingResponses) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// We can&#39;t include the local node in pingMasters list, otherwise we may up electing ourselves without</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// any check / verifications from other nodes in ZenDiscover#innerJoinCluster()</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (pingResponse.<span style="color:#a6e22e">master</span>() <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">!</span>localNode.<span style="color:#a6e22e">equals</span>(pingResponse.<span style="color:#a6e22e">master</span>())) {
+</span></span><span style="display:flex;"><span>            activeMasters.<span style="color:#a6e22e">add</span>(pingResponse.<span style="color:#a6e22e">master</span>());
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span></code></pre></div><p>这里会直接去ping 那些节点，然后把除本节点以外的，能ping通的，可用的，正在活动的节点加入到<strong>activeMasters</strong>这一个链表里面</p>
+<h4 id="找到可以成为master的node">找到可以成为master的node<a hidden class="anchor" aria-hidden="true" href="#找到可以成为master的node">#</a></h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-java" data-lang="java"><span style="display:flex;"><span> <span style="color:#75715e">// nodes discovered during pinging</span>
+</span></span><span style="display:flex;"><span>    List<span style="color:#f92672">&lt;</span>ElectMasterService.<span style="color:#a6e22e">MasterCandidate</span><span style="color:#f92672">&gt;</span> masterCandidates <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ArrayList<span style="color:#f92672">&lt;&gt;</span>();
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> (ZenPing.<span style="color:#a6e22e">PingResponse</span> pingResponse : pingResponses) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (pingResponse.<span style="color:#a6e22e">node</span>().<span style="color:#a6e22e">isMasterNode</span>()) {
+</span></span><span style="display:flex;"><span>            masterCandidates.<span style="color:#a6e22e">add</span>(<span style="color:#66d9ef">new</span> ElectMasterService.<span style="color:#a6e22e">MasterCandidate</span>(pingResponse.<span style="color:#a6e22e">node</span>(), pingResponse.<span style="color:#a6e22e">getClusterStateVersion</span>()));
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span></code></pre></div><p>这里是将所有的可以选举的节点（包括本节点），加入到了一个新的masterCandidates链表里面</p>
+<h4 id="bully算法选举">Bully算法选举<a hidden class="anchor" aria-hidden="true" href="#bully算法选举">#</a></h4>
+<p>看下代码</p>
+<p>如果刚才的那个活动选举的链表activeMasters为空，也就是说不存在活着的master节点，然后再去再去配置文件里面<strong>elasticsearch.yml</strong>，有个重要属性，discovery.zen.minimum_master_nodes，这代表着最小选举节点，当activeMasters为空，并且minimum_master_nodes &gt; masterCandidates，满足匹配数量，直接走bully的选举，选举出最小ID的节点成为master节点。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (activeMasters.<span style="color:#a6e22e">isEmpty</span>()) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (electMaster.<span style="color:#a6e22e">hasEnoughCandidates</span>(masterCandidates)) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> ElectMasterService.<span style="color:#a6e22e">MasterCandidate</span> winner <span style="color:#f92672">=</span> electMaster.<span style="color:#a6e22e">electMaster</span>(masterCandidates);
+</span></span><span style="display:flex;"><span>            logger.<span style="color:#a6e22e">trace</span>(<span style="color:#e6db74">&#34;candidate {} won election&#34;</span>, winner);
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> winner.<span style="color:#a6e22e">getNode</span>();
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// if we don&#39;t have enough master nodes, we bail, because there are not enough master to elect from</span>
+</span></span><span style="display:flex;"><span>            logger.<span style="color:#a6e22e">warn</span>(<span style="color:#e6db74">&#34;not enough master nodes discovered during pinging (found [{}], but needed [{}]), pinging again&#34;</span>,
+</span></span><span style="display:flex;"><span>                        masterCandidates, electMaster.<span style="color:#a6e22e">minimumMasterNodes</span>());
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">assert</span> <span style="color:#f92672">!</span>activeMasters.<span style="color:#a6e22e">contains</span>(localNode) : <span style="color:#e6db74">&#34;local node should never be elected as master when other nodes indicate an active master&#34;</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// lets tie break between discovered nodes</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> electMaster.<span style="color:#a6e22e">tieBreakActiveMasters</span>(activeMasters);
+</span></span><span style="display:flex;"><span>    }
+</span></span></code></pre></div><h3 id="bully算法的优点">Bully算法的优点<a hidden class="anchor" aria-hidden="true" href="#bully算法的优点">#</a></h3>
+<p>其实Bully算法，简单粗暴，好处就是<strong>简单</strong></p>
+<p>并且算法的难度低啊，怪不得Es最初几个版本要用它，简单就完事儿了</p>
+<p>而且bully的选举速度很快，相互通知，比对大小，就得了，所以我想这就是es最初几版用它的原因吧。</p>
+<h3 id="bully算法的缺点">Bully算法的缺点<a hidden class="anchor" aria-hidden="true" href="#bully算法的缺点">#</a></h3>
+<p>缺点的话。。。我感觉bully算法相比于其他主流算法，相对来说简单一些</p>
+<p>但是简单很可能就是一种原罪</p>
+<p>当有节点频繁加入或者退出的时候，主节点会频繁的进行切换，保存的节点信息的元数据也就会越来越大，越来越大</p>
+<p>所以Bully算法的缺点，从我的角度上来看的话，也就是无法满足复杂场景下的选主需求，因为复杂场景下的选主，需要强力的选主算法支撑</p>
+<p>因为主节点，能力越大，责任越大！必须保持稳定！包租婆，你说是吧！</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%96%B0%E6%97%A7%E7%AE%97%E6%B3%95/2.png"></p>
+<h3 id="为什么要替换bully算法">为什么要替换Bully算法<a hidden class="anchor" aria-hidden="true" href="#为什么要替换bully算法">#</a></h3>
+<p>Es7 版本算是大改，不仅改了选主算法，连type都删了，这算是一个大变动，我记得很多人的Es都是5，或者6</p>
+<p>我查询了一些资料，发觉在Es官方的文章上说明了为什么替换的原因</p>
+<pre tabindex="0"><code>
+Elasticsearch 6.x 及之前的版本使用了一个叫作 Zen Discovery 的集群协调子系统。
+
+这个子系统经过多年的发展，成功地为大大小小的集群提供支持。
+
+然而，我们想做出一些改进，这需要对它的工作方式作出一些根本性的修改。
+
+Zen Discovery 允许用户通过设置 
+
+discovery.zen.minimum_master_nodes 来决定多少个符合主节点条件的节点可以形成仲裁。
+
+在每个节点上一定要正确地配置这个参数，如果集群进行动态扩展，也需要正确地更新它，这一点非常重要。
+
+系统不可能检测到用户是否错误配置了这个参数，而且在实践当中，在
+添加或删除节点之后很容易忘记调整这个参数。
+
+Zen Discovery 试图通过在每次主节点选举过程中等待几秒来防止出现这种错误配置。
+
+这意味着，如果所选的主节点失败，在选择替代节点之前，集群至少在几秒钟内是不可用的。
+
+如果集群无法选举出一个主节点，有时候很难知道是为什么。
+</code></pre><p>这个翻译太蹩脚了，我来直接简单扼要的说明一下为什么要替换吧</p>
+<ol>
+<li>老版本里面有个discovery.zen.minimum_master_nodes，这个很重要，但是动态扩展的时候有些时候可能会忘记设置这个东西</li>
+<li>如果不设置这个东西，Zen Discovery会在每次选举过程中等待一阵，大概是几秒时间来防止这种错误配置，这就造成集群暂时不可用</li>
+<li>也有可能造成无法选主的问题，这个非常致命，所以我们要换这套算法。</li>
+</ol>
+<h2 id="新选主算法-类raft算法es7之后更新">新选主算法 类Raft算法（Es7之后更新）<a hidden class="anchor" aria-hidden="true" href="#新选主算法-类raft算法es7之后更新">#</a></h2>
+<p>接上节，那么，Es不用Bully之后，到底要用什么呢？</p>
+<p>官方给的文章也说明了这个问题</p>
+<pre tabindex="0"><code>
+我们重新设计并重建了 Elasticsearch 7.0 的集群协调子系统：
+
+1. 移除 minimum_master_nodes 参数，让 Elasticsearch 自己选择可以形成仲裁的节点。
+
+2. 典型的主节点选举现在只需要很短的时间就可以完成。
+
+3. 集群的伸缩变得更安全、更容易，并且可能造成丢失数据的系统配置选项更少了。
+
+4. 节点更清楚地记录它们的状态，有助于诊断为什么它们不能加入集群或为什么无法选举出主节点
+</code></pre><p>这边说的很清楚，原有的Zen Discovery被替换了，不再使用</p>
+<p>那么新版采用的算法是什么呢？</p>
+<p>这个在官方文档里也有</p>
+<pre tabindex="0"><code>
+我们经常被问到的一个问题是，为什么不简单地“插入”像 Raft 一样的标准分布式共识算法。
+
+有很多公认的算法，每种算法都有不同的利弊权衡。
+
+我们仔细评估了所有可以找到的文献，并从中汲取灵感。
+
+在我们早期的概念验证中，有一个概念便使用了非常接近 Raft 的协议。
+</code></pre><p>所以，我将Es7的选主算法命名为类Raft算法，也就是类似Raft的算法。但是不是完全是Raft算法，这个我会在后面详细说明。</p>
+<h3 id="raft算法的原理">Raft算法的原理<a hidden class="anchor" aria-hidden="true" href="#raft算法的原理">#</a></h3>
+<p>首先Es的选主算法基础是来源于Raft，还是有必要分析下Raft算法的机制和原理</p>
+<p>才有助于后期对Es 7 的核心源码进行解读分析</p>
+<h4 id="什么是raft算法">什么是Raft算法？<a hidden class="anchor" aria-hidden="true" href="#什么是raft算法">#</a></h4>
+<p>这个又涉及到了一致性问题，这是分布式系统的一个老调常谈的部分</p>
+<p>首先，Raft算法是用来解决分布式一致性问题，而编写出来的一种算法。</p>
+<h4 id="raft算法是如何工作的">Raft算法是如何工作的？<a hidden class="anchor" aria-hidden="true" href="#raft算法是如何工作的">#</a></h4>
+<p>在Raft算法中，一个节点分别可能有三种角色</p>
+<ol>
+<li>Follower 跟随者</li>
+<li>Candidate 候选人</li>
+<li>Leader 领导者</li>
+</ol>
+<p>当初始化的时候，所有的节点都是Follower跟随者</p>
+<p>此时此刻，如果没有收到leader的消息，那么节点将会自动转换为Candidate候选人的身份</p>
+<p>这时，成为候选人的节点，将向其他节点发送选举投票请求</p>
+<p>这时，接收到信号的节点，将会回复这次投票请求</p>
+<p>如果大多数节点都赞成选举这个节点为leader，那么这个节点将会成为集群leader节点</p>
+<p>这就是领导者选举的步骤，通俗来讲，也就是选主步骤，这也是我今天要讲的核心。</p>
+<p>这里我画了个图，将步骤完全简化，大家，凑合看下吧，聪明的你，一定一看就懂！</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%96%B0%E6%97%A7%E7%AE%97%E6%B3%95/3.png"></p>
+<p>开始选举的条件是：</p>
+<ol>
+<li>当follower节点接收不到leader节点的心跳</li>
+<li>leader节点超时</li>
+</ol>
+<p>但是要注意，当follower节点收不到leader节点心跳的时候，需要等待一点时间切换为Candidate候选人，才可以开始选举。</p>
+<p>看下图吧，大概，也许差不离，就是这么选举。</p>
+<h3 id="类raft算法在elasticsearch中如何运用">类Raft算法在ElasticSearch中如何运用<a hidden class="anchor" aria-hidden="true" href="#类raft算法在elasticsearch中如何运用">#</a></h3>
+<p>大概知道了Raft算法的选举原理，那么在Es里面，如何使用新的算法去选举leader呢？</p>
+<p>这里就需要追一下源码了，下面又到了追源码的路子了，大家要看不了的话，真没办法了！</p>
+<p>首先，ElasticSearch的选举算法套了Raft的壳子，但是不是真的Raft逻辑</p>
+<p>相比于Raft算法，Es的选主算法有如下不同</p>
+<ol>
+<li>初始为 Candidate状态</li>
+<li>允许多次投票，也就是每个有投票资格的节点可以投多票</li>
+<li>候选人可以有投票的机会</li>
+<li>可能会产生多个主节点</li>
+</ol>
+<p>举例来说，如果node1，node2，node3进行选主</p>
+<p>如果node1当选leader，但是node2发来了投票要求，那么node1无条件退出leader状态，node2选为主节点，但是node3也发来了投票要求，那么node2退出leader状态，node3当选主节点。</p>
+<p>说明白了，就是<strong>保证最后当选的leader为主leader</strong></p>
+<p>那么，综上所述，选举的流程为</p>
+<p>节点的初始状态，为Candidate，当加入集群的时候，如果我们的discovery发现集群已经存在 leader，那么新加入的节点自动转换为follower。</p>
+<p>类似下图：</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%96%B0%E6%97%A7%E7%AE%97%E6%B3%95/4.jpg"></p>
+<p>假设Candidate开始，那么节点收到足够的投票数量，转换为leader，假设其他节点发送了拉票请求，此节点辞去leader，转换为Candidate，直到选出leader，转换为follower。</p>
+<p>角色转变类似这张图：</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%96%B0%E6%97%A7%E7%AE%97%E6%B3%95/5.jpg"></p>
+<h3 id="类raft算法的优点">类Raft算法的优点<a hidden class="anchor" aria-hidden="true" href="#类raft算法的优点">#</a></h3>
+<p>这个资料上面有，我就直接说了</p>
+<ol>
+<li>免去了 Zen Discovery 的 discovery.zen.minimum_master_nodes 配置，es 会自己选择可以形成仲裁的节点，用户只需配置一个初始 master 节点列表即可。也即集群扩容或缩容的过程中，不要再担心遗漏或配错 discovery.zen.minimum_master_nodes 配置</li>
+<li>新版 Leader 选举速度极大快于旧版。在旧版 Zen Discovery 中，每个节点都需要先通过 3 轮的 ZenPing 才能完成节点发现和 Leader 选举，而新版的算法通常只需要在 100ms 以内</li>
+<li>修复了 Zen Discovery 下的疑难问题，如重复的网络分区可能导致群集状态更新丢失问题</li>
+</ol>
+<h3 id="类raft算法的缺点">类Raft算法的缺点<a hidden class="anchor" aria-hidden="true" href="#类raft算法的缺点">#</a></h3>
+<ol>
+<li>节点多的情况下，会造成重复选主多次，选主缓慢</li>
+</ol>
+<p>暂时缺少资料支撑，只有些英文的。并且还TM不全。。回头补上。</p>
+<h3 id="其他raft算法的实现哪些知名项目也使用了raft">其他Raft算法的实现（哪些知名项目也使用了Raft）<a hidden class="anchor" aria-hidden="true" href="#其他raft算法的实现哪些知名项目也使用了raft">#</a></h3>
+<p>这个就有话说了</p>
+<p>除开我研究过一阵的ETCD，ETCD是把Raft协议用到核心层的分布式数据库</p>
+<p>这个我原来写过文章</p>
+<p><a href="https://yemilice.com/2021/04/04/%E5%AD%A6%E4%B9%A0etcd%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6raft%E5%8D%8F%E8%AE%AE%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/">学习etcd核心机制Raft协议的一点随想</a></p>
+<p>可以自己去翻一下。</p>
+<p>还有<strong>kafka</strong></p>
+<p>kafka原有的一致性算法是Zookeeper提供的ZAB协议，但是2.8被替换成了Raft，说明Zookeeper已经被抛弃了，Raft的一些机制的确是好于ZAB</p>
+<p>当然也有RocketMQ，内部核心来源于dledger源码，也是基于Raft的。</p>
+<h2 id="总结">总结<a hidden class="anchor" aria-hidden="true" href="#总结">#</a></h2>
+<p>草草写完，过于浅显，入个门也够了，也作为我自己的笔记</p>
+<p>希望有大佬看见，能给予指点，这次借鉴了<strong>张超</strong>老师的很多博客，包括他写的<strong>Es源码解析</strong>这本书，对我的帮助非常非常大！感谢您！张超老师！</p>
+<p>6月第一篇blog，我还在不断努力，你们呢？</p>
+<p>希望自己，努力的这段时间，会有好的结果，希望自己可以换个好点的工作。希望大家也是！看到博客的人，爱你们！</p>
+<pre tabindex="0"><code>
+踌躇不前，
+
+总是妄想能一步登天
+
+登上山峰发觉
+
+我依旧在山脚前沿
+
+抬目望眼
+
+所见皆是虚无贪念
+
+停或走？
+
+或是将生活翻面
+
+直面内心懦弱的另一边。
+</code></pre><p>参考文章</p>
+<blockquote>
+<p><a href="https://www.easyice.cn/archives/332">深入理解 Elasticsearch 7.x 新的集群协调层</a>
+<a href="https://helloyoubeautifulthing.net/blog/2019/08/20/new-cluster-coordination-in-elasticsearch/">Elasticsearch 新版选主流程</a></p>
+</blockquote>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/%E7%88%B5%E5%A3%AB%E4%B9%90%E5%92%8C%E5%A3%B0%E8%BF%9B%E8%A1%8C%E7%9A%84%E4%B8%AD%E5%BF%83%E4%B8%8E%E7%B2%BE%E5%8D%8E-%E5%AF%BC%E9%9F%B3/">
+    <span class="title">« </span>
+    <span>爵士乐和声进行的中心与精华-导音</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/">
+    <span class="title"> »</span>
+    <span>ElasticSearch检索的核心-倒排索引解读</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

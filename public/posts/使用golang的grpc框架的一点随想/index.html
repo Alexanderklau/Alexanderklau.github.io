@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>使用Golang的gRPC框架的一点随想 | yemilice</title>
+<meta name="keywords" content="前后端, 其他技术">
+<meta name="description" content="前言（写文章的原因）
+最近开发项目太重了，我有些感觉自己状态不太对，想要去换一个地方生活，但是说到要做的事就一定要做，学习是不能停下来的。
+最近开发使用了一下gRPC，不同于以前我自己写的Python 的 RPC，gRPC相对来说用起来更简单，写起来更容易，可能一开始有点不好使，其实熟悉了也还是不错的，那么，这篇文章主要就写一下，gRPC的基础使用和在我项目中的实际应用吧。">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/%E4%BD%BF%E7%94%A8golang%E7%9A%84grpc%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/%E4%BD%BF%E7%94%A8golang%E7%9A%84grpc%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/%E4%BD%BF%E7%94%A8golang%E7%9A%84grpc%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="使用Golang的gRPC框架的一点随想">
+  <meta property="og:description" content="前言（写文章的原因） 最近开发项目太重了，我有些感觉自己状态不太对，想要去换一个地方生活，但是说到要做的事就一定要做，学习是不能停下来的。
+最近开发使用了一下gRPC，不同于以前我自己写的Python 的 RPC，gRPC相对来说用起来更简单，写起来更容易，可能一开始有点不好使，其实熟悉了也还是不错的，那么，这篇文章主要就写一下，gRPC的基础使用和在我项目中的实际应用吧。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-07-07T13:32:21+00:00">
+    <meta property="article:modified_time" content="2020-07-07T13:32:21+00:00">
+    <meta property="article:tag" content="前后端">
+    <meta property="article:tag" content="其他技术">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="使用Golang的gRPC框架的一点随想">
+  <meta name="twitter:description" content="前言（写文章的原因） 最近开发项目太重了，我有些感觉自己状态不太对，想要去换一个地方生活，但是说到要做的事就一定要做，学习是不能停下来的。
+最近开发使用了一下gRPC，不同于以前我自己写的Python 的 RPC，gRPC相对来说用起来更简单，写起来更容易，可能一开始有点不好使，其实熟悉了也还是不错的，那么，这篇文章主要就写一下，gRPC的基础使用和在我项目中的实际应用吧。">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "使用Golang的gRPC框架的一点随想",
+      "item": "http://localhost:1313/posts/%E4%BD%BF%E7%94%A8golang%E7%9A%84grpc%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "使用Golang的gRPC框架的一点随想",
+  "name": "使用Golang的gRPC框架的一点随想",
+  "description": "前言（写文章的原因） 最近开发项目太重了，我有些感觉自己状态不太对，想要去换一个地方生活，但是说到要做的事就一定要做，学习是不能停下来的。\n最近开发使用了一下gRPC，不同于以前我自己写的Python 的 RPC，gRPC相对来说用起来更简单，写起来更容易，可能一开始有点不好使，其实熟悉了也还是不错的，那么，这篇文章主要就写一下，gRPC的基础使用和在我项目中的实际应用吧。\n",
+  "keywords": [
+    "前后端", "其他技术"
+  ],
+  "articleBody": "前言（写文章的原因） 最近开发项目太重了，我有些感觉自己状态不太对，想要去换一个地方生活，但是说到要做的事就一定要做，学习是不能停下来的。\n最近开发使用了一下gRPC，不同于以前我自己写的Python 的 RPC，gRPC相对来说用起来更简单，写起来更容易，可能一开始有点不好使，其实熟悉了也还是不错的，那么，这篇文章主要就写一下，gRPC的基础使用和在我项目中的实际应用吧。\nRPC框架是什么 简单说下什么是RPC，RPC是什么，全称是Remote Procedure Call Protocol，中文名称是远程调用协议，这个就说的很明白了\nRPC干嘛的，远程调用的呗！\n远程调什么？参数呗！函数呗！发消息呗！\n大白话来说，像调用本地服务一样调用远程服务，就是你现在要完成一个动作，你需要一个老哥（机器）和你联动一起完成，所以你就要通过一个渠道告诉他，说，老铁，我们要一起做这个东西，知道吗。\n这个渠道，就叫RPC，一般我们在网络服务，分布式服务，微服务中都需要这个东西。\n从技术的角度上来说，RPC更类似于一种client，server的通信过程，client发送消息给server，server接收到消息，然后返回消息给client。\ngRPC是什么 我是在写Golang网络服务的时候发现了这个框架gRPC，一看就是谷歌亲儿子框架，粗看了一下，感觉其实还好，所以我仔细看了一下这个框架\n首先这货需要一个ProtoBuf序列化工具，是给客户端提供接口的，ProtoBuf这个东西需要另外安装，没他就不能解析接口，这个的好处是，你的开发语言不受这个影响，相当于就是翻译器，能把多种语言编写的接口api翻译出来，给gRPC去用 第二就是需要gRPC的本体，这个如果你有Golang环境直接go get 即可 除此之外，粗看一下gRPC，其实也需要client和server端，也是互相交互的。 gRPC主要的好处 这货的好处\n其实说白了，就是性能高，从Golang的开发来说，就表明了gRPC走的也是高性能的逻辑。 protobuf这东西，也是gRPC钦定的接口编写工具，这东西可以严格的约束住接口，告诉他，你可以传什么，不能传什么，加强了gRPC的安全机制 protobuf可以压缩编码为二进制，二进制你们懂吧，这个东西就更快了，耍起来那就是大杀器，首先相比大刀，他就是手枪，不仅小，威力还大，还可以达到kill 人的目的，因为压缩成二进制，传递的数据量也小了，通过基础的http2还可以实现异步请求，这就很nice了。 来玩玩gRPC吧 安装protobuf 首先你要先去protobuf的大本营 https://github.com/protocolbuffers/protobuf/releases，先找对应的版本下载\n我这里是Centos7 64位， 所以我选了protoc-3.12.3-linux-x86_64.zip 下载，你们要去找对应的版本下载。\n然后你需要解压\nunzip protoc-3.12.3-linux-x86_64.zip CD到目录, 进到目录的bin下，给protoc赋上可执行的权限\ncd protoc-3.12.3-linux-x86_64/bin chmod 777 protoc 这下protoc可用了，你应该把它移动到bin下，方便未来调用\ncp protoc /usr/bin 定义一个protobuf接口 重头戏来了，现在我们从零开始开发了，现在我们先创建一个项目文件夹hellogRPC,这下面现在什么也没有。\n看图\n现在我们创一个名字叫manage的文件夹，在下面创建一个名为manage.proto的接口定义文件，类似这样\n看图\n现在开始编写proto文件\nsyntax = \"proto3\"; option objc_class_prefix = \"HLW\"; package manage; //定义服务 service GreeterServer { // 定义一个具体的接口，定义输出和输出的样式 rpc SayHello (HelloRequest) returns (HelloReply) {} } // 定义输入 string message HelloRequest { string name = 1; } // 定义输出 string message HelloReply { string message = 1; } 这里具体的意思就是，我，下一道圣旨，以后，都按着这个给我输入输出，现在我只开了一个sayhello的接口，别的进不来，就这样。\n编译protobuf文件 这一步是要把protobuf生成为二进制文件，就像我们前面说的，这也是人家gRPC的一个有点，就是有点儿操蛋，因为麻烦。。。。\ngo get -u github.com/golang/protobuf/protoc-gen-go 下下来之后，你还得把他移动一下下，到你的go path下面，我这里是/root/go\ncd /root/go/bin cp -r protoc-gen-go /usr/bin 再编译一下，走一波编译\nprotoc --go_out=plugins=grpc:. *.proto 这下你可以看见，多出一个同名得pb.go文件，类似这样\n这就编译成功了。下一步继续干活儿\n编写client服务 client相当于发号施令的大哥，主要就是去找server，告诉server，你们要干嘛，要干嘛这种。\n咱们现在创建一个client.go文件\n现在开写\npackage main import ( \"log\" pb \"/你的目录/hellogRPC/manage\" \"golang.org/x/net/context\" \"google.golang.org/grpc\" ) //HelloWork 定义一个hello world 方法 func HelloWork(ip string, name string) { conn, err := grpc.Dial(ip, grpc.WithInsecure()) if err != nil { log.Fatalf(\"did not connect: %v\", err) } defer conn.Close() c := pb.NewGreeterClient(conn) r, err := c.SayHello(context.Background(), \u0026pb.HelloRequest{Name: name}) if err != nil { log.Fatalf(\"could not greet: %v\", err) } log.Printf(\"Greeting: %s\", r.Message) } func main() { //传输要发送的ip，传输name HelloWork(\"127.0.0.1:4321\", \"work\") } 编写server服务 server服务就类似于等待发号施令的小弟，他们会常驻在后台等待，并且会开启一个专用端口去接受client发来的信息，类似这样\npackage main import ( \"log\" \"net\" pb \"/你的目录/hellogRPC/manage\" \"golang.org/x/net/context\" \"google.golang.org/grpc\" ) const ( //定义一个端口 port = \":4321\" ) // 定义server type server struct{} //定义SayHello 记住，这里的SayHello要和你proto里面的接口名一致 func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) { return \u0026pb.HelloReply{Message: \"Hello \" + in.Name}, nil } func main() { lis, err := net.Listen(\"tcp\", port) if err != nil { log.Fatalf(\"failed to listen: %v\", err) } s := grpc.NewServer() pb.RegisterGreeterServer(s, \u0026server{}) s.Serve(lis) } 来跑一下 先启动 server.go\ngo run server.go 再启动 client.go\ngo run clinet.go 发现输出了\n2020/07/07 16:01:10 Greeting: Hello work 这时我们的目录结构如下，基础的gRPC服务也就此完成。\n总结 其实这个还是比较简单的，但是具体到后面使用，你可能会遇到，gRPC和ETCD冲突，编译的时候出现bug，编译的时候编译器版本对不上等等等等，我这次踩了不少坑，不过还好过来了，项目快要结束了，终于要结束了，我想我需要休息一下，然后去找一个适合我的job。\n预告一下，未来我将进行kail linux 和渗透测试的文章更新，基础的技术我应该不会再更了，毕竟我15年入行，16年正式上班，是该有一些蜕变了，未来我将持续输出高质量的文章，请多多期待吧。\n",
+  "wordCount" : "2431",
+  "inLanguage": "zh-cn",
+  "datePublished": "2020-07-07T13:32:21Z",
+  "dateModified": "2020-07-07T13:32:21Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/%E4%BD%BF%E7%94%A8golang%E7%9A%84grpc%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            使用Golang的gRPC框架的一点随想
+        </h1>
+        <div class="post-meta"><span title='2020-07-07 13:32:21 +0000 UTC'>July 7, 2020</span>&nbsp;·&nbsp;<span>5 min</span>&nbsp;·&nbsp;<span>2431 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e5%89%8d%e8%a8%80%e5%86%99%e6%96%87%e7%ab%a0%e7%9a%84%e5%8e%9f%e5%9b%a0" aria-label="前言（写文章的原因）">前言（写文章的原因）</a></li>
+            <li>
+                <a href="#rpc%e6%a1%86%e6%9e%b6%e6%98%af%e4%bb%80%e4%b9%88" aria-label="RPC框架是什么">RPC框架是什么</a></li>
+            <li>
+                <a href="#grpc%e6%98%af%e4%bb%80%e4%b9%88" aria-label="gRPC是什么">gRPC是什么</a><ul>
+                    
+            <li>
+                <a href="#grpc%e4%b8%bb%e8%a6%81%e7%9a%84%e5%a5%bd%e5%a4%84" aria-label="gRPC主要的好处">gRPC主要的好处</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e6%9d%a5%e7%8e%a9%e7%8e%a9grpc%e5%90%a7" aria-label="来玩玩gRPC吧">来玩玩gRPC吧</a><ul>
+                    
+            <li>
+                <a href="#%e5%ae%89%e8%a3%85protobuf" aria-label="安装protobuf">安装protobuf</a></li>
+            <li>
+                <a href="#%e5%ae%9a%e4%b9%89%e4%b8%80%e4%b8%aaprotobuf%e6%8e%a5%e5%8f%a3" aria-label="定义一个protobuf接口">定义一个protobuf接口</a></li>
+            <li>
+                <a href="#%e7%bc%96%e8%af%91protobuf%e6%96%87%e4%bb%b6" aria-label="编译protobuf文件">编译protobuf文件</a></li>
+            <li>
+                <a href="#%e7%bc%96%e5%86%99client%e6%9c%8d%e5%8a%a1" aria-label="编写client服务">编写client服务</a></li>
+            <li>
+                <a href="#%e7%bc%96%e5%86%99server%e6%9c%8d%e5%8a%a1" aria-label="编写server服务">编写server服务</a></li>
+            <li>
+                <a href="#%e6%9d%a5%e8%b7%91%e4%b8%80%e4%b8%8b" aria-label="来跑一下">来跑一下</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e6%80%bb%e7%bb%93" aria-label="总结">总结</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="前言写文章的原因">前言（写文章的原因）<a hidden class="anchor" aria-hidden="true" href="#前言写文章的原因">#</a></h2>
+<p>最近开发项目太重了，我有些感觉自己状态不太对，想要去换一个地方生活，但是说到要做的事就一定要做，学习是不能停下来的。</p>
+<p>最近开发使用了一下gRPC，不同于以前我自己写的Python 的 RPC，gRPC相对来说用起来更简单，写起来更容易，可能一开始有点不好使，其实熟悉了也还是不错的，那么，这篇文章主要就写一下，gRPC的基础使用和在我项目中的实际应用吧。</p>
+<h2 id="rpc框架是什么">RPC框架是什么<a hidden class="anchor" aria-hidden="true" href="#rpc框架是什么">#</a></h2>
+<p>简单说下什么是RPC，RPC是什么，全称是Remote Procedure Call Protocol，中文名称是远程调用协议，这个就说的很明白了</p>
+<p>RPC干嘛的，远程调用的呗！</p>
+<p>远程调什么？参数呗！函数呗！发消息呗！</p>
+<p>大白话来说，像调用本地服务一样调用远程服务，就是你现在要完成一个动作，你需要一个老哥（机器）和你联动一起完成，所以你就要通过一个渠道告诉他，说，老铁，我们要一起做这个东西，知道吗。</p>
+<p>这个渠道，就叫RPC，一般我们在网络服务，分布式服务，微服务中都需要这个东西。</p>
+<p>从技术的角度上来说，RPC更类似于一种client，server的通信过程，client发送消息给server，server接收到消息，然后返回消息给client。</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E4%BD%BF%E7%94%A8Golang%E7%9A%84gRPC%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/v2-21431b51eaf16789cb8be2db812cfe15_r.jpg"></p>
+<h2 id="grpc是什么">gRPC是什么<a hidden class="anchor" aria-hidden="true" href="#grpc是什么">#</a></h2>
+<p>我是在写Golang网络服务的时候发现了这个框架gRPC，一看就是谷歌亲儿子框架，粗看了一下，感觉其实还好，所以我仔细看了一下这个框架</p>
+<ol>
+<li>首先这货需要一个ProtoBuf序列化工具，是给客户端提供接口的，ProtoBuf这个东西需要另外安装，没他就不能解析接口，这个的好处是，你的开发语言不受这个影响，相当于就是翻译器，能把多种语言编写的接口api翻译出来，给gRPC去用</li>
+<li>第二就是需要gRPC的本体，这个如果你有Golang环境直接go get 即可</li>
+<li>除此之外，粗看一下gRPC，其实也需要client和server端，也是互相交互的。</li>
+</ol>
+<h3 id="grpc主要的好处">gRPC主要的好处<a hidden class="anchor" aria-hidden="true" href="#grpc主要的好处">#</a></h3>
+<p>这货的好处</p>
+<ol>
+<li>其实说白了，就是性能高，从Golang的开发来说，就表明了gRPC走的也是高性能的逻辑。</li>
+<li>protobuf这东西，也是gRPC钦定的接口编写工具，这东西可以严格的约束住接口，告诉他，你可以传什么，不能传什么，加强了gRPC的安全机制</li>
+<li>protobuf可以压缩编码为二进制，二进制你们懂吧，这个东西就更快了，耍起来那就是大杀器，首先相比大刀，他就是手枪，不仅小，威力还大，还可以达到kill 人的目的，因为压缩成二进制，传递的数据量也小了，通过基础的http2还可以实现异步请求，这就很nice了。</li>
+</ol>
+<h2 id="来玩玩grpc吧">来玩玩gRPC吧<a hidden class="anchor" aria-hidden="true" href="#来玩玩grpc吧">#</a></h2>
+<h3 id="安装protobuf">安装protobuf<a hidden class="anchor" aria-hidden="true" href="#安装protobuf">#</a></h3>
+<p>首先你要先去protobuf的大本营 <strong><a href="https://github.com/protocolbuffers/protobuf/releases">https://github.com/protocolbuffers/protobuf/releases</a></strong>，先找对应的版本下载</p>
+<p>我这里是Centos7 64位， 所以我选了<a href="https://github-production-release-asset-2e65be.s3.amazonaws.com/23357588/f7d68880-a4fb-11ea-9ab1-f9b12ce00cda?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20200707%2Fus-east-1%2Fs3%2Faws4_request&amp;X-Amz-Date=20200707T065558Z&amp;X-Amz-Expires=300&amp;X-Amz-Signature=4f4d0b1cc59536cb85626624f3c1380e23d9efab2073e23c564715a351c3908b&amp;X-Amz-SignedHeaders=host&amp;actor_id=14084047&amp;repo_id=23357588&amp;response-content-disposition=attachment%3B%20filename%3Dprotoc-3.12.3-linux-x86_64.zip&amp;response-content-type=application%2Foctet-stream">protoc-3.12.3-linux-x86_64.zip</a> 下载，你们要去找对应的版本下载。</p>
+<p>然后你需要解压</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>unzip protoc-3.12.3-linux-x86_64.zip
+</span></span></code></pre></div><p>CD到目录, 进到目录的bin下，给protoc赋上可执行的权限</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>cd protoc-3.12.3-linux-x86_64/bin
+</span></span><span style="display:flex;"><span>chmod <span style="color:#ae81ff">777</span> protoc
+</span></span></code></pre></div><p>这下protoc可用了，你应该把它移动到bin下，方便未来调用</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>cp protoc /usr/bin
+</span></span></code></pre></div><h3 id="定义一个protobuf接口">定义一个protobuf接口<a hidden class="anchor" aria-hidden="true" href="#定义一个protobuf接口">#</a></h3>
+<p>重头戏来了，现在我们从零开始开发了，现在我们先创建一个项目文件夹hellogRPC,这下面现在什么也没有。</p>
+<p>看图</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E4%BD%BF%E7%94%A8Golang%E7%9A%84gRPC%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/1594106006(1).jpg"></p>
+<p>现在我们创一个名字叫manage的文件夹，在下面创建一个名为manage.proto的接口定义文件，类似这样</p>
+<p>看图</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E4%BD%BF%E7%94%A8Golang%E7%9A%84gRPC%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/1594106339(1).png"></p>
+<p>现在开始编写proto文件</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-protobuf" data-lang="protobuf"><span style="display:flex;"><span>syntax <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;proto3&#34;</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">option</span> objc_class_prefix <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;HLW&#34;</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#f92672">package</span> manage;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">//定义服务
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">service</span> GreeterServer {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 定义一个具体的接口，定义输出和输出的样式
+</span></span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">rpc</span> SayHello (HelloRequest) <span style="color:#66d9ef">returns</span> (HelloReply) {}<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 定义输入 string
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">HelloRequest</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">string</span> name <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 定义输出 string
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">HelloReply</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">string</span> <span style="color:#66d9ef">message</span> <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>这里具体的意思就是，我，下一道圣旨，以后，都按着这个给我输入输出，现在我只开了一个sayhello的接口，别的进不来，就这样。</p>
+<h3 id="编译protobuf文件">编译protobuf文件<a hidden class="anchor" aria-hidden="true" href="#编译protobuf文件">#</a></h3>
+<p>这一步是要把protobuf生成为二进制文件，就像我们前面说的，这也是人家gRPC的一个有点，就是有点儿操蛋，因为麻烦。。。。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#66d9ef">go</span> <span style="color:#a6e22e">get</span> <span style="color:#f92672">-</span><span style="color:#a6e22e">u</span> <span style="color:#a6e22e">github</span>.<span style="color:#a6e22e">com</span><span style="color:#f92672">/</span><span style="color:#a6e22e">golang</span><span style="color:#f92672">/</span><span style="color:#a6e22e">protobuf</span><span style="color:#f92672">/</span><span style="color:#a6e22e">protoc</span><span style="color:#f92672">-</span><span style="color:#a6e22e">gen</span><span style="color:#f92672">-</span><span style="color:#66d9ef">go</span>
+</span></span></code></pre></div><p>下下来之后，你还得把他移动一下下，到你的go path下面，我这里是/root/go</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>cd /root/go/bin
+</span></span><span style="display:flex;"><span>cp -r  protoc-gen-go /usr/bin
+</span></span></code></pre></div><p>再编译一下，走一波编译</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>protoc --go_out<span style="color:#f92672">=</span>plugins<span style="color:#f92672">=</span>grpc:. *.proto
+</span></span></code></pre></div><p>这下你可以看见，多出一个同名得pb.go文件，类似这样</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E4%BD%BF%E7%94%A8Golang%E7%9A%84gRPC%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/PX%5B2DARE%5B%60FGPROJD2%401RF4.png"></p>
+<p>这就编译成功了。下一步继续干活儿</p>
+<h3 id="编写client服务">编写client服务<a hidden class="anchor" aria-hidden="true" href="#编写client服务">#</a></h3>
+<p>client相当于发号施令的大哥，主要就是去找server，告诉server，你们要干嘛，要干嘛这种。</p>
+<p>咱们现在创建一个client.go文件</p>
+<p>现在开写</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;log&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">pb</span> <span style="color:#e6db74">&#34;/你的目录/hellogRPC/manage&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;golang.org/x/net/context&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;google.golang.org/grpc&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//HelloWork 定义一个hello world 方法</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">HelloWork</span>(<span style="color:#a6e22e">ip</span> <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">name</span> <span style="color:#66d9ef">string</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">conn</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">grpc</span>.<span style="color:#a6e22e">Dial</span>(<span style="color:#a6e22e">ip</span>, <span style="color:#a6e22e">grpc</span>.<span style="color:#a6e22e">WithInsecure</span>())
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatalf</span>(<span style="color:#e6db74">&#34;did not connect: %v&#34;</span>, <span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">Close</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">NewGreeterClient</span>(<span style="color:#a6e22e">conn</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">r</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">SayHello</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Background</span>(), <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">HelloRequest</span>{<span style="color:#a6e22e">Name</span>: <span style="color:#a6e22e">name</span>})
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatalf</span>(<span style="color:#e6db74">&#34;could not greet: %v&#34;</span>, <span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;Greeting: %s&#34;</span>, <span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">Message</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//传输要发送的ip，传输name</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">HelloWork</span>(<span style="color:#e6db74">&#34;127.0.0.1:4321&#34;</span>, <span style="color:#e6db74">&#34;work&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="编写server服务">编写server服务<a hidden class="anchor" aria-hidden="true" href="#编写server服务">#</a></h3>
+<p>server服务就类似于等待发号施令的小弟，他们会常驻在后台等待，并且会开启一个专用端口去接受client发来的信息，类似这样</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;log&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;net&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">pb</span> <span style="color:#e6db74">&#34;/你的目录/hellogRPC/manage&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;golang.org/x/net/context&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;google.golang.org/grpc&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> (
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//定义一个端口</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">port</span> = <span style="color:#e6db74">&#34;:4321&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 定义server</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">server</span> <span style="color:#66d9ef">struct</span>{}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//定义SayHello 记住，这里的SayHello要和你proto里面的接口名一致</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">s</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">server</span>) <span style="color:#a6e22e">SayHello</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">in</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">HelloRequest</span>) (<span style="color:#f92672">*</span><span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">HelloReply</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">HelloReply</span>{<span style="color:#a6e22e">Message</span>: <span style="color:#e6db74">&#34;Hello &#34;</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">in</span>.<span style="color:#a6e22e">Name</span>}, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">lis</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">Listen</span>(<span style="color:#e6db74">&#34;tcp&#34;</span>, <span style="color:#a6e22e">port</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatalf</span>(<span style="color:#e6db74">&#34;failed to listen: %v&#34;</span>, <span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">s</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">grpc</span>.<span style="color:#a6e22e">NewServer</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">pb</span>.<span style="color:#a6e22e">RegisterGreeterServer</span>(<span style="color:#a6e22e">s</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">server</span>{})
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">s</span>.<span style="color:#a6e22e">Serve</span>(<span style="color:#a6e22e">lis</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="来跑一下">来跑一下<a hidden class="anchor" aria-hidden="true" href="#来跑一下">#</a></h3>
+<p>先启动 server.go</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#66d9ef">go</span> <span style="color:#a6e22e">run</span> <span style="color:#a6e22e">server</span>.<span style="color:#66d9ef">go</span>
+</span></span></code></pre></div><p>再启动 client.go</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#66d9ef">go</span> <span style="color:#a6e22e">run</span> <span style="color:#a6e22e">clinet</span>.<span style="color:#66d9ef">go</span>
+</span></span></code></pre></div><p>发现输出了</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>2020/07/07 16:01:10 Greeting: Hello work
+</span></span></code></pre></div><p>这时我们的目录结构如下，基础的gRPC服务也就此完成。</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E4%BD%BF%E7%94%A8Golang%E7%9A%84gRPC%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/1594108929(1).jpg"></p>
+<h2 id="总结">总结<a hidden class="anchor" aria-hidden="true" href="#总结">#</a></h2>
+<p>其实这个还是比较简单的，但是具体到后面使用，你可能会遇到，gRPC和ETCD冲突，编译的时候出现bug，编译的时候编译器版本对不上等等等等，我这次踩了不少坑，不过还好过来了，项目快要结束了，终于要结束了，我想我需要休息一下，然后去找一个适合我的job。</p>
+<p>预告一下，未来我将进行kail linux 和渗透测试的文章更新，基础的技术我应该不会再更了，毕竟我15年入行，16年正式上班，是该有一些蜕变了，未来我将持续输出高质量的文章，请多多期待吧。</p>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a></li>
+            <li><a href="http://localhost:1313/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/grow-up/">
+    <span class="title">« </span>
+    <span>Grow_Up</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/%E6%81%B6%E6%80%A7%E5%BE%AA%E7%8E%AF/">
+    <span class="title"> »</span>
+    <span>恶性循环</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

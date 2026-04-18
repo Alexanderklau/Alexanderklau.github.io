@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>归档 | yemilice</title>
+<meta name="keywords" content="">
+<meta name="description" content="archives">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/archives/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/archives/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/archives/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="归档">
+  <meta property="og:description" content="archives">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="归档">
+  <meta name="twitter:description" content="archives">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "归档",
+      "item": "http://localhost:1313/archives/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "归档",
+  "name": "归档",
+  "description": "archives",
+  "keywords": [
+    
+  ],
+  "articleBody": "",
+  "wordCount" : "0",
+  "inLanguage": "zh-cn",
+  "datePublished": "0001-01-01T00:00:00Z",
+  "dateModified": "0001-01-01T00:00:00Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/archives/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body class="list" id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span class="active">归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<header class="page-header">
+  <h1>
+    归档
+    <a href="/index.xml" title="RSS" aria-label="RSS">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" height="23">
+        <path d="M4 11a9 9 0 0 1 9 9" />
+        <path d="M4 4a16 16 0 0 1 16 16" />
+        <circle cx="5" cy="19" r="1" />
+      </svg>
+    </a>
+  </h1>
+</header>
+<div class="archive-year">
+  <h2 class="archive-year-header" id="2025">
+    <a class="archive-header-link" href="#2025">2025</a>
+    <sup class="archive-count">&nbsp;1</sup>
+  </h2>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2025-April">
+      <a class="archive-header-link" href="#2025-April">April</a>
+      <sup class="archive-count">&nbsp;1</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">COD(使命召唤)-排位赛匹配机制详解
+        </h3>
+        <div class="archive-meta"><span title='2025-04-21 09:40:45 +0000 UTC'>April 21, 2025</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4372 words</span></div>
+        <a class="entry-link" aria-label="post link to COD(使命召唤)-排位赛匹配机制详解" href="http://localhost:1313/posts/cod%E4%BD%BF%E5%91%BD%E5%8F%AC%E5%94%A4-%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/"></a>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="archive-year">
+  <h2 class="archive-year-header" id="2024">
+    <a class="archive-header-link" href="#2024">2024</a>
+    <sup class="archive-count">&nbsp;2</sup>
+  </h2>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2024-July">
+      <a class="archive-header-link" href="#2024-July">July</a>
+      <sup class="archive-count">&nbsp;1</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">GitLab/ArgoCD/Jenkins CI/CD方案梳理和对比
+        </h3>
+        <div class="archive-meta"><span title='2024-07-30 21:07:25 +0000 UTC'>July 30, 2024</span>&nbsp;·&nbsp;<span>7 min</span>&nbsp;·&nbsp;<span>3283 words</span></div>
+        <a class="entry-link" aria-label="post link to GitLab/ArgoCD/Jenkins CI/CD方案梳理和对比" href="http://localhost:1313/posts/gitlab-argocd-jenkins%E6%96%B9%E6%A1%88%E6%A2%B3%E7%90%86%E5%92%8C%E5%AF%B9%E6%AF%94/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2024-April">
+      <a class="archive-header-link" href="#2024-April">April</a>
+      <sup class="archive-count">&nbsp;1</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">多人游戏网络技术基础
+        </h3>
+        <div class="archive-meta"><span title='2024-04-14 09:06:47 +0000 UTC'>April 14, 2024</span>&nbsp;·&nbsp;<span>12 min</span>&nbsp;·&nbsp;<span>5570 words</span></div>
+        <a class="entry-link" aria-label="post link to 多人游戏网络技术基础" href="http://localhost:1313/posts/%E5%A4%9A%E4%BA%BA%E6%B8%B8%E6%88%8F%E6%8A%80%E6%9C%AF%E5%9F%BA%E7%A1%80/"></a>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="archive-year">
+  <h2 class="archive-year-header" id="2022">
+    <a class="archive-header-link" href="#2022">2022</a>
+    <sup class="archive-count">&nbsp;1</sup>
+  </h2>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2022-January">
+      <a class="archive-header-link" href="#2022-January">January</a>
+      <sup class="archive-count">&nbsp;1</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">2022开年礼物-拿下育碧/EA/动视Offer的随想
+        </h3>
+        <div class="archive-meta"><span title='2022-01-25 09:02:04 +0000 UTC'>January 25, 2022</span>&nbsp;·&nbsp;<span>7 min</span>&nbsp;·&nbsp;<span>3256 words</span></div>
+        <a class="entry-link" aria-label="post link to 2022开年礼物-拿下育碧/EA/动视Offer的随想" href="http://localhost:1313/posts/2022%E5%BC%80%E5%B9%B4%E7%A4%BC%E7%89%A9-%E6%8B%BF%E4%B8%8B%E8%82%B2%E7%A2%A7-%E5%8A%A8%E8%A7%86-eaoffer%E7%9A%84%E9%9A%8F%E6%83%B3/"></a>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="archive-year">
+  <h2 class="archive-year-header" id="2021">
+    <a class="archive-header-link" href="#2021">2021</a>
+    <sup class="archive-count">&nbsp;20</sup>
+  </h2>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2021-December">
+      <a class="archive-header-link" href="#2021-December">December</a>
+      <sup class="archive-count">&nbsp;2</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang协程通信探究
+        </h3>
+        <div class="archive-meta"><span title='2021-12-17 16:40:00 +0000 UTC'>December 17, 2021</span>&nbsp;·&nbsp;<span>12 min</span>&nbsp;·&nbsp;<span>5653 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang协程通信探究" href="http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E9%80%9A%E4%BF%A1%E6%8E%A2%E7%A9%B6/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">ElasticSearch重大漏洞-log4j的处理方案-12月20日更新！！！！！
+        </h3>
+        <div class="archive-meta"><span title='2021-12-14 15:45:12 +0000 UTC'>December 14, 2021</span>&nbsp;·&nbsp;<span>2 min</span>&nbsp;·&nbsp;<span>780 words</span></div>
+        <a class="entry-link" aria-label="post link to ElasticSearch重大漏洞-log4j的处理方案-12月20日更新！！！！！" href="http://localhost:1313/posts/elasticsearch%E9%87%8D%E5%A4%A7%E6%BC%8F%E6%B4%9E-log4j%E7%9A%84%E5%A4%84%E7%90%86%E6%96%B9%E6%A1%88/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2021-November">
+      <a class="archive-header-link" href="#2021-November">November</a>
+      <sup class="archive-count">&nbsp;2</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Black Hole（黑洞）（Cover MC 몽 ／ Feat. Ailee(에일리）
+        </h3>
+        <div class="archive-meta"><span title='2021-11-30 12:23:48 +0000 UTC'>November 30, 2021</span>&nbsp;·&nbsp;<span>2 min</span>&nbsp;·&nbsp;<span>768 words</span></div>
+        <a class="entry-link" aria-label="post link to Black Hole（黑洞）（Cover MC 몽 ／ Feat. Ailee(에일리）" href="http://localhost:1313/posts/black-hole%E9%BB%91%E6%B4%9Ecover-mc%E6%A2%A6--ailee/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang协程调度探究
+        </h3>
+        <div class="archive-meta"><span title='2021-11-08 09:43:19 +0000 UTC'>November 8, 2021</span>&nbsp;·&nbsp;<span>15 min</span>&nbsp;·&nbsp;<span>7043 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang协程调度探究" href="http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E8%B0%83%E5%BA%A6%E6%8E%A2%E7%A9%B6/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2021-October">
+      <a class="archive-header-link" href="#2021-October">October</a>
+      <sup class="archive-count">&nbsp;1</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang协程基础探究
+        </h3>
+        <div class="archive-meta"><span title='2021-10-27 11:39:17 +0000 UTC'>October 27, 2021</span>&nbsp;·&nbsp;<span>6 min</span>&nbsp;·&nbsp;<span>2739 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang协程基础探究" href="http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2021-September">
+      <a class="archive-header-link" href="#2021-September">September</a>
+      <sup class="archive-count">&nbsp;1</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">设计高可用的ElasicSearch索引
+        </h3>
+        <div class="archive-meta"><span title='2021-09-09 15:36:23 +0000 UTC'>September 9, 2021</span>&nbsp;·&nbsp;<span>8 min</span>&nbsp;·&nbsp;<span>3639 words</span></div>
+        <a class="entry-link" aria-label="post link to 设计高可用的ElasicSearch索引" href="http://localhost:1313/posts/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84elasicsaerch%E7%B4%A2%E5%BC%95/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2021-August">
+      <a class="archive-header-link" href="#2021-August">August</a>
+      <sup class="archive-count">&nbsp;2</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">写一个高可用Rpc服务（基础知识篇）
+        </h3>
+        <div class="archive-meta"><span title='2021-08-30 18:30:31 +0000 UTC'>August 30, 2021</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4283 words</span></div>
+        <a class="entry-link" aria-label="post link to 写一个高可用Rpc服务（基础知识篇）" href="http://localhost:1313/posts/%E5%86%99%E4%B8%80%E4%B8%AA%E9%AB%98%E5%8F%AF%E7%94%A8rpc%E6%9C%8D%E5%8A%A1%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E7%AF%87/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">望江亭(remix)
+        </h3>
+        <div class="archive-meta"><span title='2021-08-20 14:33:17 +0000 UTC'>August 20, 2021</span>&nbsp;·&nbsp;<span>1 min</span>&nbsp;·&nbsp;<span>110 words</span></div>
+        <a class="entry-link" aria-label="post link to 望江亭(remix)" href="http://localhost:1313/posts/%E6%9C%9B%E6%B1%9F%E4%BA%ADremix/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2021-June">
+      <a class="archive-header-link" href="#2021-June">June</a>
+      <sup class="archive-count">&nbsp;3</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">刷KPI的HR就不要给我发面试邀请了吧
+        </h3>
+        <div class="archive-meta"><span title='2021-06-23 14:42:49 +0000 UTC'>June 23, 2021</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1699 words</span></div>
+        <a class="entry-link" aria-label="post link to 刷KPI的HR就不要给我发面试邀请了吧" href="http://localhost:1313/posts/%E5%88%B7kpi%E7%9A%84hr%E5%B0%B1%E4%B8%8D%E8%A6%81%E7%BB%99%E6%88%91%E5%8F%91%E9%9D%A2%E8%AF%95%E9%82%80%E8%AF%B7%E4%BA%86%E5%90%A7/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">爵士乐和声进行的中心与精华-导音
+        </h3>
+        <div class="archive-meta"><span title='2021-06-23 10:42:01 +0000 UTC'>June 23, 2021</span>&nbsp;·&nbsp;<span>2 min</span>&nbsp;·&nbsp;<span>800 words</span></div>
+        <a class="entry-link" aria-label="post link to 爵士乐和声进行的中心与精华-导音" href="http://localhost:1313/posts/%E7%88%B5%E5%A3%AB%E4%B9%90%E5%92%8C%E5%A3%B0%E8%BF%9B%E8%A1%8C%E7%9A%84%E4%B8%AD%E5%BF%83%E4%B8%8E%E7%B2%BE%E5%8D%8E-%E5%AF%BC%E9%9F%B3/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">ElasticSearch-新老选主算法对比
+        </h3>
+        <div class="archive-meta"><span title='2021-06-16 15:17:06 +0000 UTC'>June 16, 2021</span>&nbsp;·&nbsp;<span>11 min</span>&nbsp;·&nbsp;<span>5505 words</span></div>
+        <a class="entry-link" aria-label="post link to ElasticSearch-新老选主算法对比" href="http://localhost:1313/posts/elasticsearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2021-May">
+      <a class="archive-header-link" href="#2021-May">May</a>
+      <sup class="archive-count">&nbsp;2</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">ElasticSearch检索的核心-倒排索引解读
+        </h3>
+        <div class="archive-meta"><span title='2021-05-14 15:09:41 +0000 UTC'>May 14, 2021</span>&nbsp;·&nbsp;<span>8 min</span>&nbsp;·&nbsp;<span>3555 words</span></div>
+        <a class="entry-link" aria-label="post link to ElasticSearch检索的核心-倒排索引解读" href="http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">为什么要使用消息队列服务
+        </h3>
+        <div class="archive-meta"><span title='2021-05-08 09:48:28 +0000 UTC'>May 8, 2021</span>&nbsp;·&nbsp;<span>11 min</span>&nbsp;·&nbsp;<span>5150 words</span></div>
+        <a class="entry-link" aria-label="post link to 为什么要使用消息队列服务" href="http://localhost:1313/posts/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2021-April">
+      <a class="archive-header-link" href="#2021-April">April</a>
+      <sup class="archive-count">&nbsp;3</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">弄懂难缠的DFS算法和相关变种(Python实现)
+        </h3>
+        <div class="archive-meta"><span title='2021-04-28 17:21:07 +0000 UTC'>April 28, 2021</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1963 words</span></div>
+        <a class="entry-link" aria-label="post link to 弄懂难缠的DFS算法和相关变种(Python实现)" href="http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84dfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">学习etcd的消息协议gRPC一点随想
+        </h3>
+        <div class="archive-meta"><span title='2021-04-06 10:39:55 +0000 UTC'>April 6, 2021</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4331 words</span></div>
+        <a class="entry-link" aria-label="post link to 学习etcd的消息协议gRPC一点随想" href="http://localhost:1313/posts/etcd%E7%9A%84%E6%B6%88%E6%81%AF%E5%8D%8F%E8%AE%AE-grpc%E5%AD%A6%E4%B9%A0%E9%9A%8F%E6%83%B3/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">学习etcd核心机制Raft协议的一点随想
+        </h3>
+        <div class="archive-meta"><span title='2021-04-04 14:50:25 +0000 UTC'>April 4, 2021</span>&nbsp;·&nbsp;<span>11 min</span>&nbsp;·&nbsp;<span>5121 words</span></div>
+        <a class="entry-link" aria-label="post link to 学习etcd核心机制Raft协议的一点随想" href="http://localhost:1313/posts/%E5%AD%A6%E4%B9%A0etcd%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6raft%E5%8D%8F%E8%AE%AE%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2021-March">
+      <a class="archive-header-link" href="#2021-March">March</a>
+      <sup class="archive-count">&nbsp;2</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang进阶-必须知道的一些事
+        </h3>
+        <div class="archive-meta"><span title='2021-03-19 16:46:16 +0000 UTC'>March 19, 2021</span>&nbsp;·&nbsp;<span>7 min</span>&nbsp;·&nbsp;<span>3470 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang进阶-必须知道的一些事" href="http://localhost:1313/posts/golang%E8%BF%9B%E9%98%B6-%E5%BF%85%E9%A1%BB%E7%9F%A5%E9%81%93%E7%9A%84%E4%B8%80%E4%BA%9B%E4%BA%8B/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">读诗的感悟
+        </h3>
+        <div class="archive-meta"><span title='2021-03-03 13:42:41 +0000 UTC'>March 3, 2021</span>&nbsp;·&nbsp;<span>1 min</span>&nbsp;·&nbsp;<span>286 words</span></div>
+        <a class="entry-link" aria-label="post link to 读诗的感悟" href="http://localhost:1313/posts/%E8%AF%BB%E8%AF%97%E7%9A%84%E6%84%9F%E6%82%9F/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2021-February">
+      <a class="archive-header-link" href="#2021-February">February</a>
+      <sup class="archive-count">&nbsp;1</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">弄懂难缠的BFS算法和相关变种(Python实现)
+        </h3>
+        <div class="archive-meta"><span title='2021-02-23 16:22:51 +0000 UTC'>February 23, 2021</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1854 words</span></div>
+        <a class="entry-link" aria-label="post link to 弄懂难缠的BFS算法和相关变种(Python实现)" href="http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84bfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2021-January">
+      <a class="archive-header-link" href="#2021-January">January</a>
+      <sup class="archive-count">&nbsp;1</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">2020的回顾和2021的展望
+        </h3>
+        <div class="archive-meta"><span title='2021-01-04 09:13:05 +0000 UTC'>January 4, 2021</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>1116 words</span></div>
+        <a class="entry-link" aria-label="post link to 2020的回顾和2021的展望" href="http://localhost:1313/posts/2020%E7%9A%84%E5%9B%9E%E9%A1%BE%E5%92%8C2021%E7%9A%84%E5%B1%95%E6%9C%9B/"></a>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="archive-year">
+  <h2 class="archive-year-header" id="2020">
+    <a class="archive-header-link" href="#2020">2020</a>
+    <sup class="archive-count">&nbsp;32</sup>
+  </h2>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2020-December">
+      <a class="archive-header-link" href="#2020-December">December</a>
+      <sup class="archive-count">&nbsp;3</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">ElasticSearch定义自己的分词器词典（检索生僻词）
+        </h3>
+        <div class="archive-meta"><span title='2020-12-08 15:20:23 +0000 UTC'>December 8, 2020</span>&nbsp;·&nbsp;<span>5 min</span>&nbsp;·&nbsp;<span>2022 words</span></div>
+        <a class="entry-link" aria-label="post link to ElasticSearch定义自己的分词器词典（检索生僻词）" href="http://localhost:1313/posts/elasticsearch%E5%AE%9A%E4%B9%89%E8%87%AA%E5%B7%B1%E7%9A%84%E5%88%86%E8%AF%8D%E5%99%A8%E8%AF%8D%E5%85%B8%E6%A3%80%E7%B4%A2%E7%94%9F%E5%83%BB%E8%AF%8D/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">ElasticSearch高级用法(Golang实现)
+        </h3>
+        <div class="archive-meta"><span title='2020-12-02 14:38:21 +0000 UTC'>December 2, 2020</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4316 words</span></div>
+        <a class="entry-link" aria-label="post link to ElasticSearch高级用法(Golang实现)" href="http://localhost:1313/posts/elasticsearch%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95golang%E5%AE%9E%E7%8E%B0/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">完全搞懂Python的线程机制
+        </h3>
+        <div class="archive-meta"><span title='2020-12-01 13:28:46 +0000 UTC'>December 1, 2020</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4162 words</span></div>
+        <a class="entry-link" aria-label="post link to 完全搞懂Python的线程机制" href="http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E6%90%9E%E6%87%82python%E7%9A%84%E7%BA%BF%E7%A8%8B%E6%9C%BA%E5%88%B6/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2020-November">
+      <a class="archive-header-link" href="#2020-November">November</a>
+      <sup class="archive-count">&nbsp;3</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang的并发机制探究
+        </h3>
+        <div class="archive-meta"><span title='2020-11-27 10:19:02 +0000 UTC'>November 27, 2020</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4098 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang的并发机制探究" href="http://localhost:1313/posts/golang%E7%9A%84%E5%B9%B6%E5%8F%91%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">完全理解Golang并发模式(2)
+        </h3>
+        <div class="archive-meta"><span title='2020-11-10 10:46:02 +0000 UTC'>November 10, 2020</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4421 words</span></div>
+        <a class="entry-link" aria-label="post link to 完全理解Golang并发模式(2)" href="http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-2/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">完全理解Golang并发模式(1)
+        </h3>
+        <div class="archive-meta"><span title='2020-11-03 18:22:08 +0000 UTC'>November 3, 2020</span>&nbsp;·&nbsp;<span>6 min</span>&nbsp;·&nbsp;<span>2889 words</span></div>
+        <a class="entry-link" aria-label="post link to 完全理解Golang并发模式(1)" href="http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-1/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2020-October">
+      <a class="archive-header-link" href="#2020-October">October</a>
+      <sup class="archive-count">&nbsp;2</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">架构设计和项目管理心得-写于第三个独立开发项目之后
+        </h3>
+        <div class="archive-meta"><span title='2020-10-20 10:15:51 +0000 UTC'>October 20, 2020</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4211 words</span></div>
+        <a class="entry-link" aria-label="post link to 架构设计和项目管理心得-写于第三个独立开发项目之后" href="http://localhost:1313/posts/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%92%8C%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86-%E5%86%99%E4%BA%8E%E7%AC%AC%E4%B8%89%E4%B8%AA%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91%E9%A1%B9%E7%9B%AE%E4%B9%8B%E5%90%8E/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Elasticsearch大数据量下的优化方法
+        </h3>
+        <div class="archive-meta"><span title='2020-10-09 09:10:22 +0000 UTC'>October 9, 2020</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4161 words</span></div>
+        <a class="entry-link" aria-label="post link to Elasticsearch大数据量下的优化方法" href="http://localhost:1313/posts/elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2020-September">
+      <a class="archive-header-link" href="#2020-September">September</a>
+      <sup class="archive-count">&nbsp;1</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Python的协程知识
+        </h3>
+        <div class="archive-meta"><span title='2020-09-01 10:20:47 +0000 UTC'>September 1, 2020</span>&nbsp;·&nbsp;<span>5 min</span>&nbsp;·&nbsp;<span>2432 words</span></div>
+        <a class="entry-link" aria-label="post link to Python的协程知识" href="http://localhost:1313/posts/python%E7%9A%84%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2020-August">
+      <a class="archive-header-link" href="#2020-August">August</a>
+      <sup class="archive-count">&nbsp;6</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">读Python的协程库asyncio源码随想
+        </h3>
+        <div class="archive-meta"><span title='2020-08-27 14:39:33 +0000 UTC'>August 27, 2020</span>&nbsp;·&nbsp;<span>5 min</span>&nbsp;·&nbsp;<span>2349 words</span></div>
+        <a class="entry-link" aria-label="post link to 读Python的协程库asyncio源码随想" href="http://localhost:1313/posts/%E8%AF%BBpython%E7%9A%84%E5%8D%8F%E7%A8%8B%E5%BA%93asyncio%E6%BA%90%E7%A0%81%E9%9A%8F%E6%83%B3/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang语言的一些基础(针对面向基础的笔/面试)
+        </h3>
+        <div class="archive-meta"><span title='2020-08-25 09:43:13 +0000 UTC'>August 25, 2020</span>&nbsp;·&nbsp;<span>7 min</span>&nbsp;·&nbsp;<span>3060 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang语言的一些基础(针对面向基础的笔/面试)" href="http://localhost:1313/posts/golang%E8%AF%AD%E8%A8%80%E7%9A%84%E4%B8%80%E4%BA%9B%E5%9F%BA%E7%A1%80-%E9%92%88%E5%AF%B9%E9%9D%A2%E5%90%91%E5%9F%BA%E7%A1%80%E7%9A%84%E7%AC%94-%E9%9D%A2%E8%AF%95/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">似乎要沉下心来处理一些事
+        </h3>
+        <div class="archive-meta"><span title='2020-08-24 16:22:14 +0000 UTC'>August 24, 2020</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1810 words</span></div>
+        <a class="entry-link" aria-label="post link to 似乎要沉下心来处理一些事" href="http://localhost:1313/posts/%E4%BC%BC%E4%B9%8E%E8%A6%81%E6%B2%89%E4%B8%8B%E5%BF%83%E6%9D%A5%E5%A4%84%E7%90%86%E4%B8%80%E4%BA%9B%E4%BA%8B/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">中文分词的算法分析
+        </h3>
+        <div class="archive-meta"><span title='2020-08-21 09:57:46 +0000 UTC'>August 21, 2020</span>&nbsp;·&nbsp;<span>8 min</span>&nbsp;·&nbsp;<span>3723 words</span></div>
+        <a class="entry-link" aria-label="post link to 中文分词的算法分析" href="http://localhost:1313/posts/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">一次Golang服务占用CPU过大的排查经过
+        </h3>
+        <div class="archive-meta"><span title='2020-08-17 09:51:47 +0000 UTC'>August 17, 2020</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>1481 words</span></div>
+        <a class="entry-link" aria-label="post link to 一次Golang服务占用CPU过大的排查经过" href="http://localhost:1313/posts/%E4%B8%80%E6%AC%A1golang%E6%9C%8D%E5%8A%A1%E5%8D%A0%E7%94%A8cpu%E8%BF%87%E5%A4%A7%E7%9A%84%E6%8E%92%E6%9F%A5%E7%BB%8F%E8%BF%87/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">出埃及记_普通程序员的买房之路
+        </h3>
+        <div class="archive-meta"><span title='2020-08-10 08:56:30 +0000 UTC'>August 10, 2020</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>1162 words</span></div>
+        <a class="entry-link" aria-label="post link to 出埃及记_普通程序员的买房之路" href="http://localhost:1313/posts/%E5%87%BA%E5%9F%83%E5%8F%8A%E8%AE%B0-%E6%99%AE%E9%80%9A%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E4%B9%B0%E6%88%BF%E4%B9%8B%E8%B7%AF/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2020-July">
+      <a class="archive-header-link" href="#2020-July">July</a>
+      <sup class="archive-count">&nbsp;3</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Elasticsearch检索PDF和Office文档的方案测评
+        </h3>
+        <div class="archive-meta"><span title='2020-07-29 14:02:32 +0000 UTC'>July 29, 2020</span>&nbsp;·&nbsp;<span>10 min</span>&nbsp;·&nbsp;<span>4859 words</span></div>
+        <a class="entry-link" aria-label="post link to Elasticsearch检索PDF和Office文档的方案测评" href="http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2pdf%E5%92%8Coffice%E6%96%87%E6%A1%A3%E7%9A%84%E6%96%B9%E6%A1%88%E6%B5%8B%E8%AF%84/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Grow_Up
+        </h3>
+        <div class="archive-meta"><span title='2020-07-28 14:38:28 +0000 UTC'>July 28, 2020</span>&nbsp;·&nbsp;<span>1 min</span>&nbsp;·&nbsp;<span>455 words</span></div>
+        <a class="entry-link" aria-label="post link to Grow_Up" href="http://localhost:1313/posts/grow-up/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">使用Golang的gRPC框架的一点随想
+        </h3>
+        <div class="archive-meta"><span title='2020-07-07 13:32:21 +0000 UTC'>July 7, 2020</span>&nbsp;·&nbsp;<span>5 min</span>&nbsp;·&nbsp;<span>2431 words</span></div>
+        <a class="entry-link" aria-label="post link to 使用Golang的gRPC框架的一点随想" href="http://localhost:1313/posts/%E4%BD%BF%E7%94%A8golang%E7%9A%84grpc%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2020-June">
+      <a class="archive-header-link" href="#2020-June">June</a>
+      <sup class="archive-count">&nbsp;4</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">恶性循环
+        </h3>
+        <div class="archive-meta"><span title='2020-06-17 12:43:19 +0000 UTC'>June 17, 2020</span>&nbsp;·&nbsp;<span>1 min</span>&nbsp;·&nbsp;<span>355 words</span></div>
+        <a class="entry-link" aria-label="post link to 恶性循环" href="http://localhost:1313/posts/%E6%81%B6%E6%80%A7%E5%BE%AA%E7%8E%AF/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">我的自我介绍
+        </h3>
+        <div class="archive-meta"><span title='2020-06-02 15:05:31 +0000 UTC'>June 2, 2020</span>&nbsp;·&nbsp;<span>1 min</span>&nbsp;·&nbsp;<span>330 words</span></div>
+        <a class="entry-link" aria-label="post link to 我的自我介绍" href="http://localhost:1313/posts/%E6%88%91%E7%9A%84%E8%87%AA%E6%88%91%E4%BB%8B%E7%BB%8D/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Python写一个自动点餐程序
+        </h3>
+        <div class="archive-meta"><span title='2020-06-02 10:17:12 +0000 UTC'>June 2, 2020</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>1316 words</span></div>
+        <a class="entry-link" aria-label="post link to Python写一个自动点餐程序" href="http://localhost:1313/posts/python%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%8A%A8%E7%82%B9%E9%A4%90%E7%A8%8B%E5%BA%8F/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang中Context使用的一点随想
+        </h3>
+        <div class="archive-meta"><span title='2020-06-01 10:18:36 +0000 UTC'>June 1, 2020</span>&nbsp;·&nbsp;<span>7 min</span>&nbsp;·&nbsp;<span>3303 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang中Context使用的一点随想" href="http://localhost:1313/posts/golang%E4%B8%ADcontext%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2020-May">
+      <a class="archive-header-link" href="#2020-May">May</a>
+      <sup class="archive-count">&nbsp;5</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang中WaitGroup使用的一点随想
+        </h3>
+        <div class="archive-meta"><span title='2020-05-26 13:29:11 +0000 UTC'>May 26, 2020</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>1297 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang中WaitGroup使用的一点随想" href="http://localhost:1313/posts/golang%E4%B8%ADwaitgroup%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang中Channel使用的一点随想
+        </h3>
+        <div class="archive-meta"><span title='2020-05-25 18:25:38 +0000 UTC'>May 25, 2020</span>&nbsp;·&nbsp;<span>5 min</span>&nbsp;·&nbsp;<span>2007 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang中Channel使用的一点随想" href="http://localhost:1313/posts/golang%E4%B8%ADchannel%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">分布式数据库如何选择，几种分布式数据库优缺点一览
+        </h3>
+        <div class="archive-meta"><span title='2020-05-22 16:16:20 +0000 UTC'>May 22, 2020</span>&nbsp;·&nbsp;<span>8 min</span>&nbsp;·&nbsp;<span>3787 words</span></div>
+        <a class="entry-link" aria-label="post link to 分布式数据库如何选择，几种分布式数据库优缺点一览" href="http://localhost:1313/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">开发中常用的Golang高级用法
+        </h3>
+        <div class="archive-meta"><span title='2020-05-22 14:37:09 +0000 UTC'>May 22, 2020</span>&nbsp;·&nbsp;<span>5 min</span>&nbsp;·&nbsp;<span>2493 words</span></div>
+        <a class="entry-link" aria-label="post link to 开发中常用的Golang高级用法" href="http://localhost:1313/posts/%E5%BC%80%E5%8F%91%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84golang%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang封装Elasticsearch常用功能
+        </h3>
+        <div class="archive-meta"><span title='2020-05-14 09:45:49 +0000 UTC'>May 14, 2020</span>&nbsp;·&nbsp;<span>6 min</span>&nbsp;·&nbsp;<span>2956 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang封装Elasticsearch常用功能" href="http://localhost:1313/posts/golang%E5%B0%81%E8%A3%85elasticsearch%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2020-April">
+      <a class="archive-header-link" href="#2020-April">April</a>
+      <sup class="archive-count">&nbsp;2</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">这次绩效考评会成为压垮我的稻草么？
+        </h3>
+        <div class="archive-meta"><span title='2020-04-14 10:06:30 +0000 UTC'>April 14, 2020</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1551 words</span></div>
+        <a class="entry-link" aria-label="post link to 这次绩效考评会成为压垮我的稻草么？" href="http://localhost:1313/posts/%E8%BF%99%E6%AC%A1%E7%BB%A9%E6%95%88%E8%80%83%E8%AF%84%E4%BC%9A%E6%88%90%E4%B8%BA%E5%8E%8B%E5%9E%AE%E6%88%91%E7%9A%84%E7%A8%BB%E8%8D%89%E4%B9%88/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang调用Rabbitmq消息队列和封装
+        </h3>
+        <div class="archive-meta"><span title='2020-04-13 10:11:00 +0000 UTC'>April 13, 2020</span>&nbsp;·&nbsp;<span>6 min</span>&nbsp;·&nbsp;<span>2521 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang调用Rabbitmq消息队列和封装" href="http://localhost:1313/posts/golang%E8%B0%83%E7%94%A8rabbitmq%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%92%8C%E5%B0%81%E8%A3%85/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2020-March">
+      <a class="archive-header-link" href="#2020-March">March</a>
+      <sup class="archive-count">&nbsp;3</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang 完成一个 Crontab定时器（2）
+        </h3>
+        <div class="archive-meta"><span title='2020-03-23 09:14:40 +0000 UTC'>March 23, 2020</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>1265 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang 完成一个 Crontab定时器（2）" href="http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A82/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang 完成一个 Crontab定时器（1）
+        </h3>
+        <div class="archive-meta"><span title='2020-03-23 09:12:36 +0000 UTC'>March 23, 2020</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>1291 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang 完成一个 Crontab定时器（1）" href="http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A81/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang利用context实现一个任务并发框架
+        </h3>
+        <div class="archive-meta"><span title='2020-03-20 15:57:48 +0000 UTC'>March 20, 2020</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1971 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang利用context实现一个任务并发框架" href="http://localhost:1313/posts/golang%E5%88%A9%E7%94%A8context%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E4%BB%BB%E5%8A%A1%E5%B9%B6%E5%8F%91%E6%A1%86%E6%9E%B6/"></a>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="archive-year">
+  <h2 class="archive-year-header" id="2019">
+    <a class="archive-header-link" href="#2019">2019</a>
+    <sup class="archive-count">&nbsp;7</sup>
+  </h2>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2019-December">
+      <a class="archive-header-link" href="#2019-December">December</a>
+      <sup class="archive-count">&nbsp;1</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">ETCD分布式锁实现选主机制(Golang)
+        </h3>
+        <div class="archive-meta"><span title='2019-12-13 15:41:04 +0000 UTC'>December 13, 2019</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1767 words</span></div>
+        <a class="entry-link" aria-label="post link to ETCD分布式锁实现选主机制(Golang)" href="http://localhost:1313/posts/etcd%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E9%80%89%E4%B8%BB%E6%9C%BA%E5%88%B6-golang/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2019-November">
+      <a class="archive-header-link" href="#2019-November">November</a>
+      <sup class="archive-count">&nbsp;1</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">算法笔记-入门-数据结构篇
+        </h3>
+        <div class="archive-meta"><span title='2019-11-13 11:26:18 +0000 UTC'>November 13, 2019</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>2004 words</span></div>
+        <a class="entry-link" aria-label="post link to 算法笔记-入门-数据结构篇" href="http://localhost:1313/posts/%E7%AE%97%E6%B3%95%E7%AC%94%E8%AE%B0-%E5%85%A5%E9%97%A8-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%AF%87/"></a>
+      </div>
+    </div>
+  </div>
+  <div class="archive-month">
+    <h3 class="archive-month-header" id="2019-October">
+      <a class="archive-header-link" href="#2019-October">October</a>
+      <sup class="archive-count">&nbsp;5</sup>
+    </h3>
+    <div class="archive-posts">
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Python高效率遍历文件夹寻找重复文件
+        </h3>
+        <div class="archive-meta"><span title='2019-10-28 12:31:15 +0000 UTC'>October 28, 2019</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>1259 words</span></div>
+        <a class="entry-link" aria-label="post link to Python高效率遍历文件夹寻找重复文件" href="http://localhost:1313/posts/python%E9%AB%98%E6%95%88%E7%8E%87%E9%81%8D%E5%8E%86%E6%96%87%E4%BB%B6%E5%A4%B9%E5%AF%BB%E6%89%BE%E9%87%8D%E5%A4%8D%E6%96%87%E4%BB%B6/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Elasticsearch for python API模块化封装
+        </h3>
+        <div class="archive-meta"><span title='2019-10-25 09:57:50 +0000 UTC'>October 25, 2019</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>1004 words</span></div>
+        <a class="entry-link" aria-label="post link to Elasticsearch for python API模块化封装" href="http://localhost:1313/posts/elasticsearch-for-python-api%E6%A8%A1%E5%9D%97%E5%8C%96%E5%B0%81%E8%A3%85/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">Golang 调用 aws-sdk 操作 S3对象存储
+        </h3>
+        <div class="archive-meta"><span title='2019-10-25 09:55:52 +0000 UTC'>October 25, 2019</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>1295 words</span></div>
+        <a class="entry-link" aria-label="post link to Golang 调用 aws-sdk 操作 S3对象存储" href="http://localhost:1313/posts/golang-%E8%B0%83%E7%94%A8-aws-sdk-%E6%93%8D%E4%BD%9C-s3%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">程序员如何锻炼自己的产品思维
+        </h3>
+        <div class="archive-meta"><span title='2019-10-25 09:46:55 +0000 UTC'>October 25, 2019</span>&nbsp;·&nbsp;<span>7 min</span>&nbsp;·&nbsp;<span>3180 words</span></div>
+        <a class="entry-link" aria-label="post link to 程序员如何锻炼自己的产品思维" href="http://localhost:1313/posts/%E7%A8%8B%E5%BA%8F%E5%91%98%E5%A6%82%E4%BD%95%E9%94%BB%E7%82%BC%E8%87%AA%E5%B7%B1%E7%9A%84%E4%BA%A7%E5%93%81%E6%80%9D%E7%BB%B4/"></a>
+      </div>
+      <div class="archive-entry">
+        <h3 class="archive-entry-title entry-hint-parent">新旧博客迁移的一点感悟
+        </h3>
+        <div class="archive-meta"><span title='2019-10-24 17:50:37 +0000 UTC'>October 24, 2019</span>&nbsp;·&nbsp;<span>2 min</span>&nbsp;·&nbsp;<span>520 words</span></div>
+        <a class="entry-link" aria-label="post link to 新旧博客迁移的一点感悟" href="http://localhost:1313/posts/%E6%96%B0%E6%97%A7%E5%8D%9A%E5%AE%A2%E8%BF%81%E7%A7%BB%E7%9A%84%E4%B8%80%E7%82%B9%E6%84%9F%E6%82%9F/"></a>
+      </div>
+    </div>
+  </div>
+</div>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

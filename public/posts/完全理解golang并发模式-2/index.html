@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>完全理解Golang并发模式(2) | yemilice</title>
+<meta name="keywords" content="前后端">
+<meta name="description" content="前言
+这几天的攻关都是在Golang并发上面，也算是有了一些收获，把一些基础的并发场景和并发模式都过了一遍，觉得自己又提升了一层楼，其实我发觉，在我的开发生涯中，总是纠结实现，却不是去看最底层的东西，任何东西，都是由简到难，或者就是从底层到核心，无论是Python还是Golang，或者是我正在狂刷算法的Java，我都是去纠结实现，但是不会钻研核心，所以我写代码都是面向搜素引擎编程。所以，也是时候该改变一些东西。">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-2/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-2/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-2/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="完全理解Golang并发模式(2)">
+  <meta property="og:description" content="前言 这几天的攻关都是在Golang并发上面，也算是有了一些收获，把一些基础的并发场景和并发模式都过了一遍，觉得自己又提升了一层楼，其实我发觉，在我的开发生涯中，总是纠结实现，却不是去看最底层的东西，任何东西，都是由简到难，或者就是从底层到核心，无论是Python还是Golang，或者是我正在狂刷算法的Java，我都是去纠结实现，但是不会钻研核心，所以我写代码都是面向搜素引擎编程。所以，也是时候该改变一些东西。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-11-10T10:46:02+00:00">
+    <meta property="article:modified_time" content="2020-11-10T10:46:02+00:00">
+    <meta property="article:tag" content="前后端">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="完全理解Golang并发模式(2)">
+  <meta name="twitter:description" content="前言 这几天的攻关都是在Golang并发上面，也算是有了一些收获，把一些基础的并发场景和并发模式都过了一遍，觉得自己又提升了一层楼，其实我发觉，在我的开发生涯中，总是纠结实现，却不是去看最底层的东西，任何东西，都是由简到难，或者就是从底层到核心，无论是Python还是Golang，或者是我正在狂刷算法的Java，我都是去纠结实现，但是不会钻研核心，所以我写代码都是面向搜素引擎编程。所以，也是时候该改变一些东西。">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "完全理解Golang并发模式(2)",
+      "item": "http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-2/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "完全理解Golang并发模式(2)",
+  "name": "完全理解Golang并发模式(2)",
+  "description": "前言 这几天的攻关都是在Golang并发上面，也算是有了一些收获，把一些基础的并发场景和并发模式都过了一遍，觉得自己又提升了一层楼，其实我发觉，在我的开发生涯中，总是纠结实现，却不是去看最底层的东西，任何东西，都是由简到难，或者就是从底层到核心，无论是Python还是Golang，或者是我正在狂刷算法的Java，我都是去纠结实现，但是不会钻研核心，所以我写代码都是面向搜素引擎编程。所以，也是时候该改变一些东西。\n",
+  "keywords": [
+    "前后端"
+  ],
+  "articleBody": "前言 这几天的攻关都是在Golang并发上面，也算是有了一些收获，把一些基础的并发场景和并发模式都过了一遍，觉得自己又提升了一层楼，其实我发觉，在我的开发生涯中，总是纠结实现，却不是去看最底层的东西，任何东西，都是由简到难，或者就是从底层到核心，无论是Python还是Golang，或者是我正在狂刷算法的Java，我都是去纠结实现，但是不会钻研核心，所以我写代码都是面向搜素引擎编程。所以，也是时候该改变一些东西。\n决意想要改变 心情就像离弦的箭 收不回的思绪每天在反复缠绵 并发的超时处理 如果我们在开发一个Web框架，势必在运行一个goroutine的时候，会出现运行时间过长的问题，一般这种情况，如果不进行超时控制，到最后的结果就是阻塞在那里，迟迟不返回，这样肯定是不行的，所以我们要对并发进行一个超时限制，说人话就是，加一个timeout之后自动退出或者报错。\n首先这里有个新东西，或者是新包，叫做\"Context\"，这个我的博客里面的久文章也写过了，在这不多废话。你不会还想让我介绍一下它吧！\nContext的几个调用方法 寻思了一下，如果不介绍，很可能你们不知道我在说什么，还是讲几个基础用法吧，其实这个还是比较简单的，Golang的语法比起Rust简单多了。\nContext的接口如下\ntype Context interface { Deadline() (deadline time.Time, ok bool) Done() \u003c-chan struct{} Err() error Value(key interface{}) interface{} } 其中有四个方法\nDeadline返回绑定当前context的任务被取消的截止时间；如果没有设定期限，将返回ok == false。 Done 当绑定当前context的任务被取消时，将返回一个关闭的channel；如果当前context不会被取消，将返回nil。 Err 如果Done返回的channel没有关闭，将返回nil;如果Done返回的channel已经关闭，将返回非空的值表示任务结束的原因。如果是context被取消，Err将返回Canceled；如果是context超时，Err将返回DeadlineExceeded。 Value 返回context存储的键值对中当前key对应的值，如果没有对应的key,则返回nil。 简单的超时取消模型 咱们现在来实现一个超时的例子，其实这个直接调用context的timeout逻辑就可以了，有一张图可以明显说清楚超时处理的逻辑\nctx, cancel := context.WithTimeout(context.TODO(), time.Second*2) 看一下context.WithTimeout的源码\nfunc WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc) { return WithDeadline(parent, time.Now().Add(timeout)) } 这个家伙传入了一个时间，并且调用了withDeadline函数，看下它的源码\nfunc WithDeadline(parent Context, d time.Time) (Context, CancelFunc) { if cur, ok := parent.Deadline(); ok \u0026\u0026 cur.Before(d) { // The current deadline is already sooner than the new one. return WithCancel(parent) } c := \u0026timerCtx{ cancelCtx: newCancelCtx(parent), deadline: d, } // 监听parent的取消，或者向parent注册自身 propagateCancel(parent, c) dur := time.Until(d) if dur \u003c= 0 { // 已经过期 c.cancel(true, DeadlineExceeded) // deadline has already passed return c, func() { c.cancel(false, Canceled) } } c.mu.Lock() defer c.mu.Unlock() if c.err == nil { c.timer = time.AfterFunc(dur, func() { c.cancel(true, DeadlineExceeded) }) } return c, func() { c.cancel(true, Canceled) } } 这里输出了两个值，一个是ctx，一个是cancel\n你可以这么理解，ctx就是信号，cancel是阀门，ctx的信号结束时，关闭阀门（关闭goroutine）\n写个简单的超时退出模型\n// 定义一个超时时间/开始时间/信号 var ( Timeout = 1 * time.Second starttime = time.Now() signal = make(chan bool) ) // 模拟一个执行时间很长的任务 func do_something_work_1(ctx context.Context, url string) string { // 执行任务 go func() { // 假装阻塞在这里 time.Sleep(time.Second * 10) fmt.Println(url) // 如果执行完，singal为true signal \u003c- true }() select { // 如果接受到关闭信号（超时） case \u003c-ctx.Done(): fmt.Println(\"tomeout..........\") fmt.Printf(\"%.2fs - workers(%s) killed\\n\", time.Since(starttime).Seconds(), url) // 杀掉 return \"tomeout........\" case \u003c-signal: // 如果正常关闭，没超时 fmt.Println(\"success\") // 正常输出，正常杀掉 return \"success\" } return \"success\" } func main() { // 定义一个Timeout，超时时间为1s ctxt, cancel := context.WithTimeout(context.Background(), Timeout) defer cancel() // 开始执行goroutine go do_something_work_1(ctxt, \"hallo\") //假装在做别的任务 time.Sleep(time.Second * 5) // 结束主程 fmt.Println(\"END\") } 这里的输出结果是\ntomeout.......... 1.00s - workers(hallo) killed END 解析一下这个框架吧，这个框架实现了一个简单的超时功能.\n首先，我定义了一个假设执行时间很长的task，利用context，我给这个task定义了一个超时时间，并且通过select去监控它，当我监控到ctx有输出的时候，那么我就认为task超时，则直接输出超时并且杀死task，如果task直接run到底，那么会有一个信号signal被赋值，select接受到signal被赋值之后，将会认为任务执行成功，输出成功并且杀死task，大概的逻辑就是这样。\n并发的取消和退出 并发的退出，其实又回到了上面的一个例子，刚才我演示了一个叫做**cancel()**的东西，这个东西就相当于是杀死goroutine的侩子手。来瞅瞅这个东西到底是啥\n首先又回到刚那个逻辑\nctx, cancel := context.WithTimeout(context.TODO(), time.Second*2) 它输出了一个ctx，一个cancel，我们看下cancel到底是个什么东西\n在源码里面，它是个\ntype CancelFunc func() 是不是很蒙蔽，这具体是个啥呢，官方文档里面说了\nA CancelFunc tells an operation to abandon its work. A CancelFunc does not wait for the work to stop. A CancelFunc may be called by multiple goroutines simultaneously. After the first call, subsequent calls to a CancelFunc do nothing. 大意就是这个参数是放弃操作用的，并不等待工作停止，多个任务可调用多个cancel，第一个任务调用cancel之后，其他调用的操作不起作用。 还是蒙蔽阿，瞅一眼其他调用代码，继续追踪，最后在withdeadline找到了\nfunc (c *cancelCtx) cancel(removeFromParent bool, err error) { if err == nil { panic(\"context: internal error: missing cancel error\") } c.mu.Lock() if c.err != nil { c.mu.Unlock() return // already canceled } c.err = err if c.done == nil { c.done = closedchan } else { close(c.done) } for child := range c.children { // NOTE: acquiring the child's lock while holding parent's lock. child.cancel(false, err) } c.children = nil c.mu.Unlock() if removeFromParent { removeChild(c.Context, c) } } 这部分就相对来说清楚一些了，这里主要是用了一个互斥锁问mutex.lock，看起来是访问共享内存，保护和协调内存访问的，首先先对ctx进行加锁，然后去遍历子goroutine，执行close，没有child之后再进行锁释放，这里的代码真的值得一看。\n并发的退出（context代码）\n// 定义一个int值，这个值没啥意义，单纯就是做了一个传输，看看就得 var c = make(chan int) func do_something_work(ctx context.Context) string { i := 0 for { select { // 接收到退出信号 case \u003c-ctx.Done(): fmt.Println(\"Task Exit\") return \"Task Exit\" // 做点事儿 case c \u003c- i * i: i++ } } return \"Task Success\" } func main() { ctx, cancel := context.WithCancel(context.Background()) // 开始干活儿 go do_something_work(ctx) for i := 0; i \u003c 5; i++ { fmt.Println(\"Next square is\", \u003c-c) } // 杀掉任务 cancel() // 假装还在干别的活儿 time.Sleep(time.Second * 3) fmt.Println(\"END\") } 再来一个其他模式的代码，还有一种是通过chan管道传递，其实实现的逻辑也差不多，这里也贴出来，然后给予讲解\nchan类型退出框架\nfunc do_somethings(done chan bool, url string) { go func() { for { select { // 接受到信号关闭 case \u003c-done: fmt.Println(\"退出\") return default: fmt.Println(url + \" \" + \"执行中\") time.Sleep(1 * time.Second) } } }() } func main() { done := make(chan bool) // 假装干个活儿 do_somethings(done, \"hello\") // 假装正在干别的活儿 time.Sleep(3 * time.Second) // 关闭 close(done) } 这里首先定义了一个chan，通过close chan来进行协程的退出，还是老样子，每次一定要有一个select去监控chan，当执行close时，chan会有输出，当获取到chan输出时，则结束杀死任务。\ngoroutine的心跳模式 有些时候，我们需要一个后台常驻任务，去做一些有的没的，但是有些时候不确定goroutine是否还活着，所以你需要每隔一段时间通知一下，报告情况，虽然存在静默状态，但是会隔固定的时间进行一次通知，这里对并发代码很有用，避免了异常挂住或者zombie的问题。\n一般我写心跳代码都是后台常驻的服务，比如监控服务，比如时不时跳出来的告警服务，比如前阵子我写了个网络服务，一直就后台挂着等着别人来访问，有些时候不确定啥时候来人访问，就写了个心跳代码，所以我感觉并发里面，心跳还是很有必要的，特别是分布式的系统。\n首先看图，心跳在Golang里怎么表现的\n分析下心跳的实现方法\n我们建立一个空的channel，设定时间去关闭它 按照时间间隔定时向空的channel发送一个值，类似定时通知机制，并且每次都能读到channel的内容 func dowork(done \u003c-chan interface{}, pulseInterval time.Duration) (\u003c-chan interface{}, \u003c-chan time.Time) { // 设定心跳通道 heartbeat := make(chan interface{}) //1 results := make(chan time.Time) go func() { defer close(heartbeat) defer close(results) // 心跳间隔 pulse := time.Tick(pulseInterval) //2 // 工作间隔 workGen := time.Tick(2 * pulseInterval) //3 // 发送心跳 sendPulse := func() { select { case heartbeat \u003c- struct{}{}: default: //4 } } // 发送结果 sendResult := func(r time.Time) { for { select { case \u003c-done: return case \u003c-pulse: //5 sendPulse() case results \u003c- r: return } } } // 循环，如果关闭就renturn，获取pulse就续租 for { select { case \u003c-done: return case \u003c-pulse: //5 sendPulse() case r := \u003c-workGen: sendResult(r) } } }() return heartbeat, results } func main() { done := make(chan interface{}) time.AfterFunc(10*time.Second, func() { close(done) }) const timeout = 2 * time.Second heartbeat, results := dowork(done, timeout/2) for { select { case _, ok := \u003c-heartbeat: if ok == false { return } fmt.Println(\"pulse\") case r, ok := \u003c-results: if ok == false { return } fmt.Printf(\"results %v\\n\", r) // 没有收到心跳 case \u003c-time.After(timeout): fmt.Println(\"worker goroutine is not healthy!\") return } } } 峰值限制（防止过大的并发请求数） 又是抽象的一B的东西，说人话就是，把系统的稳定和平衡性控制在可控范围内。举个简单的例子，如果你是一个动漫网站站长，你每天只允许100个人访问你的网站看动漫，那这个100就是你的限制，就是访问限制，如果第101个人想要看动漫，就只能阻塞在外面继续等待，等100个人中的其中几个人退出才可以继续进去。\n这里一般的处理方法是令牌算法\n令牌算法的解释如下\n假设要使用资源，你必须拥有资源的访问令牌。没有令牌，请求会被拒绝。想象这些令牌存储在等待被检索以供使用的桶中。该桶的深度为d，表示它一次可以容纳d个访问令牌。 现在，每次你需要访问资源时，你都会进入存储桶并删除令牌。如果你的存储桶包含五个令牌，那么您可以访问五次资源。在第六次访问时，没有访问令牌可用，那么必须将请求加入队列，直到令牌变为可用，或拒绝请求。 写个代码你看看\nbar24x7 := make(Bar, 10) // 此酒吧只能同时招待10个顾客 for customerId := 0; ; customerId++ { time.Sleep(time.Second) consumer := Consumer{customerId} select { case bar24x7 \u003c- consumer: // 试图进入此酒吧 go bar24x7.ServeConsumer(consumer) default: log.Print(\"顾客#\", customerId, \"不愿等待而离去\") } } 这个其实相对来说可能比较简单，定义一个队列就可以了，但是这不是最好的办法\n速率限制（设定某一时刻的并发请求数） 和上面那个兄弟的机制没啥两样，其实一个是瞬时请求，一个是总请求，说人话就是，上面那个管全局，下面这个管某一时刻，比如在选课的时候，瞬间就有一大堆人过来抢课，这不把服务器撑爆了。所以，速率限制，常用来限制吞吐和确保在一段时间内的资源使用不会超标。\n写个代码你看看\ntype Request interface{} func handle(r Request) { fmt.Println(r.(int)) } const RateLimitPeriod = time.Minute const RateLimit = 10 // 任何一分钟内最多处理10个请求 func handleRequests(requests \u003c-chan Request) { quotas := make(chan time.Time, RateLimit) go func() { tick := time.NewTicker(RateLimitPeriod / RateLimit) defer tick.Stop() for t := range tick.C { select { case quotas \u003c- t: default: } } }() for r := range requests { \u003c-quotas go handle(r) } } func main() { requests := make(chan Request) go handleRequests(requests) // time.Sleep(time.Minute) for i := 0; ; i++ { requests \u003c- i } } 并发最快回应机制 有时候，一份数据可能同时从多个数据源获取。这些数据源将返回相同的数据。因为各种因素，这些数据源的回应速度参差不一，甚至某个特定数据源的多次回应速度之间也可能相差很大。同时从多个数据源获取一份相同的数据可以有效保障低延迟。我们只需采用最快的回应并舍弃其它较慢回应.\n写个代码你看看\npackage main import ( \"fmt\" \"time\" \"math/rand\" ) func source(c chan\u003c- int32) { ra, rb := rand.Int31(), rand.Intn(3) + 1 // 睡眠1秒/2秒/3秒 time.Sleep(time.Duration(rb) * time.Second) c \u003c- ra } func main() { rand.Seed(time.Now().UnixNano()) startTime := time.Now() c := make(chan int32, 5) // 必须用一个缓冲通道 for i := 0; i \u003c cap(c); i++ { go source(c) } rnd := \u003c- c // 只有第一个回应被使用了 fmt.Println(time.Since(startTime)) fmt.Println(rnd) } 差不多就是这样，这里我偷懒了一下，借用了他人的代码，他的环境是，这篇文章给了我很大的启发，感恩！\n通道用例大全\n结尾 细细看了一下，写了不少了，但是其中有一两个东西我也没整的太明白，比如goroutine的心跳之类的，这个东西实在是用的不多，所以我感觉我还是，嗯，需要持续性进步才能解决问题，我写的不那么好，如果有错，请老铁们指出来，感恩！\n予你开心叫我宝宝 予你异见上我镣铐 小人以为我拿它没办法 光脚不惧穿鞋我又有何怕 check~ ",
+  "wordCount" : "4421",
+  "inLanguage": "zh-cn",
+  "datePublished": "2020-11-10T10:46:02Z",
+  "dateModified": "2020-11-10T10:46:02Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-2/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            完全理解Golang并发模式(2)
+        </h1>
+        <div class="post-meta"><span title='2020-11-10 10:46:02 +0000 UTC'>November 10, 2020</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4421 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e5%89%8d%e8%a8%80" aria-label="前言">前言</a></li>
+            <li>
+                <a href="#%e5%b9%b6%e5%8f%91%e7%9a%84%e8%b6%85%e6%97%b6%e5%a4%84%e7%90%86" aria-label="并发的超时处理">并发的超时处理</a><ul>
+                    
+            <li>
+                <a href="#context%e7%9a%84%e5%87%a0%e4%b8%aa%e8%b0%83%e7%94%a8%e6%96%b9%e6%b3%95" aria-label="Context的几个调用方法">Context的几个调用方法</a></li>
+            <li>
+                <a href="#%e7%ae%80%e5%8d%95%e7%9a%84%e8%b6%85%e6%97%b6%e5%8f%96%e6%b6%88%e6%a8%a1%e5%9e%8b" aria-label="简单的超时取消模型">简单的超时取消模型</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e5%b9%b6%e5%8f%91%e7%9a%84%e5%8f%96%e6%b6%88%e5%92%8c%e9%80%80%e5%87%ba" aria-label="并发的取消和退出">并发的取消和退出</a></li>
+            <li>
+                <a href="#goroutine%e7%9a%84%e5%bf%83%e8%b7%b3%e6%a8%a1%e5%bc%8f" aria-label="goroutine的心跳模式">goroutine的心跳模式</a></li>
+            <li>
+                <a href="#%e5%b3%b0%e5%80%bc%e9%99%90%e5%88%b6%e9%98%b2%e6%ad%a2%e8%bf%87%e5%a4%a7%e7%9a%84%e5%b9%b6%e5%8f%91%e8%af%b7%e6%b1%82%e6%95%b0" aria-label="峰值限制（防止过大的并发请求数）">峰值限制（防止过大的并发请求数）</a></li>
+            <li>
+                <a href="#%e9%80%9f%e7%8e%87%e9%99%90%e5%88%b6%e8%ae%be%e5%ae%9a%e6%9f%90%e4%b8%80%e6%97%b6%e5%88%bb%e7%9a%84%e5%b9%b6%e5%8f%91%e8%af%b7%e6%b1%82%e6%95%b0" aria-label="速率限制（设定某一时刻的并发请求数）">速率限制（设定某一时刻的并发请求数）</a></li>
+            <li>
+                <a href="#%e5%b9%b6%e5%8f%91%e6%9c%80%e5%bf%ab%e5%9b%9e%e5%ba%94%e6%9c%ba%e5%88%b6" aria-label="并发最快回应机制">并发最快回应机制</a></li>
+            <li>
+                <a href="#%e7%bb%93%e5%b0%be" aria-label="结尾">结尾</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="前言">前言<a hidden class="anchor" aria-hidden="true" href="#前言">#</a></h2>
+<p>这几天的攻关都是在Golang并发上面，也算是有了一些收获，把一些基础的并发场景和并发模式都过了一遍，觉得自己又提升了一层楼，其实我发觉，在我的开发生涯中，总是纠结实现，却不是去看最底层的东西，任何东西，都是由简到难，或者就是从底层到核心，无论是Python还是Golang，或者是我正在狂刷算法的Java，我都是去纠结实现，但是不会钻研核心，所以我写代码都是面向搜素引擎编程。所以，也是时候该改变一些东西。</p>
+<pre tabindex="0"><code>决意想要改变
+
+心情就像离弦的箭
+
+收不回的思绪每天在反复缠绵
+</code></pre><h2 id="并发的超时处理">并发的超时处理<a hidden class="anchor" aria-hidden="true" href="#并发的超时处理">#</a></h2>
+<p>如果我们在开发一个Web框架，势必在运行一个goroutine的时候，会出现运行时间过长的问题，一般这种情况，如果不进行超时控制，到最后的结果就是阻塞在那里，迟迟不返回，这样肯定是不行的，所以我们要对并发进行一个超时限制，说人话就是，<strong>加一个timeout之后自动退出或者报错</strong>。</p>
+<p>首先这里有个新东西，或者是新包，叫做&quot;Context&quot;，这个我的博客里面的久文章也写过了，在这不多废话。你不会还想让我介绍一下它吧！</p>
+<h3 id="context的几个调用方法">Context的几个调用方法<a hidden class="anchor" aria-hidden="true" href="#context的几个调用方法">#</a></h3>
+<p>寻思了一下，如果不介绍，很可能你们不知道我在说什么，还是讲几个基础用法吧，其实这个还是比较简单的，Golang的语法比起Rust简单多了。</p>
+<p>Context的接口如下</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Context</span> <span style="color:#66d9ef">interface</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Deadline</span>() (<span style="color:#a6e22e">deadline</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Time</span>, <span style="color:#a6e22e">ok</span> <span style="color:#66d9ef">bool</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Done</span>() <span style="color:#f92672">&lt;-</span><span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">struct</span>{}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Err</span>() <span style="color:#66d9ef">error</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Value</span>(<span style="color:#a6e22e">key</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#66d9ef">interface</span>{}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>其中有四个方法</p>
+<ol>
+<li>Deadline返回绑定当前context的任务被取消的截止时间；如果没有设定期限，将返回ok == false。</li>
+<li>Done 当绑定当前context的任务被取消时，将返回一个关闭的channel；如果当前context不会被取消，将返回nil。</li>
+<li>Err 如果Done返回的channel没有关闭，将返回nil;如果Done返回的channel已经关闭，将返回非空的值表示任务结束的原因。如果是context被取消，Err将返回Canceled；如果是context超时，Err将返回DeadlineExceeded。</li>
+<li>Value 返回context存储的键值对中当前key对应的值，如果没有对应的key,则返回nil。</li>
+</ol>
+<h3 id="简单的超时取消模型">简单的超时取消模型<a hidden class="anchor" aria-hidden="true" href="#简单的超时取消模型">#</a></h3>
+<p>咱们现在来实现一个超时的例子，其实这个直接调用context的timeout逻辑就可以了，有一张图可以明显说清楚超时处理的逻辑</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/golang%E5%B9%B6%E5%8F%912/1.png"></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">cancel</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">WithTimeout</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">TODO</span>(), <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span><span style="color:#f92672">*</span><span style="color:#ae81ff">2</span>)
+</span></span></code></pre></div><p>看一下context.WithTimeout的源码</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">WithTimeout</span>(<span style="color:#a6e22e">parent</span> <span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">timeout</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Duration</span>) (<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">CancelFunc</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">WithDeadline</span>(<span style="color:#a6e22e">parent</span>, <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Now</span>().<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">timeout</span>))
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这个家伙传入了一个时间，并且调用了withDeadline函数，看下它的源码</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">WithDeadline</span>(<span style="color:#a6e22e">parent</span> <span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">d</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Time</span>) (<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">CancelFunc</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">cur</span>, <span style="color:#a6e22e">ok</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">parent</span>.<span style="color:#a6e22e">Deadline</span>(); <span style="color:#a6e22e">ok</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">cur</span>.<span style="color:#a6e22e">Before</span>(<span style="color:#a6e22e">d</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// The current deadline is already sooner than the new one.</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">WithCancel</span>(<span style="color:#a6e22e">parent</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">timerCtx</span>{
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">cancelCtx</span>: <span style="color:#a6e22e">newCancelCtx</span>(<span style="color:#a6e22e">parent</span>),
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">deadline</span>:  <span style="color:#a6e22e">d</span>,
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 监听parent的取消，或者向parent注册自身</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">propagateCancel</span>(<span style="color:#a6e22e">parent</span>, <span style="color:#a6e22e">c</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">dur</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Until</span>(<span style="color:#a6e22e">d</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">dur</span> <span style="color:#f92672">&lt;=</span> <span style="color:#ae81ff">0</span> {
+</span></span><span style="display:flex;"><span>       <span style="color:#75715e">// 已经过期</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">cancel</span>(<span style="color:#66d9ef">true</span>, <span style="color:#a6e22e">DeadlineExceeded</span>) <span style="color:#75715e">// deadline has already passed</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">c</span>, <span style="color:#66d9ef">func</span>() { <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">cancel</span>(<span style="color:#66d9ef">false</span>, <span style="color:#a6e22e">Canceled</span>) }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">mu</span>.<span style="color:#a6e22e">Lock</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">mu</span>.<span style="color:#a6e22e">Unlock</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">err</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">timer</span> = <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">AfterFunc</span>(<span style="color:#a6e22e">dur</span>, <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">cancel</span>(<span style="color:#66d9ef">true</span>, <span style="color:#a6e22e">DeadlineExceeded</span>)
+</span></span><span style="display:flex;"><span>        })
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">c</span>, <span style="color:#66d9ef">func</span>() { <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">cancel</span>(<span style="color:#66d9ef">true</span>, <span style="color:#a6e22e">Canceled</span>) }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这里输出了两个值，一个是ctx，一个是cancel</p>
+<p>你可以这么理解，ctx就是信号，cancel是阀门，ctx的信号结束时，关闭阀门（关闭goroutine）</p>
+<p><strong>写个简单的超时退出模型</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 定义一个超时时间/开始时间/信号</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Timeout</span>   = <span style="color:#ae81ff">1</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">starttime</span> = <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Now</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">signal</span>    = make(<span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">bool</span>)
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 模拟一个执行时间很长的任务</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">do_something_work_1</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">url</span> <span style="color:#66d9ef">string</span>) <span style="color:#66d9ef">string</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 执行任务</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 假装阻塞在这里</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">10</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">url</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 如果执行完，singal为true</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">signal</span> <span style="color:#f92672">&lt;-</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>	}()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 如果接受到关闭信号（超时）</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">ctx</span>.<span style="color:#a6e22e">Done</span>():
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;tomeout..........&#34;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;%.2fs - workers(%s) killed\n&#34;</span>, <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Since</span>(<span style="color:#a6e22e">starttime</span>).<span style="color:#a6e22e">Seconds</span>(), <span style="color:#a6e22e">url</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 杀掉</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;tomeout........&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">signal</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 如果正常关闭，没超时</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;success&#34;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 正常输出，正常杀掉</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;success&#34;</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;success&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 定义一个Timeout，超时时间为1s</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">ctxt</span>, <span style="color:#a6e22e">cancel</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">WithTimeout</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Background</span>(), <span style="color:#a6e22e">Timeout</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">cancel</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 开始执行goroutine</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#a6e22e">do_something_work_1</span>(<span style="color:#a6e22e">ctxt</span>, <span style="color:#e6db74">&#34;hallo&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//假装在做别的任务 </span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">5</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 结束主程</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;END&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这里的输出结果是</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>tomeout..........
+</span></span><span style="display:flex;"><span>1.00s - workers<span style="color:#f92672">(</span>hallo<span style="color:#f92672">)</span> killed
+</span></span><span style="display:flex;"><span>END
+</span></span></code></pre></div><p>解析一下这个框架吧，这个框架实现了一个简单的超时功能.</p>
+<p>首先，我定义了一个假设执行时间很长的task，利用context，我给这个task定义了一个超时时间，并且通过select去监控它，当我监控到ctx有输出的时候，那么我就认为task超时，则直接输出超时并且杀死task，如果task直接run到底，那么会有一个信号signal被赋值，select接受到signal被赋值之后，将会认为任务执行成功，输出成功并且杀死task，大概的逻辑就是这样。</p>
+<h2 id="并发的取消和退出">并发的取消和退出<a hidden class="anchor" aria-hidden="true" href="#并发的取消和退出">#</a></h2>
+<p>并发的退出，其实又回到了上面的一个例子，刚才我演示了一个叫做**cancel()**的东西，这个东西就相当于是杀死goroutine的侩子手。来瞅瞅这个东西到底是啥</p>
+<p>首先又回到刚那个逻辑</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">cancel</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">WithTimeout</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">TODO</span>(), <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span><span style="color:#f92672">*</span><span style="color:#ae81ff">2</span>)
+</span></span></code></pre></div><p>它输出了一个ctx，一个cancel，我们看下cancel到底是个什么东西</p>
+<p>在源码里面，它是个</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">CancelFunc</span> <span style="color:#66d9ef">func</span>()
+</span></span></code></pre></div><p>是不是很蒙蔽，这具体是个啥呢，官方文档里面说了</p>
+<pre tabindex="0"><code>A CancelFunc tells an operation to abandon its work. A CancelFunc does not wait for the work to stop. A CancelFunc may be called by multiple goroutines simultaneously. After the first call, subsequent calls to a CancelFunc do nothing.
+
+大意就是这个参数是放弃操作用的，并不等待工作停止，多个任务可调用多个cancel，第一个任务调用cancel之后，其他调用的操作不起作用。
+</code></pre><p>还是蒙蔽阿，瞅一眼其他调用代码，继续追踪，最后在withdeadline找到了</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">c</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">cancelCtx</span>) <span style="color:#a6e22e">cancel</span>(<span style="color:#a6e22e">removeFromParent</span> <span style="color:#66d9ef">bool</span>, <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		panic(<span style="color:#e6db74">&#34;context: internal error: missing cancel error&#34;</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">mu</span>.<span style="color:#a6e22e">Lock</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">mu</span>.<span style="color:#a6e22e">Unlock</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#75715e">// already canceled</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">done</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">done</span> = <span style="color:#a6e22e">closedchan</span>
+</span></span><span style="display:flex;"><span>	} <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>		close(<span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">done</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">child</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">children</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// NOTE: acquiring the child&#39;s lock while holding parent&#39;s lock.</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">child</span>.<span style="color:#a6e22e">cancel</span>(<span style="color:#66d9ef">false</span>, <span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">children</span> = <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">mu</span>.<span style="color:#a6e22e">Unlock</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">removeFromParent</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">removeChild</span>(<span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">c</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这部分就相对来说清楚一些了，这里主要是用了一个互斥锁问mutex.lock，看起来是访问共享内存，保护和协调内存访问的，首先先对ctx进行加锁，然后去遍历子goroutine，执行close，没有child之后再进行锁释放，这里的代码真的值得一看。</p>
+<p><strong>并发的退出（context代码）</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#75715e">// 定义一个int值，这个值没啥意义，单纯就是做了一个传输，看看就得</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">c</span> = make(<span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">int</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">do_something_work</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>) <span style="color:#66d9ef">string</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 接收到退出信号</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">ctx</span>.<span style="color:#a6e22e">Done</span>():
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;Task Exit&#34;</span>)
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;Task Exit&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 做点事儿</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">c</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">i</span>:
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">i</span><span style="color:#f92672">++</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;Task Success&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">cancel</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">WithCancel</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Background</span>())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 开始干活儿</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#a6e22e">do_something_work</span>(<span style="color:#a6e22e">ctx</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#ae81ff">5</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;Next square is&#34;</span>, <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">c</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 杀掉任务</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">cancel</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 假装还在干别的活儿</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">3</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;END&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>再来一个其他模式的代码，还有一种是通过chan管道传递，其实实现的逻辑也差不多，这里也贴出来，然后给予讲解</p>
+<p><strong>chan类型退出框架</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">do_somethings</span>(<span style="color:#a6e22e">done</span> <span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">bool</span>, <span style="color:#a6e22e">url</span> <span style="color:#66d9ef">string</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#75715e">// 接受到信号关闭</span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">done</span>:
+</span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;退出&#34;</span>)
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">default</span>:
+</span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">url</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34; &#34;</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;执行中&#34;</span>)
+</span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#ae81ff">1</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>)
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}()
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">done</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">bool</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 假装干个活儿</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">do_somethings</span>(<span style="color:#a6e22e">done</span>, <span style="color:#e6db74">&#34;hello&#34;</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 假装正在干别的活儿</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#ae81ff">3</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 关闭</span>
+</span></span><span style="display:flex;"><span>	close(<span style="color:#a6e22e">done</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这里首先定义了一个chan，通过close chan来进行协程的退出，还是老样子，每次一定要有一个select去监控chan，当执行close时，chan会有输出，当获取到chan输出时，则结束杀死任务。</p>
+<h2 id="goroutine的心跳模式">goroutine的心跳模式<a hidden class="anchor" aria-hidden="true" href="#goroutine的心跳模式">#</a></h2>
+<p>有些时候，我们需要一个后台常驻任务，去做一些有的没的，但是有些时候不确定goroutine是否还活着，所以你需要每隔一段时间通知一下，报告情况，虽然存在静默状态，但是会隔固定的时间进行一次通知，这里对并发代码很有用，避免了异常挂住或者zombie的问题。</p>
+<p>一般我写心跳代码都是后台常驻的服务，比如监控服务，比如时不时跳出来的告警服务，比如前阵子我写了个网络服务，一直就后台挂着等着别人来访问，有些时候不确定啥时候来人访问，就写了个心跳代码，所以我感觉并发里面，心跳还是很有必要的，特别是分布式的系统。</p>
+<p>首先看图，心跳在Golang里怎么表现的</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/golang%E5%B9%B6%E5%8F%912/2.jpg"></p>
+<p>分析下心跳的实现方法</p>
+<ol>
+<li>我们建立一个空的channel，设定时间去关闭它</li>
+<li>按照时间间隔定时向空的channel发送一个值，类似定时通知机制，并且每次都能读到channel的内容</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">dowork</span>(<span style="color:#a6e22e">done</span> <span style="color:#f92672">&lt;-</span><span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">interface</span>{}, <span style="color:#a6e22e">pulseInterval</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Duration</span>) (<span style="color:#f92672">&lt;-</span><span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">interface</span>{}, <span style="color:#f92672">&lt;-</span><span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Time</span>) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 设定心跳通道</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">heartbeat</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#75715e">//1</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">results</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Time</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">defer</span> close(<span style="color:#a6e22e">heartbeat</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">defer</span> close(<span style="color:#a6e22e">results</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 心跳间隔</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">pulse</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Tick</span>(<span style="color:#a6e22e">pulseInterval</span>) <span style="color:#75715e">//2</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 工作间隔</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">workGen</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Tick</span>(<span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">pulseInterval</span>) <span style="color:#75715e">//3</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 发送心跳</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">sendPulse</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">heartbeat</span> <span style="color:#f92672">&lt;-</span> <span style="color:#66d9ef">struct</span>{}{}:
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">default</span>: <span style="color:#75715e">//4</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 发送结果</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">sendResult</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">r</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Time</span>) {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">done</span>:
+</span></span><span style="display:flex;"><span>					<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">pulse</span>: <span style="color:#75715e">//5</span>
+</span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">sendPulse</span>()
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">results</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">r</span>:
+</span></span><span style="display:flex;"><span>					<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 循环，如果关闭就renturn，获取pulse就续租</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">done</span>:
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">pulse</span>: <span style="color:#75715e">//5</span>
+</span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">sendPulse</span>()
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">r</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">workGen</span>:
+</span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">sendResult</span>(<span style="color:#a6e22e">r</span>)
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">heartbeat</span>, <span style="color:#a6e22e">results</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">done</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">interface</span>{})
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">AfterFunc</span>(<span style="color:#ae81ff">10</span><span style="color:#f92672">*</span><span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>, <span style="color:#66d9ef">func</span>() { close(<span style="color:#a6e22e">done</span>) })
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">const</span> <span style="color:#a6e22e">timeout</span> = <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">heartbeat</span>, <span style="color:#a6e22e">results</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">dowork</span>(<span style="color:#a6e22e">done</span>, <span style="color:#a6e22e">timeout</span><span style="color:#f92672">/</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">ok</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">heartbeat</span>:
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">ok</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">false</span> {
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;pulse&#34;</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">r</span>, <span style="color:#a6e22e">ok</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">results</span>:
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">ok</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">false</span> {
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;results %v\n&#34;</span>, <span style="color:#a6e22e">r</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// 没有收到心跳</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">After</span>(<span style="color:#a6e22e">timeout</span>):
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;worker goroutine is not healthy!&#34;</span>)
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="峰值限制防止过大的并发请求数">峰值限制（防止过大的并发请求数）<a hidden class="anchor" aria-hidden="true" href="#峰值限制防止过大的并发请求数">#</a></h2>
+<p>又是抽象的一B的东西，说人话就是，把系统的稳定和平衡性控制在可控范围内。举个简单的例子，如果你是一个动漫网站站长，你每天只允许100个人访问你的网站看动漫，那这个100就是你的限制，就是访问限制，如果第101个人想要看动漫，就只能阻塞在外面继续等待，等100个人中的其中几个人退出才可以继续进去。</p>
+<p>这里一般的处理方法是令牌算法</p>
+<p>令牌算法的解释如下</p>
+<pre tabindex="0"><code>
+假设要使用资源，你必须拥有资源的访问令牌。没有令牌，请求会被拒绝。想象这些令牌存储在等待被检索以供使用的桶中。该桶的深度为d，表示它一次可以容纳d个访问令牌。
+
+现在，每次你需要访问资源时，你都会进入存储桶并删除令牌。如果你的存储桶包含五个令牌，那么您可以访问五次资源。在第六次访问时，没有访问令牌可用，那么必须将请求加入队列，直到令牌变为可用，或拒绝请求。
+</code></pre><p>写个代码你看看</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span>    <span style="color:#a6e22e">bar24x7</span> <span style="color:#f92672">:=</span> make(<span style="color:#a6e22e">Bar</span>, <span style="color:#ae81ff">10</span>) <span style="color:#75715e">// 此酒吧只能同时招待10个顾客</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">customerId</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; ; <span style="color:#a6e22e">customerId</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">consumer</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">Consumer</span>{<span style="color:#a6e22e">customerId</span>}
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">bar24x7</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">consumer</span>: <span style="color:#75715e">// 试图进入此酒吧</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">go</span> <span style="color:#a6e22e">bar24x7</span>.<span style="color:#a6e22e">ServeConsumer</span>(<span style="color:#a6e22e">consumer</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">default</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Print</span>(<span style="color:#e6db74">&#34;顾客#&#34;</span>, <span style="color:#a6e22e">customerId</span>, <span style="color:#e6db74">&#34;不愿等待而离去&#34;</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span></code></pre></div><p>这个其实相对来说可能比较简单，定义一个队列就可以了，但是这不是最好的办法</p>
+<h2 id="速率限制设定某一时刻的并发请求数">速率限制（设定某一时刻的并发请求数）<a hidden class="anchor" aria-hidden="true" href="#速率限制设定某一时刻的并发请求数">#</a></h2>
+<p>和上面那个兄弟的机制没啥两样，其实一个是瞬时请求，一个是总请求，说人话就是，上面那个管全局，下面这个管某一时刻，比如在选课的时候，瞬间就有一大堆人过来抢课，这不把服务器撑爆了。所以，速率限制，常用来限制吞吐和确保在一段时间内的资源使用不会超标。</p>
+<p>写个代码你看看</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Request</span> <span style="color:#66d9ef">interface</span>{}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">handle</span>(<span style="color:#a6e22e">r</span> <span style="color:#a6e22e">Request</span>) { <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">r</span>.(<span style="color:#66d9ef">int</span>)) }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">RateLimitPeriod</span> = <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Minute</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#a6e22e">RateLimit</span> = <span style="color:#ae81ff">10</span> <span style="color:#75715e">// 任何一分钟内最多处理10个请求</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">handleRequests</span>(<span style="color:#a6e22e">requests</span> <span style="color:#f92672">&lt;-</span><span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">Request</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">quotas</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Time</span>, <span style="color:#a6e22e">RateLimit</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">tick</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">NewTicker</span>(<span style="color:#a6e22e">RateLimitPeriod</span> <span style="color:#f92672">/</span> <span style="color:#a6e22e">RateLimit</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">tick</span>.<span style="color:#a6e22e">Stop</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">t</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">tick</span>.<span style="color:#a6e22e">C</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">quotas</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">t</span>:
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">default</span>:
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">r</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">requests</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">quotas</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">go</span> <span style="color:#a6e22e">handle</span>(<span style="color:#a6e22e">r</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">requests</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">Request</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#a6e22e">handleRequests</span>(<span style="color:#a6e22e">requests</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// time.Sleep(time.Minute)</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; ; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">requests</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">i</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="并发最快回应机制">并发最快回应机制<a hidden class="anchor" aria-hidden="true" href="#并发最快回应机制">#</a></h2>
+<p>有时候，一份数据可能同时从多个数据源获取。这些数据源将返回相同的数据。因为各种因素，这些数据源的回应速度参差不一，甚至某个特定数据源的多次回应速度之间也可能相差很大。同时从多个数据源获取一份相同的数据可以有效保障低延迟。我们只需采用最快的回应并舍弃其它较慢回应.</p>
+<p>写个代码你看看</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;time&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;math/rand&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">source</span>(<span style="color:#a6e22e">c</span> <span style="color:#66d9ef">chan</span><span style="color:#f92672">&lt;-</span> <span style="color:#66d9ef">int32</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">ra</span>, <span style="color:#a6e22e">rb</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">rand</span>.<span style="color:#a6e22e">Int31</span>(), <span style="color:#a6e22e">rand</span>.<span style="color:#a6e22e">Intn</span>(<span style="color:#ae81ff">3</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 睡眠1秒/2秒/3秒</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Duration</span>(<span style="color:#a6e22e">rb</span>) <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">c</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">ra</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">rand</span>.<span style="color:#a6e22e">Seed</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Now</span>().<span style="color:#a6e22e">UnixNano</span>())
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">startTime</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Now</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">int32</span>, <span style="color:#ae81ff">5</span>) <span style="color:#75715e">// 必须用一个缓冲通道</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; cap(<span style="color:#a6e22e">c</span>); <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">go</span> <span style="color:#a6e22e">source</span>(<span style="color:#a6e22e">c</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">rnd</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">c</span> <span style="color:#75715e">// 只有第一个回应被使用了</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Since</span>(<span style="color:#a6e22e">startTime</span>))
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">rnd</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>差不多就是这样，这里我偷懒了一下，借用了他人的代码，他的环境是，这篇文章给了我很大的启发，感恩！</p>
+<p><a href="https://www.bookstack.cn/read/golang101/6bbafd2e243d4d07.md">通道用例大全</a></p>
+<h2 id="结尾">结尾<a hidden class="anchor" aria-hidden="true" href="#结尾">#</a></h2>
+<p>细细看了一下，写了不少了，但是其中有一两个东西我也没整的太明白，比如goroutine的心跳之类的，这个东西实在是用的不多，所以我感觉我还是，嗯，需要持续性进步才能解决问题，我写的不那么好，如果有错，请老铁们指出来，感恩！</p>
+<pre tabindex="0"><code>予你开心叫我宝宝
+
+予你异见上我镣铐
+
+小人以为我拿它没办法
+
+光脚不惧穿鞋我又有何怕
+
+check~
+</code></pre>
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/golang%E7%9A%84%E5%B9%B6%E5%8F%91%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/">
+    <span class="title">« </span>
+    <span>Golang的并发机制探究</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-1/">
+    <span class="title"> »</span>
+    <span>完全理解Golang并发模式(1)</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

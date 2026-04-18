@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Posts | yemilice</title>
+<meta name="keywords" content="">
+<meta name="description" content="Posts - yemilice">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" type="application/rss+xml" href="http://localhost:1313/posts/index.xml" title="rss">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="Posts">
+  <meta property="og:description" content="程序、音乐与生活随笔">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="website">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Posts">
+  <meta name="twitter:description" content="程序、音乐与生活随笔">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }
+  ]
+}
+</script>
+</head>
+<body class="list" id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main"> 
+<header class="page-header"><nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a></nav>
+  <h1>
+    Posts
+    <a href="/posts/index.xml" title="RSS" aria-label="RSS">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" height="23">
+        <path d="M4 11a9 9 0 0 1 9 9" />
+        <path d="M4 4a16 16 0 0 1 16 16" />
+        <circle cx="5" cy="19" r="1" />
+      </svg>
+    </a>
+  </h1>
+</header>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">写一个高可用Rpc服务（基础知识篇）
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 最近实在是太忙啦，每天都加班，这是开博这么久首次，一个月都没UPDATE，my bad，这个月保证日更三篇，补上补上。
+久违的freestyle时间，（虽然我现在玩爵士了）
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-08-30 18:30:31 +0000 UTC'>August 30, 2021</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4283 words</span></footer>
+  <a class="entry-link" aria-label="post link to 写一个高可用Rpc服务（基础知识篇）" href="http://localhost:1313/posts/%E5%86%99%E4%B8%80%E4%B8%AA%E9%AB%98%E5%8F%AF%E7%94%A8rpc%E6%9C%8D%E5%8A%A1%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E7%AF%87/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">望江亭(remix)
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>望江亭（remix） 很喜欢王诗安，一直非常喜欢
+listen
+remix听听就好
+歌词 后面补
+最近忙
+结尾 我
+间歇性写歌
+间歇性录歌
+不忙的时候会参加比赛
+平常在soundcloud发歌多一些
+最近加班太多
+不想干了
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-08-20 14:33:17 +0000 UTC'>August 20, 2021</span>&nbsp;·&nbsp;<span>1 min</span>&nbsp;·&nbsp;<span>110 words</span></footer>
+  <a class="entry-link" aria-label="post link to 望江亭(remix)" href="http://localhost:1313/posts/%E6%9C%9B%E6%B1%9F%E4%BA%ADremix/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">刷KPI的HR就不要给我发面试邀请了吧
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 去年这个时候面试了一家小公司叫无糖信息，大概是叫这个名字
+面试的体验极差，HR从头到尾都是隐形人，我感觉就是不停的刷KPI的，忽悠你去面试
+我过去先等了半个小时，那面试官都没来
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-06-23 14:42:49 +0000 UTC'>June 23, 2021</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1699 words</span></footer>
+  <a class="entry-link" aria-label="post link to 刷KPI的HR就不要给我发面试邀请了吧" href="http://localhost:1313/posts/%E5%88%B7kpi%E7%9A%84hr%E5%B0%B1%E4%B8%8D%E8%A6%81%E7%BB%99%E6%88%91%E5%8F%91%E9%9D%A2%E8%AF%95%E9%82%80%E8%AF%B7%E4%BA%86%E5%90%A7/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">爵士乐和声进行的中心与精华-导音
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>什么是导音？ What isguide tones?
+在爵士乐中，和弦大部分为七和弦，导音主要是指的七和弦的三音或七音。
+在一个七和弦中，最能体现和弦色彩的音就是三七音。
+三音为稳定音级，七音为不稳定音级，两者决定一个和弦的大，小，属等重要属性。
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-06-23 10:42:01 +0000 UTC'>June 23, 2021</span>&nbsp;·&nbsp;<span>2 min</span>&nbsp;·&nbsp;<span>800 words</span></footer>
+  <a class="entry-link" aria-label="post link to 爵士乐和声进行的中心与精华-导音" href="http://localhost:1313/posts/%E7%88%B5%E5%A3%AB%E4%B9%90%E5%92%8C%E5%A3%B0%E8%BF%9B%E8%A1%8C%E7%9A%84%E4%B8%AD%E5%BF%83%E4%B8%8E%E7%B2%BE%E5%8D%8E-%E5%AF%BC%E9%9F%B3/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">ElasticSearch-新老选主算法对比
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 首先，ElasticSearch 7，也就是Es 7， 变动还是有点儿大，改了很多东西，例如取消了type，修改了选主算法之类的操作
+正好几天在钻研一些选主算法一类的东西，看了ETCD，rabbitmq，kafka之类的一些选主算法，想起来似乎对于Es，我还没有细致研究
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-06-16 15:17:06 +0000 UTC'>June 16, 2021</span>&nbsp;·&nbsp;<span>11 min</span>&nbsp;·&nbsp;<span>5505 words</span></footer>
+  <a class="entry-link" aria-label="post link to ElasticSearch-新老选主算法对比" href="http://localhost:1313/posts/elasticsearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">ElasticSearch检索的核心-倒排索引解读
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 ElasticSearch为什么适合做检索服务器？
+因为快啊，大佬！
+为什么快啊？
+因为倒排索引啊！
+什么是倒排索引？
+这个，就要细细分析一下了，这篇文章可能写的不是那么全，但是我也会尽量总结所有重点！希望能帮到大家，爱你们！
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-05-14 15:09:41 +0000 UTC'>May 14, 2021</span>&nbsp;·&nbsp;<span>8 min</span>&nbsp;·&nbsp;<span>3555 words</span></footer>
+  <a class="entry-link" aria-label="post link to ElasticSearch检索的核心-倒排索引解读" href="http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">为什么要使用消息队列服务
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>消息队列是什么？ 化繁为简一下，分拆一下这个词汇，首先，先来看队列（queue）
+队列是一种常用的数据结构，特点是先进先出
+消息队列，顾名思义一下，就是把消息放在队列当中进行处理
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-05-08 09:48:28 +0000 UTC'>May 8, 2021</span>&nbsp;·&nbsp;<span>11 min</span>&nbsp;·&nbsp;<span>5150 words</span></footer>
+  <a class="entry-link" aria-label="post link to 为什么要使用消息队列服务" href="http://localhost:1313/posts/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">弄懂难缠的DFS算法和相关变种(Python实现)
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 这次不废话，直接接上次的BFS，直接来看DFS。
+什么是DFS算法 DFS，全名深度优先搜索
+用大白话来说，其实就是 一条路走到黑，走不通再回来，直到无路可走
+举个简单的例子，现在我们有一个树，就像下面这样
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-04-28 17:21:07 +0000 UTC'>April 28, 2021</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1963 words</span></footer>
+  <a class="entry-link" aria-label="post link to 弄懂难缠的DFS算法和相关变种(Python实现)" href="http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84dfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">学习etcd的消息协议gRPC一点随想
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 首先，要在这里说明一个情况，我的etcd的学习进入了第二个阶段
+再一个，未来我将不会更新一些基础代码用法，未来的博客文章将会持续性输出阅读源码和算法之类的文章，因为我的学习也进入了另一个阶段。
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-04-06 10:39:55 +0000 UTC'>April 6, 2021</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4331 words</span></footer>
+  <a class="entry-link" aria-label="post link to 学习etcd的消息协议gRPC一点随想" href="http://localhost:1313/posts/etcd%E7%9A%84%E6%B6%88%E6%81%AF%E5%8D%8F%E8%AE%AE-grpc%E5%AD%A6%E4%B9%A0%E9%9A%8F%E6%83%B3/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">学习etcd核心机制Raft协议的一点随想
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 最近开始学习k8s相关的东西，不可避免的和etcd搭上了交道，说来使用etcd的日子也不短了
+中途开源过Python和Golang的etcd的api，代码在github上，公布一下
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-04-04 14:50:25 +0000 UTC'>April 4, 2021</span>&nbsp;·&nbsp;<span>11 min</span>&nbsp;·&nbsp;<span>5121 words</span></footer>
+  <a class="entry-link" aria-label="post link to 学习etcd核心机制Raft协议的一点随想" href="http://localhost:1313/posts/%E5%AD%A6%E4%B9%A0etcd%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6raft%E5%8D%8F%E8%AE%AE%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/"></a>
+</article>
+<footer class="page-footer">
+  <nav class="pagination">
+    <a class="prev" href="http://localhost:1313/posts/">
+      «&nbsp;&nbsp;
+    </a>
+    <a class="next" href="http://localhost:1313/posts/page/3/">&nbsp;&nbsp;»
+    </a>
+  </nav>
+</footer>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

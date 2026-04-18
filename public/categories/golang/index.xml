@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Golang on yemilice</title>
+    <link>http://localhost:1313/categories/golang/</link>
+    <description>Recent content in Golang on yemilice</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Mon, 08 Nov 2021 09:43:19 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/golang/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Golang协程调度探究</title>
+      <link>http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E8%B0%83%E5%BA%A6%E6%8E%A2%E7%A9%B6/</link>
+      <pubDate>Mon, 08 Nov 2021 09:43:19 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E8%B0%83%E5%BA%A6%E6%8E%A2%E7%A9%B6/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;这几天攻关了一下go协程的调度，然后写了这篇文章&lt;/p&gt;
+&lt;p&gt;这篇文章的工作量真挺大的，我看的也很累，找资料也很累&lt;/p&gt;
+&lt;p&gt;这篇文章，需要感谢《Go语言底层原理剖析》这本书的作者，这本书给了我很大启发&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang协程基础探究</title>
+      <link>http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/</link>
+      <pubDate>Wed, 27 Oct 2021 11:39:17 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;最近我把Go重新过了一遍，特别是Go的协程这一块，我感觉任何事都是从简单到复杂&lt;/p&gt;
+&lt;p&gt;包括现在，所以我重新开始学习基础，后序我会出一个系列&lt;/p&gt;
+&lt;p&gt;分别为&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Golang协程基础 （已经完成！）&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;Golang协程调度&lt;/li&gt;
+&lt;li&gt;Golang协程控制&lt;/li&gt;
+&lt;li&gt;Golang协程通信&lt;/li&gt;
+&lt;li&gt;Golang垃圾回收机制&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;所以我会持续更新，大家请期待吧，爱你们！&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang中Context使用的一点随想</title>
+      <link>http://localhost:1313/posts/golang%E4%B8%ADcontext%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Mon, 01 Jun 2020 10:18:36 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E4%B8%ADcontext%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h1 id=&#34;golang中context使用的一点随想&#34;&gt;Golang中Context使用的一点随想&lt;/h1&gt;
+&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;这一篇是三巨头最后一篇了，前两篇介绍了channel，waitgroup，今天这篇来介绍一下context，相比于其他两种，我倒是更推荐context（上下文）这种控制goroutine的方法，为什呢，下面我就来详细的说一说吧。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang中WaitGroup使用的一点随想</title>
+      <link>http://localhost:1313/posts/golang%E4%B8%ADwaitgroup%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Tue, 26 May 2020 13:29:11 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E4%B8%ADwaitgroup%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h1 id=&#34;golang中waitgroup使用的一点随想&#34;&gt;Golang中WaitGroup使用的一点随想&lt;/h1&gt;
+&lt;h2 id=&#34;前言为什么又要写一篇随想文&#34;&gt;前言（为什么又要写一篇随想文）&lt;/h2&gt;
+&lt;p&gt;上次我写了一个channel的文章，我寻思，这Golang控制三大巨头，channel，waitgroup，context，我得尽快都安排上，最近工作太忙，压力过大，但是Update Blog还是不能够停下来，所以继续补上，学习还是不能停，那么来吧。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang中Channel使用的一点随想</title>
+      <link>http://localhost:1313/posts/golang%E4%B8%ADchannel%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Mon, 25 May 2020 18:25:38 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E4%B8%ADchannel%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h1 id=&#34;golang中channel使用的一点随想&#34;&gt;Golang中Channel使用的一点随想&lt;/h1&gt;
+&lt;h2 id=&#34;前言为什么要写这篇文章&#34;&gt;前言（为什么要写这篇文章）&lt;/h2&gt;
+&lt;p&gt;在Golang中，搞同步/并发控制的方法有很多，有channel(管道)，WaitGroup(等待线程结束)，context(上下文管理)，我一直想深入研究一下它们，因为这次开发我遇到了很多比较棘手的问题，我认为万变不离其宗，所以我看了一下他们的源码，然后简单的写了几个Demo，结合了我自己的开发经验，写成此文，做记录的同时，希望可以帮到其他兄弟，未来我还会出context随想，waitgroup随想，一点一点来吧。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>开发中常用的Golang高级用法</title>
+      <link>http://localhost:1313/posts/%E5%BC%80%E5%8F%91%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84golang%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/</link>
+      <pubDate>Fri, 22 May 2020 14:37:09 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%BC%80%E5%8F%91%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84golang%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/</guid>
+      <description>&lt;h1 id=&#34;开发中常用的golang高级用法&#34;&gt;开发中常用的Golang高级用法&lt;/h1&gt;
+&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;忙碌了两个月，这次开发终于要结束了，今天下午公司在重组集群机器，也没办法干活儿了，就写一些东西，相当于，留住一些东西，来纪念这辛苦的两个月吧。做一个纪念，也是为了方便以后自己去查看。在这次开发中，学习了不少Golang的高级特性，并且付诸于实现，也踩了不少坑，留下这篇文字，也是方便其他人能够查看，或者借鉴，如果帮到你，那么我也会很开心你。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang 完成一个 Crontab定时器（2）</title>
+      <link>http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A82/</link>
+      <pubDate>Mon, 23 Mar 2020 09:14:40 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A82/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;上篇文章，大概讲了一下robfig/cron 包的使用，怎么开始一个定时任务，那个东西比较简单，也就是调用函数而已，人家都给你把包都封装好了。鉴于上一章我没提到cron相关，这一章专门我写个cron相关，讲讲怎么cron语法，然后再实现一个自动生成cron语句的逻辑。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang 完成一个 Crontab定时器（1）</title>
+      <link>http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A81/</link>
+      <pubDate>Mon, 23 Mar 2020 09:12:36 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A81/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;Linux的Crontab定时器似乎已经足够强大，但是我认为还是没有办法满足我们所有的需求，例如定时器某一瞬间需要动态添加／删除任务的功能，例如定时器只能在指定的节点上启动（主节点），其他节点不需要定时服务，这种情况Linux自带的Crontab就不能够满足我们的需求了，所以这次要徒手定义一个Crontab定时器，作为自己的备用。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang 调用 aws-sdk 操作 S3对象存储</title>
+      <link>http://localhost:1313/posts/golang-%E8%B0%83%E7%94%A8-aws-sdk-%E6%93%8D%E4%BD%9C-s3%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8/</link>
+      <pubDate>Fri, 25 Oct 2019 09:55:52 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang-%E8%B0%83%E7%94%A8-aws-sdk-%E6%93%8D%E4%BD%9C-s3%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8/</guid>
+      <description>&lt;h1 id=&#34;golang-调用-aws-sdk-操作-s3对象存储&#34;&gt;Golang 调用 aws-sdk 操作 S3对象存储&lt;/h1&gt;
+&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;因为业务问题，要写一个S3对象存储管理代码，由于一直写Go，所以这次采用了Go，Go嘛，快，自带多线程，这种好处就不用多说了吧。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

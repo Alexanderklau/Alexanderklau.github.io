@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head>
+	<meta name="generator" content="Hugo 0.160.1"><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>yemilice</title>
+
+<meta name="description" content="程序、音乐与生活随笔">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" type="application/rss+xml" href="http://localhost:1313/index.xml" title="rss">
+<link rel="alternate" type="application/json" href="http://localhost:1313/index.json" title="json">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="yemilice">
+  <meta property="og:description" content="程序、音乐与生活随笔">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="website">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="yemilice">
+  <meta name="twitter:description" content="程序、音乐与生活随笔">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "yemilice",
+  "url": "http://localhost:1313/",
+  "description": "程序、音乐与生活随笔",
+  "logo": "http://localhost:1313/favicon.ico",
+  "sameAs": [
+      "https://github.com/Alexanderklau", "mailto:Yemiliceklichko@outlook.com"
+  ]
+}
+</script>
+</head>
+<body class="list" id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+<article class="first-entry home-info">
+    <header class="entry-header">
+        <h1>Yemilice</h1>
+    </header>
+    <div class="entry-content md-content">
+        
+        <p>人生如逆水行舟，不进则退。</p>
+<p>这里主要记录 <strong>Golang / 架构 / 搜索/ AI / 游戏相关</strong>，偶尔也写音乐、成长和一些不太想发在朋友圈的话。</p>
+
+    </div>
+    <div class="home-actions">
+        <a class="home-action" href="/archives/">归档</a>
+        <a class="home-action" href="/aboutme/">关于我</a>
+    </div>
+    <footer class="entry-footer">
+        <div class="social-icons" >
+    <a href="https://github.com/Alexanderklau" target="_blank" rel="noopener noreferrer me"
+        title="Github">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path
+        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+    </path>
+</svg>
+    </a>
+    <a href="mailto:Yemiliceklichko@outlook.com" target="_blank" rel="noopener noreferrer me"
+        title="Email">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 21" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+    <polyline points="22,6 12,13 2,6"></polyline>
+</svg>
+    </a>
+</div>
+
+    </footer>
+</article>
+<section class="home-section">
+  <div class="section-heading">
+    <h2>内容方向</h2>
+    <p>如果你第一次来，这里是最适合开始逛的入口。</p>
+  </div>
+  <div class="home-grid track-grid">
+    <a class="home-card track-card" href="/categories/%e6%8a%80%e6%9c%af/">
+      <span class="home-card-kicker">Track</span>
+      <h3>技术沉淀</h3>
+      <p>Golang、架构设计、ElasticSearch、分布式和踩坑复盘。</p>
+    </a>
+    <a class="home-card track-card" href="/posts/%E5%A4%9A%E4%BA%BA%E6%B8%B8%E6%88%8F%E6%8A%80%E6%9C%AF%E5%9F%BA%E7%A1%80/">
+      <span class="home-card-kicker">Track</span>
+      <h3>游戏观察</h3>
+      <p>多人游戏、网络机制、匹配逻辑，以及一些开发者视角的拆解。</p>
+    </a>
+    <a class="home-card track-card" href="/categories/%e7%94%9f%e6%b4%bb/">
+      <span class="home-card-kicker">Track</span>
+      <h3>音乐与生活</h3>
+      <p>说唱、编曲、情绪记录，还有那些不太适合发在朋友圈的话。</p>
+    </a>
+  </div>
+</section>
+<section class="home-section">
+  <div class="section-heading">
+    <h2>精选文章</h2>
+    <p>这些文章最能代表这个博客的气质和内容跨度。</p>
+  </div>
+  <div class="home-grid featured-grid">
+    <article class="home-card featured-card">
+      <div class="home-card-topline"><span class="home-card-tag">系列起点</span>
+        <span class="home-card-date">October 27, 2021</span>
+      </div>
+      <h3><a href="/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/">Golang协程基础探究</a></h3>
+      <p>前言 最近我把Go重新过了一遍，特别是Go的协程这一块，我感觉任何事都是从简单到复杂
+包括现在，所以我重新开始学习基础，后序我会出一个系列
+分别为
+Golang协程基础 （已经完成！） Golang协程调度 Golang协程控制 Golang协程通信 Golang垃圾回收机制 所以我会持续更新，大家请期待吧，爱你们！
+...</p>
+      <div class="home-card-meta"><span title='2021-10-27 11:39:17 +0000 UTC'>October 27, 2021</span>&nbsp;·&nbsp;<span>6 min</span>&nbsp;·&nbsp;<span>2739 words</span></div>
+    </article>
+    <article class="home-card featured-card">
+      <div class="home-card-topline"><span class="home-card-tag">游戏开发</span>
+        <span class="home-card-date">April 14, 2024</span>
+      </div>
+      <h3><a href="/posts/%E5%A4%9A%E4%BA%BA%E6%B8%B8%E6%88%8F%E6%8A%80%E6%9C%AF%E5%9F%BA%E7%A1%80/">多人游戏网络技术基础</a></h3>
+      <p>前言 很久不更新Blog了，是自己懈怠了很多，所以在思考了一下之后明白，我需要继续加强学习
+加入ubisoft之后其实也没做什么值得称道的事儿
+只是一个基础的开发人员，不过工作当中有一些可以被记录和梳理的地方
+...</p>
+      <div class="home-card-meta"><span title='2024-04-14 09:06:47 +0000 UTC'>April 14, 2024</span>&nbsp;·&nbsp;<span>12 min</span>&nbsp;·&nbsp;<span>5570 words</span></div>
+    </article>
+    <article class="home-card featured-card">
+      <div class="home-card-topline"><span class="home-card-tag">经验复盘</span>
+        <span class="home-card-date">October 20, 2020</span>
+      </div>
+      <h3><a href="/posts/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%92%8C%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86-%E5%86%99%E4%BA%8E%E7%AC%AC%E4%B8%89%E4%B8%AA%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91%E9%A1%B9%E7%9B%AE%E4%B9%8B%E5%90%8E/">架构设计和项目管理心得-写于第三个独立开发项目之后</a></h3>
+      <p>前言 本月20号，我完成了我第三个独立开发项目，并且通过测试顺利交付了。
+首先先总结一下我这半年都干了什么吧。
+回想一下，从去年开始，我就被安排独立开发，从无到有，从惶恐到上手，从不知所措到游刃有余，其实还是度过了一个比较漫长的阶段，还好挺过来了。
+...</p>
+      <div class="home-card-meta"><span title='2020-10-20 10:15:51 +0000 UTC'>October 20, 2020</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4211 words</span></div>
+    </article>
+    <article class="home-card featured-card">
+      <div class="home-card-topline"><span class="home-card-tag">人生节点</span>
+        <span class="home-card-date">January 25, 2022</span>
+      </div>
+      <h3><a href="/posts/2022%E5%BC%80%E5%B9%B4%E7%A4%BC%E7%89%A9-%E6%8B%BF%E4%B8%8B%E8%82%B2%E7%A2%A7-%E5%8A%A8%E8%A7%86-eaoffer%E7%9A%84%E9%9A%8F%E6%83%B3/">2022开年礼物-拿下育碧/EA/动视Offer的随想</a></h3>
+      <p>前言 大家好，好久不见！
+最近太忙了，实在没时间上来写blog，昨天收获了最后一个offer（育碧），自此，我的跳槽计划完全结束
+我在一个月的时间拿下了育碧，动视，EA的Offer
+...</p>
+      <div class="home-card-meta"><span title='2022-01-25 09:02:04 +0000 UTC'>January 25, 2022</span>&nbsp;·&nbsp;<span>7 min</span>&nbsp;·&nbsp;<span>3256 words</span></div>
+    </article>
+  </div>
+</section>
+
+<section class="home-section home-latest">
+  <div class="section-heading">
+    <h2>最近更新</h2>
+    <p>按时间倒序，持续记录技术、音乐和生活。</p>
+  </div>
+  <article class="post-entry latest-entry"> 
+    <div class="latest-topline">
+      <span class="latest-date">April 21, 2025</span>
+    </div>
+    <header class="entry-header">
+      <h2 class="entry-hint-parent">COD(使命召唤)-排位赛匹配机制详解
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p>前言 当使奴太久了，从cod8 - cod21，前几天卖了PS5，打算彻底脱坑，再也不玩了
+之前被折磨的太多了，现在真的不想玩了，动视的匹配机制真的是个迷
+...</p>
+    </div>
+    <footer class="entry-footer"><span>9 min</span>&nbsp;·&nbsp;<span>4372 words</span></footer>
+    <a class="entry-link" aria-label="post link to COD(使命召唤)-排位赛匹配机制详解" href="http://localhost:1313/posts/cod%E4%BD%BF%E5%91%BD%E5%8F%AC%E5%94%A4-%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/"></a>
+  </article>
+  <article class="post-entry latest-entry"> 
+    <div class="latest-topline">
+      <span class="latest-date">July 30, 2024</span>
+    </div>
+    <header class="entry-header">
+      <h2 class="entry-hint-parent">GitLab/ArgoCD/Jenkins CI/CD方案梳理和对比
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p>CI/CD的概述 良好的CI/CD应该拥有哪些功能 自动化构建 自动化构建触发：每次代码提交、合并请求、或其他触发事件时，自动启动构建过程。 依赖管理：自动处理项目依赖，确保构建环境的一致性。 可复用的构建脚本：使用脚本或配置文件（如Makefile、Gradle、Maven等）来定义构建过程，确保构建步骤的一致性和可复用性。 版本控制：构建过程中自动生成版本号或构建标签，以便于版本管理和追踪。 自动化测试 自动化测试是CI/CD系统确保代码质量的重要功能，通过自动化测试，开发团队可以快速发现和修复问题。
+...</p>
+    </div>
+    <footer class="entry-footer"><span>7 min</span>&nbsp;·&nbsp;<span>3283 words</span></footer>
+    <a class="entry-link" aria-label="post link to GitLab/ArgoCD/Jenkins CI/CD方案梳理和对比" href="http://localhost:1313/posts/gitlab-argocd-jenkins%E6%96%B9%E6%A1%88%E6%A2%B3%E7%90%86%E5%92%8C%E5%AF%B9%E6%AF%94/"></a>
+  </article>
+  <article class="post-entry latest-entry"> 
+    <div class="latest-topline">
+      <span class="latest-date">April 14, 2024</span>
+    </div>
+    <header class="entry-header">
+      <h2 class="entry-hint-parent">多人游戏网络技术基础
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p>前言 很久不更新Blog了，是自己懈怠了很多，所以在思考了一下之后明白，我需要继续加强学习
+加入ubisoft之后其实也没做什么值得称道的事儿
+只是一个基础的开发人员，不过工作当中有一些可以被记录和梳理的地方
+...</p>
+    </div>
+    <footer class="entry-footer"><span>12 min</span>&nbsp;·&nbsp;<span>5570 words</span></footer>
+    <a class="entry-link" aria-label="post link to 多人游戏网络技术基础" href="http://localhost:1313/posts/%E5%A4%9A%E4%BA%BA%E6%B8%B8%E6%88%8F%E6%8A%80%E6%9C%AF%E5%9F%BA%E7%A1%80/"></a>
+  </article>
+  <article class="post-entry latest-entry"> 
+    <div class="latest-topline">
+      <span class="latest-date">January 25, 2022</span>
+    </div>
+    <header class="entry-header">
+      <h2 class="entry-hint-parent">2022开年礼物-拿下育碧/EA/动视Offer的随想
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p>前言 大家好，好久不见！
+最近太忙了，实在没时间上来写blog，昨天收获了最后一个offer（育碧），自此，我的跳槽计划完全结束
+我在一个月的时间拿下了育碧，动视，EA的Offer
+...</p>
+    </div>
+    <footer class="entry-footer"><span>7 min</span>&nbsp;·&nbsp;<span>3256 words</span></footer>
+    <a class="entry-link" aria-label="post link to 2022开年礼物-拿下育碧/EA/动视Offer的随想" href="http://localhost:1313/posts/2022%E5%BC%80%E5%B9%B4%E7%A4%BC%E7%89%A9-%E6%8B%BF%E4%B8%8B%E8%82%B2%E7%A2%A7-%E5%8A%A8%E8%A7%86-eaoffer%E7%9A%84%E9%9A%8F%E6%83%B3/"></a>
+  </article>
+  <article class="post-entry latest-entry"> 
+    <div class="latest-topline">
+      <span class="latest-date">December 17, 2021</span>
+    </div>
+    <header class="entry-header">
+      <h2 class="entry-hint-parent">Golang协程通信探究
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p>前言 这几天攻关了一下协程通信，也顺利完成了
+我觉得每次学习都是一个新的经验
+狗公司今年没有年终
+我肯定是要走的，没必要继续停留
+Golang协程基础 （已经完成！） Golang协程调度 （已经完成！） Golang协程通信 (已经完成) Golang协程控制 Golang垃圾回收机制 CSP思想 要了解协程通信，首先就要了解CSP思想
+...</p>
+    </div>
+    <footer class="entry-footer"><span>12 min</span>&nbsp;·&nbsp;<span>5653 words</span></footer>
+    <a class="entry-link" aria-label="post link to Golang协程通信探究" href="http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E9%80%9A%E4%BF%A1%E6%8E%A2%E7%A9%B6/"></a>
+  </article>
+  <article class="post-entry latest-entry"> 
+    <div class="latest-topline">
+      <span class="latest-date">December 14, 2021</span>
+    </div>
+    <header class="entry-header">
+      <h2 class="entry-hint-parent">ElasticSearch重大漏洞-log4j的处理方案-12月20日更新！！！！！
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p>前言 最近暴露出一个炸弹级别的漏洞 log4j
+Log4j的GitHub公开披露了一个影响 Apache Log4j 2 实用程序多个版本的高严重性漏洞 (CVE-2021-44228)。
+该漏洞影响了 Apache Log4j 2 的 2.0 到 2.14.1 版本。
+...</p>
+    </div>
+    <footer class="entry-footer"><span>2 min</span>&nbsp;·&nbsp;<span>780 words</span></footer>
+    <a class="entry-link" aria-label="post link to ElasticSearch重大漏洞-log4j的处理方案-12月20日更新！！！！！" href="http://localhost:1313/posts/elasticsearch%E9%87%8D%E5%A4%A7%E6%BC%8F%E6%B4%9E-log4j%E7%9A%84%E5%A4%84%E7%90%86%E6%96%B9%E6%A1%88/"></a>
+  </article>
+  <article class="post-entry latest-entry"> 
+    <div class="latest-topline">
+      <span class="latest-date">November 30, 2021</span>
+    </div>
+    <header class="entry-header">
+      <h2 class="entry-hint-parent">Black Hole（黑洞）（Cover MC 몽 ／ Feat. Ailee(에일리）
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p>前言 翻唱，听听就得
+原版
+https://www.youtube.com/watch?v=-OE1DvOaq7o
+歌曲 歌词 내가 널 울린 적 있니 我曾把你弄哭
+넌 항상 옳은 선택을 했니 你总是做正确的选择
+넌 이미 그런 길에 서 있어 你已经处于那样的一条路上
+나 역시 낭떠러지에 서 있어 而我果然还是站在了悬崖边
+...</p>
+    </div>
+    <footer class="entry-footer"><span>2 min</span>&nbsp;·&nbsp;<span>768 words</span></footer>
+    <a class="entry-link" aria-label="post link to Black Hole（黑洞）（Cover MC 몽 ／ Feat. Ailee(에일리）" href="http://localhost:1313/posts/black-hole%E9%BB%91%E6%B4%9Ecover-mc%E6%A2%A6--ailee/"></a>
+  </article>
+  <article class="post-entry latest-entry"> 
+    <div class="latest-topline">
+      <span class="latest-tag">技术</span>
+      <span class="latest-date">November 8, 2021</span>
+    </div>
+    <header class="entry-header">
+      <h2 class="entry-hint-parent">Golang协程调度探究
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p>前言 这几天攻关了一下go协程的调度，然后写了这篇文章
+这篇文章的工作量真挺大的，我看的也很累，找资料也很累
+这篇文章，需要感谢《Go语言底层原理剖析》这本书的作者，这本书给了我很大启发
+...</p>
+    </div>
+    <footer class="entry-footer"><span>15 min</span>&nbsp;·&nbsp;<span>7043 words</span></footer>
+    <a class="entry-link" aria-label="post link to Golang协程调度探究" href="http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E8%B0%83%E5%BA%A6%E6%8E%A2%E7%A9%B6/"></a>
+  </article>
+  <article class="post-entry latest-entry"> 
+    <div class="latest-topline">
+      <span class="latest-tag">技术</span>
+      <span class="latest-date">October 27, 2021</span>
+    </div>
+    <header class="entry-header">
+      <h2 class="entry-hint-parent">Golang协程基础探究
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p>前言 最近我把Go重新过了一遍，特别是Go的协程这一块，我感觉任何事都是从简单到复杂
+包括现在，所以我重新开始学习基础，后序我会出一个系列
+分别为
+Golang协程基础 （已经完成！） Golang协程调度 Golang协程控制 Golang协程通信 Golang垃圾回收机制 所以我会持续更新，大家请期待吧，爱你们！
+...</p>
+    </div>
+    <footer class="entry-footer"><span>6 min</span>&nbsp;·&nbsp;<span>2739 words</span></footer>
+    <a class="entry-link" aria-label="post link to Golang协程基础探究" href="http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/"></a>
+  </article>
+  <article class="post-entry latest-entry"> 
+    <div class="latest-topline">
+      <span class="latest-tag">技术</span>
+      <span class="latest-date">September 9, 2021</span>
+    </div>
+    <header class="entry-header">
+      <h2 class="entry-hint-parent">设计高可用的ElasicSearch索引
+      </h2>
+    </header>
+    <div class="entry-content">
+      <p>前言 最近又是学习的爆发期，我戒除了上班划水和看知乎故事会，也戒除了游戏和小说
+也戒除了频繁参加外面的无用活动，也逐渐修复了寂寞侵蚀内心的恐惧
+将心思逐渐稳定下来，所以，我本月开始到年底，将会爆发式更新blog和歌曲
+...</p>
+    </div>
+    <footer class="entry-footer"><span>8 min</span>&nbsp;·&nbsp;<span>3639 words</span></footer>
+    <a class="entry-link" aria-label="post link to 设计高可用的ElasicSearch索引" href="http://localhost:1313/posts/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84elasicsaerch%E7%B4%A2%E5%BC%95/"></a>
+  </article>
+</section>
+<footer class="page-footer">
+  <nav class="pagination">
+    <a class="next" href="http://localhost:1313/page/2/">&nbsp;&nbsp;&raquo;
+    </a>
+  </nav>
+</footer>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

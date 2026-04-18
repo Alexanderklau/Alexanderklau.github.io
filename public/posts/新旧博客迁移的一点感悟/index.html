@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>新旧博客迁移的一点感悟 | yemilice</title>
+<meta name="keywords" content="其他技术">
+<meta name="description" content="算是日记吧
+其实自己一直在cnblog上更新自己的博客，从16年3月入行到现在，已经过去了三个春秋，发觉自己的技术还是个渣渣，最近生活真的忙成一团，工作也很忙，生活也很忙，有时候饭都不容易吃上，感觉自己学习真的学不动了，不知道自己是不是懈怠了，运动，音乐什么的，也停下来了，感觉真的缺少了一点点乐趣。
+不过说真的，自己也真的该动起来了，因为时间不等人啊，已经入行这么久，跌跌撞撞像个摇摆人，所以未来我还是要多学习，多更新我的博客，将自己的技术或者是一些感悟，哪怕是一些灵光一闪的理想，都记录下来，哈哈，这样会不会好一些呢？会不会明天就是更好的那一天呢？">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/%E6%96%B0%E6%97%A7%E5%8D%9A%E5%AE%A2%E8%BF%81%E7%A7%BB%E7%9A%84%E4%B8%80%E7%82%B9%E6%84%9F%E6%82%9F/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/%E6%96%B0%E6%97%A7%E5%8D%9A%E5%AE%A2%E8%BF%81%E7%A7%BB%E7%9A%84%E4%B8%80%E7%82%B9%E6%84%9F%E6%82%9F/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/%E6%96%B0%E6%97%A7%E5%8D%9A%E5%AE%A2%E8%BF%81%E7%A7%BB%E7%9A%84%E4%B8%80%E7%82%B9%E6%84%9F%E6%82%9F/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="新旧博客迁移的一点感悟">
+  <meta property="og:description" content="算是日记吧 其实自己一直在cnblog上更新自己的博客，从16年3月入行到现在，已经过去了三个春秋，发觉自己的技术还是个渣渣，最近生活真的忙成一团，工作也很忙，生活也很忙，有时候饭都不容易吃上，感觉自己学习真的学不动了，不知道自己是不是懈怠了，运动，音乐什么的，也停下来了，感觉真的缺少了一点点乐趣。
+不过说真的，自己也真的该动起来了，因为时间不等人啊，已经入行这么久，跌跌撞撞像个摇摆人，所以未来我还是要多学习，多更新我的博客，将自己的技术或者是一些感悟，哪怕是一些灵光一闪的理想，都记录下来，哈哈，这样会不会好一些呢？会不会明天就是更好的那一天呢？">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2019-10-24T17:50:37+00:00">
+    <meta property="article:modified_time" content="2019-10-24T17:50:37+00:00">
+    <meta property="article:tag" content="其他技术">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="新旧博客迁移的一点感悟">
+  <meta name="twitter:description" content="算是日记吧 其实自己一直在cnblog上更新自己的博客，从16年3月入行到现在，已经过去了三个春秋，发觉自己的技术还是个渣渣，最近生活真的忙成一团，工作也很忙，生活也很忙，有时候饭都不容易吃上，感觉自己学习真的学不动了，不知道自己是不是懈怠了，运动，音乐什么的，也停下来了，感觉真的缺少了一点点乐趣。
+不过说真的，自己也真的该动起来了，因为时间不等人啊，已经入行这么久，跌跌撞撞像个摇摆人，所以未来我还是要多学习，多更新我的博客，将自己的技术或者是一些感悟，哪怕是一些灵光一闪的理想，都记录下来，哈哈，这样会不会好一些呢？会不会明天就是更好的那一天呢？">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "新旧博客迁移的一点感悟",
+      "item": "http://localhost:1313/posts/%E6%96%B0%E6%97%A7%E5%8D%9A%E5%AE%A2%E8%BF%81%E7%A7%BB%E7%9A%84%E4%B8%80%E7%82%B9%E6%84%9F%E6%82%9F/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "新旧博客迁移的一点感悟",
+  "name": "新旧博客迁移的一点感悟",
+  "description": "算是日记吧 其实自己一直在cnblog上更新自己的博客，从16年3月入行到现在，已经过去了三个春秋，发觉自己的技术还是个渣渣，最近生活真的忙成一团，工作也很忙，生活也很忙，有时候饭都不容易吃上，感觉自己学习真的学不动了，不知道自己是不是懈怠了，运动，音乐什么的，也停下来了，感觉真的缺少了一点点乐趣。\n不过说真的，自己也真的该动起来了，因为时间不等人啊，已经入行这么久，跌跌撞撞像个摇摆人，所以未来我还是要多学习，多更新我的博客，将自己的技术或者是一些感悟，哪怕是一些灵光一闪的理想，都记录下来，哈哈，这样会不会好一些呢？会不会明天就是更好的那一天呢？\n",
+  "keywords": [
+    "其他技术"
+  ],
+  "articleBody": "算是日记吧 其实自己一直在cnblog上更新自己的博客，从16年3月入行到现在，已经过去了三个春秋，发觉自己的技术还是个渣渣，最近生活真的忙成一团，工作也很忙，生活也很忙，有时候饭都不容易吃上，感觉自己学习真的学不动了，不知道自己是不是懈怠了，运动，音乐什么的，也停下来了，感觉真的缺少了一点点乐趣。\n不过说真的，自己也真的该动起来了，因为时间不等人啊，已经入行这么久，跌跌撞撞像个摇摆人，所以未来我还是要多学习，多更新我的博客，将自己的技术或者是一些感悟，哪怕是一些灵光一闪的理想，都记录下来，哈哈，这样会不会好一些呢？会不会明天就是更好的那一天呢？\n算是自己我介绍吧 渣渣一个，技术又全又杂，精通的少，各种都会一点，但是真正就是个渣渣，哈哈，现在孑然一生，18年年底被踹，重新出发，想想自己当时为了感情选择留在这个陌生的城市，现在已经爱上了这座城市，这座美丽的西南大都会。我想我会留下来的吧，我会留下来的？我也不确定吧，现在要慢慢出发，重新出发，我想我会越来越好的。\n算是结尾吧 可能你因为一些别的原因走到我博客来，其实欢迎你，欢迎你听一个24岁的家伙碎碎念那么久，未来大部分应该会更新技术，或者是我的一些奇特爱好，哈哈，希望你们会喜欢，我爱你们。\n",
+  "wordCount" : "520",
+  "inLanguage": "zh-cn",
+  "datePublished": "2019-10-24T17:50:37Z",
+  "dateModified": "2019-10-24T17:50:37Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/%E6%96%B0%E6%97%A7%E5%8D%9A%E5%AE%A2%E8%BF%81%E7%A7%BB%E7%9A%84%E4%B8%80%E7%82%B9%E6%84%9F%E6%82%9F/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            新旧博客迁移的一点感悟
+        </h1>
+        <div class="post-meta"><span title='2019-10-24 17:50:37 +0000 UTC'>October 24, 2019</span>&nbsp;·&nbsp;<span>2 min</span>&nbsp;·&nbsp;<span>520 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e7%ae%97%e6%98%af%e6%97%a5%e8%ae%b0%e5%90%a7" aria-label="算是日记吧">算是日记吧</a></li>
+            <li>
+                <a href="#%e7%ae%97%e6%98%af%e8%87%aa%e5%b7%b1%e6%88%91%e4%bb%8b%e7%bb%8d%e5%90%a7" aria-label="算是自己我介绍吧">算是自己我介绍吧</a></li>
+            <li>
+                <a href="#%e7%ae%97%e6%98%af%e7%bb%93%e5%b0%be%e5%90%a7" aria-label="算是结尾吧">算是结尾吧</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="算是日记吧">算是日记吧<a hidden class="anchor" aria-hidden="true" href="#算是日记吧">#</a></h2>
+<p>其实自己一直在cnblog上更新自己的博客，从16年3月入行到现在，已经过去了三个春秋，发觉自己的技术还是个渣渣，最近生活真的忙成一团，工作也很忙，生活也很忙，有时候饭都不容易吃上，感觉自己学习真的学不动了，不知道自己是不是懈怠了，运动，音乐什么的，也停下来了，感觉真的缺少了一点点乐趣。<br>
+不过说真的，自己也真的该动起来了，因为时间不等人啊，已经入行这么久，跌跌撞撞像个摇摆人，所以未来我还是要多学习，多更新我的博客，将自己的技术或者是一些感悟，哪怕是一些灵光一闪的理想，都记录下来，哈哈，这样会不会好一些呢？会不会明天就是更好的那一天呢？</p>
+<h2 id="算是自己我介绍吧">算是自己我介绍吧<a hidden class="anchor" aria-hidden="true" href="#算是自己我介绍吧">#</a></h2>
+<p>渣渣一个，技术又全又杂，精通的少，各种都会一点，但是真正就是个渣渣，哈哈，现在孑然一生，18年年底被踹，重新出发，想想自己当时为了感情选择留在这个陌生的城市，现在已经爱上了这座城市，这座美丽的西南大都会。我想我会留下来的吧，我会留下来的？我也不确定吧，现在要慢慢出发，重新出发，我想我会越来越好的。</p>
+<h2 id="算是结尾吧">算是结尾吧<a hidden class="anchor" aria-hidden="true" href="#算是结尾吧">#</a></h2>
+<p>可能你因为一些别的原因走到我博客来，其实欢迎你，欢迎你听一个24岁的家伙碎碎念那么久，未来大部分应该会更新技术，或者是我的一些奇特爱好，哈哈，希望你们会喜欢，我爱你们。<br>
+<img alt="“图片描述”" loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/images/2.jpg"></p>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/%E7%A8%8B%E5%BA%8F%E5%91%98%E5%A6%82%E4%BD%95%E9%94%BB%E7%82%BC%E8%87%AA%E5%B7%B1%E7%9A%84%E4%BA%A7%E5%93%81%E6%80%9D%E7%BB%B4/">
+    <span class="title">« </span>
+    <span>程序员如何锻炼自己的产品思维</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

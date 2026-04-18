@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>分布式数据库如何选择，几种分布式数据库优缺点一览 | yemilice</title>
+<meta name="keywords" content="其他技术">
+<meta name="description" content="分布式数据库如何选择？几种分布式数据库优缺点一览
+为什么选择分布式数据库？
+优点如下：
+
+具有灵活的体系结构
+适应分布式的管理和控制机构
+经济性能优越
+系统的可靠性高、可用性好
+局部应用的响应速度快
+可扩展性好，易于集成现有系统。
+
+相关的技术概念介绍
+什么是分布式数据库？
+常见的分布式系统分为，">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="分布式数据库如何选择，几种分布式数据库优缺点一览">
+  <meta property="og:description" content="分布式数据库如何选择？几种分布式数据库优缺点一览 为什么选择分布式数据库？ 优点如下：
+具有灵活的体系结构 适应分布式的管理和控制机构 经济性能优越 系统的可靠性高、可用性好 局部应用的响应速度快 可扩展性好，易于集成现有系统。 相关的技术概念介绍 什么是分布式数据库？ 常见的分布式系统分为，">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-05-22T16:16:20+00:00">
+    <meta property="article:modified_time" content="2020-05-22T16:16:20+00:00">
+    <meta property="article:tag" content="其他技术">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="分布式数据库如何选择，几种分布式数据库优缺点一览">
+  <meta name="twitter:description" content="分布式数据库如何选择？几种分布式数据库优缺点一览 为什么选择分布式数据库？ 优点如下：
+具有灵活的体系结构 适应分布式的管理和控制机构 经济性能优越 系统的可靠性高、可用性好 局部应用的响应速度快 可扩展性好，易于集成现有系统。 相关的技术概念介绍 什么是分布式数据库？ 常见的分布式系统分为，">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "分布式数据库如何选择，几种分布式数据库优缺点一览",
+      "item": "http://localhost:1313/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "分布式数据库如何选择，几种分布式数据库优缺点一览",
+  "name": "分布式数据库如何选择，几种分布式数据库优缺点一览",
+  "description": "分布式数据库如何选择？几种分布式数据库优缺点一览 为什么选择分布式数据库？ 优点如下：\n具有灵活的体系结构 适应分布式的管理和控制机构 经济性能优越 系统的可靠性高、可用性好 局部应用的响应速度快 可扩展性好，易于集成现有系统。 相关的技术概念介绍 什么是分布式数据库？ 常见的分布式系统分为，\n",
+  "keywords": [
+    "其他技术"
+  ],
+  "articleBody": "分布式数据库如何选择？几种分布式数据库优缺点一览 为什么选择分布式数据库？ 优点如下：\n具有灵活的体系结构 适应分布式的管理和控制机构 经济性能优越 系统的可靠性高、可用性好 局部应用的响应速度快 可扩展性好，易于集成现有系统。 相关的技术概念介绍 什么是分布式数据库？ 常见的分布式系统分为，\n支持持久化存储的分布式存储系统 着重计算的分布式计算框架 分布式消息队列 根据不同的应用的领域，把上述分类细化，常见分布式存储系统分为：\n分布式协同系统（分布式日志复制） 分布式任务调度框架 流计算框架 分布式文件/对象系统 分布式NoSQL存储 分布式关系数据库（OLAP、OLTP）； 各种消息队列mq 不同的分布式数据库如何区分？ Key-value NoSQL : 例如Redis Riak等；\ncolumn family NoSQL(wide column store) : 典型的是Hbase Cassandra\ndocument NoSQL : 典型的是mongodb\n需要什么样的数据库? 支持数据持久化，数据落盘，异常备份，高并发，大数据量存储。 要支持频繁的数据读写 分布式，多节点并行 和以前的数据库不冲突 可选的方法及其特点 根据上述的要求，分布式数据库，符合大数据存储的，支持频繁读写的数据库有如下几个，它们的特点会简单说明。\nElasticsearch数据库 Elasticsearch简介 分布式的实时文件存储，每个字段都被索引并可被搜索，分布式的实时分析搜索引擎\n可以扩展到上百台服务器，处理PB级结构化或非结构化数据\nElasticsearch应用场景 分布式的搜索引擎和数据分析引擎，全文检索，结构化检索，数据分析\n对海量数据进行近实时的处理，站内搜索（电商，招聘，门户，等等），IT系统搜索（OA，CRM，ERP，等等），数据分析\nElasticsearch的优缺点 缺点：没有用户验证和权限控制，没有事务的概念，不支持回滚，误删不能恢复，需要java环境.\n优点：将你的文档分割到不同容器或者分片中，可以存在单个节点或多个节点复制每个分片提供数据备份，防止硬件问题导致数据丢失。\nElasticsearch的持久化方案 gateway 代表 elasticsearch 索引的持久化存储方式，elasticsearch 默认是先把索引存放到内存中去，当内存满了的时候再持久化到硬盘里。当这个 elasticsearch 集群关闭或者再次重新启动时就会从 gateway 中读取索引数据。elasticsearch 支持多种类型的 gateway，有本地文件系统（默认），分布式文件系统，Hadoop 的 HDFS 和 amazon 的 s3 云存储服务。\nElasticSearch是先把索引的内容保存到内存之中，当内存不够时再把索引持久化到硬盘中，同时它还有一个队列，是在系统空闲时自动把索引写到硬盘中。\nRedis数据库 Redis简介 redis是开源BSD许可高级的key-value存储系统(NoSQL)，可以用来存储字符串，哈希结构，链表，集合，因此，常用来提供数据结构服务，Redis支持数据的持久化，可以将内存中的数据保存在磁盘中，重启的时候可以再次加 载进行使用。 支持简单的key-value类型的数据，同时还提供list，set，zset，hash等数据结构的存储。Redis支持数据的备份，即master-slave模式的数据备份。\nRedis应用场景 A）常规计数：粉丝数，微博数\nB）用户信息变更\nC）缓存处理，作为mysql的缓存\nD）队列系统，建有优先级的队列系统，日志收集系统\nRedis的优缺点 优点 (1) 速度快，因为数据存在内存中，类似于HashMap，HashMap的优势就是查找和操作的时间复杂度都是O(1)\n(2) 支持丰富数据类型，支持string，list，set，sorted set，hash\n(3) 支持事务，操作都是原子性，所谓的原子性就是对数据的更改要么全部执行，要么全部不执行\n(4) 丰富的特性：可用于缓存，消息，按key设置过期时间，过期后将会自动删除\n缺点 （1）Redis不具备自动容错和恢复功能，主机从机的宕机都会导致前端部分读写请求失败，需要等待机器重启或者手动切换前端的IP才能恢复\n（2）主机宕机，宕机前有部分数据未能及时同步到从机，切换IP后还会引入数据不一致的问题，降低了系统的可用性\n（3）redis的主从复制采用全量复制，复制过程中主机会fork出一个子进程对内存做一份快照，并将子进程的内存快照保存为文件发送给从机，这一过程需要确保主机有足够多的空余内存。若快照文件较大，对集群的服务能力会产生较大的影响，而且复制过程是在从机新加入集群或者从机和主机网络断开重连时都会进行，也就是网络波动都会造成主机和从机间的一次全量的数据复制，这对实际的系统运营造成了不小的麻烦\n（4）Redis较难支持在线扩容，在集群容量达到上限时在线扩容会变得很复杂。为避免这一问题，运维人员在系统上线时必须确保有足够的空间，这对资源造成了很大的浪费。\nRedis的持久化方案 redis提供两种方式进行持久化，一种是RDB持久化（原理是将Reids在内存中的数据库记录定时dump到磁盘上的RDB持久化），另外一种是AOF（append only file）持久化（原理是将Reids的操作日志以追加的方式写入文件）。\nRDB持久化是指在指定的时间间隔内将内存中的数据集快照写入磁盘，实际操作过程是fork一个子进程，先将数据集写入临时文件，写入成功后，再替换之前的文件，用二进制压缩存储。\nMongodb数据库 Mongodb简介 MongoDB本身是一种非关系型数据库。它的每一条记录是一个Document，每个Document有一组键值对组成。MongoDB中的Document与JSON对象相似。 Document中字段的值可能包括其他Document，数组等。\nMongodb应用场景 mongodb的主要目标是在键/值存储方式（提供了高性能和高度伸缩性）以及传统的RDBMS系统（丰富的功能）架起一座桥梁，集两者的优势于一身。mongo适用于以下场景：\na.网站数据：mongo非常适合实时的插入，更新与查询，并具备网站实时数据存储所需的复制及高度伸缩性。\nb.缓存：由于性能很高，mongo也适合作为信息基础设施的缓存层。在系统重启之后，由mongo搭建的持久化缓存可以避免下层的数据源过载。\nc.大尺寸、低价值的数据：使用传统的关系数据库存储一些数据时可能会比较贵，在此之前，很多程序员往往会选择传统的文件进行存储。\nd.高伸缩性的场景：mongo非常适合由数十或者数百台服务器组成的数据库。\ne.用于对象及JSON数据的存储：mongo的BSON数据格式非常适合文档格式化的存储及查询。\nMongodb的优缺点 优点：\n(1) 弱一致性（最终一致），更能保证用户的访问速度\n(2) 文档结构的存储方式，能够更便捷的获取数据\n(3) 内置GridFS，支持大容量的存储\n(4) 在使用场合下，千万级别的文档对象，近10G的数据，对有索引的ID的查询不会比mysql慢，而对非索引字段的查询，则是全面胜出。\n缺点：\n（1）不支持事物\n（2）占用空间过大，会造成磁盘浪费\n（3）单机可靠性比较差\n（4）大数据量持续插入，写入性能有较大波动\nMongodb的持久化方案/异常处理 当执行写操作时，MongoDB创建一个journal来包含确切磁盘位置和改变的字节。因此，如果服务器突然崩溃，启动时，journal会重放崩溃前并没有刷新到磁盘上的任何写操作。\n数据文件每隔60s刷新到磁盘上，默认情况下，因此journal只需要持有60s内的写入数据。journal预分配了几个空文件用于此目的，位于/data/db/journal，命名为_j.0,j.1等等。\nMongoDB运行很长时间情况下，在journal目录下，你会看到类似于_j.6217,_j.6218和_j.6219文件。这些文件是当前的journal文件，如果MongoDB一直运行，这些数字会持续增加。当正常关闭MongoDB时，这些文件将被清除，因为正常关机不在需要这些日志的。\n如果服务器崩溃或kill -9, mongodb再次启动时，会重放journal文件，会输出冗长难懂的检验行，这表明在正常的恢复。\nMysql分布式集群 Mysql分布式集群简介 MySQL集群是一个无共享的(shared-nothing)、分布式节点架构的存储方案，其目的是提供容错性和高性能。\n数据更新使用读已提交隔离级别（read-committedisolation)来保证所有节点数据的一致性，使用两阶段提交机制（two-phasedcommit)保证所有节点都有相同的数据(如果任何一个写操作失败，则更新失败）。\n无共享的对等节点使得某台服务器上的更新操作在其他服务器上立即可见。传播更新使用一种复杂的通信机制，这一机制专用来提供跨网络的高吞吐量。\n通过多个MySQL服务器分配负载，从而最大程序地达到高性能，通过在不同位置存储数据保证高可用性和冗余。\nMysql分布式集群应用场景 解决海量存储问题，比如京东B2B就用的Mysql分布式集群。\n适用几十亿的PV对DB的访问。\nMysql分布式集群的优缺点 优点：\na) 高可用性\nb)快速的自动失效切换\nc)灵活的分布式体系结构，没有单点故障\nd)高吞吐量和低延迟\ne)可扩展性强，支持在线扩容\n缺点：\na)存在很多限制，比如：不支持外键\nb)部署、管理、配置很复杂\nc)占用磁盘空间大，内存大\nd)备份和恢复不方便\ne)重启的时候，数据节点将数据load到内存需要很长时间\nMysql分布式集群的持久化方案 负载均衡。\n管理节点备份。\n",
+  "wordCount" : "3787",
+  "inLanguage": "zh-cn",
+  "datePublished": "2020-05-22T16:16:20Z",
+  "dateModified": "2020-05-22T16:16:20Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            分布式数据库如何选择，几种分布式数据库优缺点一览
+        </h1>
+        <div class="post-meta"><span title='2020-05-22 16:16:20 +0000 UTC'>May 22, 2020</span>&nbsp;·&nbsp;<span>8 min</span>&nbsp;·&nbsp;<span>3787 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e5%88%86%e5%b8%83%e5%bc%8f%e6%95%b0%e6%8d%ae%e5%ba%93%e5%a6%82%e4%bd%95%e9%80%89%e6%8b%a9%e5%87%a0%e7%a7%8d%e5%88%86%e5%b8%83%e5%bc%8f%e6%95%b0%e6%8d%ae%e5%ba%93%e4%bc%98%e7%bc%ba%e7%82%b9%e4%b8%80%e8%a7%88" aria-label="分布式数据库如何选择？几种分布式数据库优缺点一览">分布式数据库如何选择？几种分布式数据库优缺点一览</a><ul>
+                    
+            <li>
+                <a href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e9%80%89%e6%8b%a9%e5%88%86%e5%b8%83%e5%bc%8f%e6%95%b0%e6%8d%ae%e5%ba%93" aria-label="为什么选择分布式数据库？">为什么选择分布式数据库？</a></li>
+            <li>
+                <a href="#%e7%9b%b8%e5%85%b3%e7%9a%84%e6%8a%80%e6%9c%af%e6%a6%82%e5%bf%b5%e4%bb%8b%e7%bb%8d" aria-label="相关的技术概念介绍">相关的技术概念介绍</a><ul>
+                    
+            <li>
+                <a href="#%e4%bb%80%e4%b9%88%e6%98%af%e5%88%86%e5%b8%83%e5%bc%8f%e6%95%b0%e6%8d%ae%e5%ba%93" aria-label="什么是分布式数据库？">什么是分布式数据库？</a></li>
+            <li>
+                <a href="#%e4%b8%8d%e5%90%8c%e7%9a%84%e5%88%86%e5%b8%83%e5%bc%8f%e6%95%b0%e6%8d%ae%e5%ba%93%e5%a6%82%e4%bd%95%e5%8c%ba%e5%88%86" aria-label="不同的分布式数据库如何区分？">不同的分布式数据库如何区分？</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e9%9c%80%e8%a6%81%e4%bb%80%e4%b9%88%e6%a0%b7%e7%9a%84%e6%95%b0%e6%8d%ae%e5%ba%93" aria-label="需要什么样的数据库?">需要什么样的数据库?</a></li>
+            <li>
+                <a href="#%e5%8f%af%e9%80%89%e7%9a%84%e6%96%b9%e6%b3%95%e5%8f%8a%e5%85%b6%e7%89%b9%e7%82%b9" aria-label="可选的方法及其特点">可选的方法及其特点</a><ul>
+                    
+            <li>
+                <a href="#elasticsearch%e6%95%b0%e6%8d%ae%e5%ba%93" aria-label="Elasticsearch数据库">Elasticsearch数据库</a><ul>
+                    
+            <li>
+                <a href="#elasticsearch%e7%ae%80%e4%bb%8b" aria-label="Elasticsearch简介">Elasticsearch简介</a></li>
+            <li>
+                <a href="#elasticsearch%e5%ba%94%e7%94%a8%e5%9c%ba%e6%99%af" aria-label="Elasticsearch应用场景">Elasticsearch应用场景</a></li>
+            <li>
+                <a href="#elasticsearch%e7%9a%84%e4%bc%98%e7%bc%ba%e7%82%b9" aria-label="Elasticsearch的优缺点">Elasticsearch的优缺点</a></li>
+            <li>
+                <a href="#elasticsearch%e7%9a%84%e6%8c%81%e4%b9%85%e5%8c%96%e6%96%b9%e6%a1%88" aria-label="Elasticsearch的持久化方案">Elasticsearch的持久化方案</a></li></ul>
+            </li>
+            <li>
+                <a href="#redis%e6%95%b0%e6%8d%ae%e5%ba%93" aria-label="Redis数据库">Redis数据库</a><ul>
+                    
+            <li>
+                <a href="#redis%e7%ae%80%e4%bb%8b" aria-label="Redis简介">Redis简介</a></li>
+            <li>
+                <a href="#redis%e5%ba%94%e7%94%a8%e5%9c%ba%e6%99%af" aria-label="Redis应用场景">Redis应用场景</a></li>
+            <li>
+                <a href="#redis%e7%9a%84%e4%bc%98%e7%bc%ba%e7%82%b9" aria-label="Redis的优缺点">Redis的优缺点</a><ul>
+                    
+            <li>
+                <a href="#%e4%bc%98%e7%82%b9" aria-label="优点">优点</a></li>
+            <li>
+                <a href="#%e7%bc%ba%e7%82%b9" aria-label="缺点">缺点</a></li></ul>
+            </li>
+            <li>
+                <a href="#redis%e7%9a%84%e6%8c%81%e4%b9%85%e5%8c%96%e6%96%b9%e6%a1%88" aria-label="Redis的持久化方案">Redis的持久化方案</a></li></ul>
+            </li>
+            <li>
+                <a href="#mongodb%e6%95%b0%e6%8d%ae%e5%ba%93" aria-label="Mongodb数据库">Mongodb数据库</a><ul>
+                    
+            <li>
+                <a href="#mongodb%e7%ae%80%e4%bb%8b" aria-label="Mongodb简介">Mongodb简介</a></li>
+            <li>
+                <a href="#mongodb%e5%ba%94%e7%94%a8%e5%9c%ba%e6%99%af" aria-label="Mongodb应用场景">Mongodb应用场景</a></li>
+            <li>
+                <a href="#mongodb%e7%9a%84%e4%bc%98%e7%bc%ba%e7%82%b9" aria-label="Mongodb的优缺点">Mongodb的优缺点</a></li>
+            <li>
+                <a href="#mongodb%e7%9a%84%e6%8c%81%e4%b9%85%e5%8c%96%e6%96%b9%e6%a1%88%e5%bc%82%e5%b8%b8%e5%a4%84%e7%90%86" aria-label="Mongodb的持久化方案/异常处理">Mongodb的持久化方案/异常处理</a></li></ul>
+            </li>
+            <li>
+                <a href="#mysql%e5%88%86%e5%b8%83%e5%bc%8f%e9%9b%86%e7%be%a4" aria-label="Mysql分布式集群">Mysql分布式集群</a><ul>
+                    
+            <li>
+                <a href="#mysql%e5%88%86%e5%b8%83%e5%bc%8f%e9%9b%86%e7%be%a4%e7%ae%80%e4%bb%8b" aria-label="Mysql分布式集群简介">Mysql分布式集群简介</a></li>
+            <li>
+                <a href="#mysql%e5%88%86%e5%b8%83%e5%bc%8f%e9%9b%86%e7%be%a4%e5%ba%94%e7%94%a8%e5%9c%ba%e6%99%af" aria-label="Mysql分布式集群应用场景">Mysql分布式集群应用场景</a></li>
+            <li>
+                <a href="#mysql%e5%88%86%e5%b8%83%e5%bc%8f%e9%9b%86%e7%be%a4%e7%9a%84%e4%bc%98%e7%bc%ba%e7%82%b9" aria-label="Mysql分布式集群的优缺点">Mysql分布式集群的优缺点</a></li>
+            <li>
+                <a href="#mysql%e5%88%86%e5%b8%83%e5%bc%8f%e9%9b%86%e7%be%a4%e7%9a%84%e6%8c%81%e4%b9%85%e5%8c%96%e6%96%b9%e6%a1%88" aria-label="Mysql分布式集群的持久化方案">Mysql分布式集群的持久化方案</a>
+            </li>
+        </ul>
+        </li>
+        </ul>
+        </li>
+        </ul>
+        </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h1 id="分布式数据库如何选择几种分布式数据库优缺点一览">分布式数据库如何选择？几种分布式数据库优缺点一览<a hidden class="anchor" aria-hidden="true" href="#分布式数据库如何选择几种分布式数据库优缺点一览">#</a></h1>
+<h2 id="为什么选择分布式数据库">为什么选择分布式数据库？<a hidden class="anchor" aria-hidden="true" href="#为什么选择分布式数据库">#</a></h2>
+<p>优点如下：</p>
+<ol>
+<li>具有灵活的体系结构</li>
+<li>适应分布式的管理和控制机构</li>
+<li>经济性能优越</li>
+<li>系统的可靠性高、可用性好</li>
+<li>局部应用的响应速度快</li>
+<li>可扩展性好，易于集成现有系统。</li>
+</ol>
+<h2 id="相关的技术概念介绍">相关的技术概念介绍<a hidden class="anchor" aria-hidden="true" href="#相关的技术概念介绍">#</a></h2>
+<h3 id="什么是分布式数据库">什么是分布式数据库？<a hidden class="anchor" aria-hidden="true" href="#什么是分布式数据库">#</a></h3>
+<p>常见的分布式系统分为，</p>
+<ol>
+<li>支持持久化存储的分布式存储系统</li>
+<li>着重计算的分布式计算框架</li>
+<li>分布式消息队列</li>
+</ol>
+<p>根据不同的应用的领域，把上述分类细化，常见分布式存储系统分为：</p>
+<ol>
+<li>分布式协同系统（分布式日志复制）</li>
+<li>分布式任务调度框架</li>
+<li>流计算框架</li>
+<li>分布式文件/对象系统</li>
+<li>分布式NoSQL存储</li>
+<li>分布式关系数据库（OLAP、OLTP）；</li>
+<li>各种消息队列mq</li>
+</ol>
+<h3 id="不同的分布式数据库如何区分">不同的分布式数据库如何区分？<a hidden class="anchor" aria-hidden="true" href="#不同的分布式数据库如何区分">#</a></h3>
+<ol>
+<li>
+<p>Key-value NoSQL : 例如Redis Riak等；</p>
+</li>
+<li>
+<p>column family NoSQL(wide column store) : 典型的是Hbase Cassandra</p>
+</li>
+<li>
+<p>document NoSQL : 典型的是mongodb</p>
+</li>
+</ol>
+<h2 id="需要什么样的数据库">需要什么样的数据库?<a hidden class="anchor" aria-hidden="true" href="#需要什么样的数据库">#</a></h2>
+<ol>
+<li>支持数据持久化，数据落盘，异常备份，高并发，大数据量存储。</li>
+<li>要支持频繁的数据读写</li>
+<li>分布式，多节点并行</li>
+<li>和以前的数据库不冲突</li>
+</ol>
+<h2 id="可选的方法及其特点">可选的方法及其特点<a hidden class="anchor" aria-hidden="true" href="#可选的方法及其特点">#</a></h2>
+<p>根据上述的要求，分布式数据库，符合大数据存储的，支持频繁读写的数据库有如下几个，它们的特点会简单说明。</p>
+<h3 id="elasticsearch数据库">Elasticsearch数据库<a hidden class="anchor" aria-hidden="true" href="#elasticsearch数据库">#</a></h3>
+<h4 id="elasticsearch简介">Elasticsearch简介<a hidden class="anchor" aria-hidden="true" href="#elasticsearch简介">#</a></h4>
+<p>分布式的实时文件存储，每个字段都被索引并可被搜索，分布式的实时分析搜索引擎<br>
+可以扩展到上百台服务器，处理PB级结构化或非结构化数据</p>
+<h4 id="elasticsearch应用场景">Elasticsearch应用场景<a hidden class="anchor" aria-hidden="true" href="#elasticsearch应用场景">#</a></h4>
+<p>分布式的搜索引擎和数据分析引擎，全文检索，结构化检索，数据分析</p>
+<p>对海量数据进行近实时的处理，站内搜索（电商，招聘，门户，等等），IT系统搜索（OA，CRM，ERP，等等），数据分析</p>
+<h4 id="elasticsearch的优缺点">Elasticsearch的优缺点<a hidden class="anchor" aria-hidden="true" href="#elasticsearch的优缺点">#</a></h4>
+<p>缺点：没有用户验证和权限控制，没有事务的概念，不支持回滚，误删不能恢复，需要java环境.</p>
+<p>优点：将你的文档分割到不同容器或者分片中，可以存在单个节点或多个节点复制每个分片提供数据备份，防止硬件问题导致数据丢失。</p>
+<h4 id="elasticsearch的持久化方案">Elasticsearch的持久化方案<a hidden class="anchor" aria-hidden="true" href="#elasticsearch的持久化方案">#</a></h4>
+<p>gateway 代表 elasticsearch 索引的持久化存储方式，elasticsearch 默认是先把索引存放到内存中去，当内存满了的时候再持久化到硬盘里。当这个 elasticsearch 集群关闭或者再次重新启动时就会从 gateway 中读取索引数据。elasticsearch 支持多种类型的 gateway，有本地文件系统（默认），分布式文件系统，Hadoop 的 HDFS 和 amazon 的 s3 云存储服务。</p>
+<p>ElasticSearch是先把索引的内容保存到内存之中，当内存不够时再把索引持久化到硬盘中，同时它还有一个队列，是在系统空闲时自动把索引写到硬盘中。</p>
+<h3 id="redis数据库">Redis数据库<a hidden class="anchor" aria-hidden="true" href="#redis数据库">#</a></h3>
+<h4 id="redis简介">Redis简介<a hidden class="anchor" aria-hidden="true" href="#redis简介">#</a></h4>
+<p>redis是开源BSD许可高级的key-value存储系统(NoSQL)，可以用来存储字符串，哈希结构，链表，集合，因此，常用来提供数据结构服务，Redis支持数据的持久化，可以将内存中的数据保存在磁盘中，重启的时候可以再次加 载进行使用。 支持简单的key-value类型的数据，同时还提供list，set，zset，hash等数据结构的存储。Redis支持数据的备份，即master-slave模式的数据备份。</p>
+<h4 id="redis应用场景">Redis应用场景<a hidden class="anchor" aria-hidden="true" href="#redis应用场景">#</a></h4>
+<p>A）常规计数：粉丝数，微博数</p>
+<p>B）用户信息变更</p>
+<p>C）缓存处理，作为mysql的缓存</p>
+<p>D）队列系统，建有优先级的队列系统，日志收集系统</p>
+<h4 id="redis的优缺点">Redis的优缺点<a hidden class="anchor" aria-hidden="true" href="#redis的优缺点">#</a></h4>
+<h5 id="优点">优点<a hidden class="anchor" aria-hidden="true" href="#优点">#</a></h5>
+<p>(1) 速度快，因为数据存在内存中，类似于HashMap，HashMap的优势就是查找和操作的时间复杂度都是O(1)</p>
+<p>(2) 支持丰富数据类型，支持string，list，set，sorted set，hash</p>
+<p>(3) 支持事务，操作都是原子性，所谓的原子性就是对数据的更改要么全部执行，要么全部不执行</p>
+<p>(4) 丰富的特性：可用于缓存，消息，按key设置过期时间，过期后将会自动删除</p>
+<h5 id="缺点">缺点<a hidden class="anchor" aria-hidden="true" href="#缺点">#</a></h5>
+<p>（1）Redis不具备自动容错和恢复功能，主机从机的宕机都会导致前端部分读写请求失败，需要等待机器重启或者手动切换前端的IP才能恢复</p>
+<p>（2）主机宕机，宕机前有部分数据未能及时同步到从机，切换IP后还会引入数据不一致的问题，降低了系统的可用性</p>
+<p>（3）redis的主从复制采用全量复制，复制过程中主机会fork出一个子进程对内存做一份快照，并将子进程的内存快照保存为文件发送给从机，这一过程需要确保主机有足够多的空余内存。若快照文件较大，对集群的服务能力会产生较大的影响，而且复制过程是在从机新加入集群或者从机和主机网络断开重连时都会进行，也就是网络波动都会造成主机和从机间的一次全量的数据复制，这对实际的系统运营造成了不小的麻烦</p>
+<p>（4）Redis较难支持在线扩容，在集群容量达到上限时在线扩容会变得很复杂。为避免这一问题，运维人员在系统上线时必须确保有足够的空间，这对资源造成了很大的浪费。</p>
+<h4 id="redis的持久化方案">Redis的持久化方案<a hidden class="anchor" aria-hidden="true" href="#redis的持久化方案">#</a></h4>
+<p>redis提供两种方式进行持久化，一种是RDB持久化（原理是将Reids在内存中的数据库记录定时dump到磁盘上的RDB持久化），另外一种是AOF（append only file）持久化（原理是将Reids的操作日志以追加的方式写入文件）。</p>
+<p>RDB持久化是指在指定的时间间隔内将内存中的数据集快照写入磁盘，实际操作过程是fork一个子进程，先将数据集写入临时文件，写入成功后，再替换之前的文件，用二进制压缩存储。</p>
+<h3 id="mongodb数据库">Mongodb数据库<a hidden class="anchor" aria-hidden="true" href="#mongodb数据库">#</a></h3>
+<h4 id="mongodb简介">Mongodb简介<a hidden class="anchor" aria-hidden="true" href="#mongodb简介">#</a></h4>
+<p>MongoDB本身是一种非关系型数据库。它的每一条记录是一个Document，每个Document有一组键值对组成。MongoDB中的Document与JSON对象相似。 Document中字段的值可能包括其他Document，数组等。</p>
+<h4 id="mongodb应用场景">Mongodb应用场景<a hidden class="anchor" aria-hidden="true" href="#mongodb应用场景">#</a></h4>
+<p>mongodb的主要目标是在键/值存储方式（提供了高性能和高度伸缩性）以及传统的RDBMS系统（丰富的功能）架起一座桥梁，集两者的优势于一身。mongo适用于以下场景：</p>
+<p>a.网站数据：mongo非常适合实时的插入，更新与查询，并具备网站实时数据存储所需的复制及高度伸缩性。</p>
+<p>b.缓存：由于性能很高，mongo也适合作为信息基础设施的缓存层。在系统重启之后，由mongo搭建的持久化缓存可以避免下层的数据源过载。</p>
+<p>c.大尺寸、低价值的数据：使用传统的关系数据库存储一些数据时可能会比较贵，在此之前，很多程序员往往会选择传统的文件进行存储。</p>
+<p>d.高伸缩性的场景：mongo非常适合由数十或者数百台服务器组成的数据库。</p>
+<p>e.用于对象及JSON数据的存储：mongo的BSON数据格式非常适合文档格式化的存储及查询。</p>
+<h4 id="mongodb的优缺点">Mongodb的优缺点<a hidden class="anchor" aria-hidden="true" href="#mongodb的优缺点">#</a></h4>
+<p>优点：</p>
+<p>(1) 弱一致性（最终一致），更能保证用户的访问速度</p>
+<p>(2) 文档结构的存储方式，能够更便捷的获取数据</p>
+<p>(3) 内置GridFS，支持大容量的存储</p>
+<p>(4) 在使用场合下，千万级别的文档对象，近10G的数据，对有索引的ID的查询不会比mysql慢，而对非索引字段的查询，则是全面胜出。</p>
+<p>缺点：</p>
+<p>（1）不支持事物</p>
+<p>（2）占用空间过大，会造成磁盘浪费</p>
+<p>（3）单机可靠性比较差</p>
+<p>（4）大数据量持续插入，写入性能有较大波动</p>
+<h4 id="mongodb的持久化方案异常处理">Mongodb的持久化方案/异常处理<a hidden class="anchor" aria-hidden="true" href="#mongodb的持久化方案异常处理">#</a></h4>
+<p>当执行写操作时，MongoDB创建一个journal来包含确切磁盘位置和改变的字节。因此，如果服务器突然崩溃，启动时，journal会重放崩溃前并没有刷新到磁盘上的任何写操作。</p>
+<p>数据文件每隔60s刷新到磁盘上，默认情况下，因此journal只需要持有60s内的写入数据。journal预分配了几个空文件用于此目的，位于/data/db/journal，命名为_j.0,j.1等等。</p>
+<p>MongoDB运行很长时间情况下，在journal目录下，你会看到类似于_j.6217,_j.6218和_j.6219文件。这些文件是当前的journal文件，如果MongoDB一直运行，这些数字会持续增加。当正常关闭MongoDB时，这些文件将被清除，因为正常关机不在需要这些日志的。</p>
+<p>如果服务器崩溃或kill -9, mongodb再次启动时，会重放journal文件，会输出冗长难懂的检验行，这表明在正常的恢复。</p>
+<h3 id="mysql分布式集群">Mysql分布式集群<a hidden class="anchor" aria-hidden="true" href="#mysql分布式集群">#</a></h3>
+<h4 id="mysql分布式集群简介">Mysql分布式集群简介<a hidden class="anchor" aria-hidden="true" href="#mysql分布式集群简介">#</a></h4>
+<p>MySQL集群是一个无共享的(shared-nothing)、分布式节点架构的存储方案，其目的是提供容错性和高性能。</p>
+<p>数据更新使用读已提交隔离级别（read-committedisolation)来保证所有节点数据的一致性，使用两阶段提交机制（two-phasedcommit)保证所有节点都有相同的数据(如果任何一个写操作失败，则更新失败）。</p>
+<p>无共享的对等节点使得某台服务器上的更新操作在其他服务器上立即可见。传播更新使用一种复杂的通信机制，这一机制专用来提供跨网络的高吞吐量。</p>
+<p>通过多个MySQL服务器分配负载，从而最大程序地达到高性能，通过在不同位置存储数据保证高可用性和冗余。</p>
+<h4 id="mysql分布式集群应用场景">Mysql分布式集群应用场景<a hidden class="anchor" aria-hidden="true" href="#mysql分布式集群应用场景">#</a></h4>
+<p>解决海量存储问题，比如京东B2B就用的Mysql分布式集群。</p>
+<p>适用几十亿的PV对DB的访问。</p>
+<h4 id="mysql分布式集群的优缺点">Mysql分布式集群的优缺点<a hidden class="anchor" aria-hidden="true" href="#mysql分布式集群的优缺点">#</a></h4>
+<p>优点：</p>
+<p>a) 高可用性</p>
+<p>b)快速的自动失效切换</p>
+<p>c)灵活的分布式体系结构，没有单点故障</p>
+<p>d)高吞吐量和低延迟</p>
+<p>e)可扩展性强，支持在线扩容</p>
+<p>缺点：</p>
+<p>a)存在很多限制，比如：不支持外键</p>
+<p>b)部署、管理、配置很复杂</p>
+<p>c)占用磁盘空间大，内存大</p>
+<p>d)备份和恢复不方便</p>
+<p>e)重启的时候，数据节点将数据load到内存需要很长时间</p>
+<h4 id="mysql分布式集群的持久化方案">Mysql分布式集群的持久化方案<a hidden class="anchor" aria-hidden="true" href="#mysql分布式集群的持久化方案">#</a></h4>
+<p>负载均衡。</p>
+<p>管理节点备份。</p>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/golang%E4%B8%ADchannel%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/">
+    <span class="title">« </span>
+    <span>Golang中Channel使用的一点随想</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/%E5%BC%80%E5%8F%91%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84golang%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/">
+    <span class="title"> »</span>
+    <span>开发中常用的Golang高级用法</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

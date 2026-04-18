@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Categories on yemilice</title>
+    <link>http://localhost:1313/categories/</link>
+    <description>Recent content in Categories on yemilice</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Thu, 18 Apr 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>生活</title>
+      <link>http://localhost:1313/categories/%E7%94%9F%E6%B4%BB/</link>
+      <pubDate>Thu, 18 Apr 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/categories/%E7%94%9F%E6%B4%BB/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Golang</title>
+      <link>http://localhost:1313/categories/golang/</link>
+      <pubDate>Mon, 08 Nov 2021 09:43:19 +0000</pubDate>
+      <guid>http://localhost:1313/categories/golang/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>技术</title>
+      <link>http://localhost:1313/categories/%E6%8A%80%E6%9C%AF/</link>
+      <pubDate>Mon, 08 Nov 2021 09:43:19 +0000</pubDate>
+      <guid>http://localhost:1313/categories/%E6%8A%80%E6%9C%AF/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Elasticsearch</title>
+      <link>http://localhost:1313/categories/elasticsearch/</link>
+      <pubDate>Thu, 09 Sep 2021 15:36:23 +0000</pubDate>
+      <guid>http://localhost:1313/categories/elasticsearch/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Python</title>
+      <link>http://localhost:1313/categories/python/</link>
+      <pubDate>Tue, 01 Sep 2020 10:20:47 +0000</pubDate>
+      <guid>http://localhost:1313/categories/python/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>算法</title>
+      <link>http://localhost:1313/categories/%E7%AE%97%E6%B3%95/</link>
+      <pubDate>Fri, 21 Aug 2020 09:57:46 +0000</pubDate>
+      <guid>http://localhost:1313/categories/%E7%AE%97%E6%B3%95/</guid>
+      <description></description>
+    </item>
+  </channel>
+</rss>

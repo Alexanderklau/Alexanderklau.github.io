@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Python高效率遍历文件夹寻找重复文件 | yemilice</title>
+<meta name="keywords" content="其他技术, 前后端">
+<meta name="description" content="前言
+为什么要写这篇文章呢。。。主要还是业务中有个需求，遍历一个将近200w数据的文件夹，大部分还都是视频文件那种，但是这玩意用的次数还不多，做文件夹index也不是很ok，所以写了一个脚本来处理这个问题，从而发现了自己的一些薄弱点，将其记录下来，方便自己，也方便未来其他的兄弟使用">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/python%E9%AB%98%E6%95%88%E7%8E%87%E9%81%8D%E5%8E%86%E6%96%87%E4%BB%B6%E5%A4%B9%E5%AF%BB%E6%89%BE%E9%87%8D%E5%A4%8D%E6%96%87%E4%BB%B6/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/python%E9%AB%98%E6%95%88%E7%8E%87%E9%81%8D%E5%8E%86%E6%96%87%E4%BB%B6%E5%A4%B9%E5%AF%BB%E6%89%BE%E9%87%8D%E5%A4%8D%E6%96%87%E4%BB%B6/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/python%E9%AB%98%E6%95%88%E7%8E%87%E9%81%8D%E5%8E%86%E6%96%87%E4%BB%B6%E5%A4%B9%E5%AF%BB%E6%89%BE%E9%87%8D%E5%A4%8D%E6%96%87%E4%BB%B6/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="Python高效率遍历文件夹寻找重复文件">
+  <meta property="og:description" content="前言 为什么要写这篇文章呢。。。主要还是业务中有个需求，遍历一个将近200w数据的文件夹，大部分还都是视频文件那种，但是这玩意用的次数还不多，做文件夹index也不是很ok，所以写了一个脚本来处理这个问题，从而发现了自己的一些薄弱点，将其记录下来，方便自己，也方便未来其他的兄弟使用">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2019-10-28T12:31:15+00:00">
+    <meta property="article:modified_time" content="2019-10-28T12:31:15+00:00">
+    <meta property="article:tag" content="其他技术">
+    <meta property="article:tag" content="前后端">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Python高效率遍历文件夹寻找重复文件">
+  <meta name="twitter:description" content="前言 为什么要写这篇文章呢。。。主要还是业务中有个需求，遍历一个将近200w数据的文件夹，大部分还都是视频文件那种，但是这玩意用的次数还不多，做文件夹index也不是很ok，所以写了一个脚本来处理这个问题，从而发现了自己的一些薄弱点，将其记录下来，方便自己，也方便未来其他的兄弟使用">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Python高效率遍历文件夹寻找重复文件",
+      "item": "http://localhost:1313/posts/python%E9%AB%98%E6%95%88%E7%8E%87%E9%81%8D%E5%8E%86%E6%96%87%E4%BB%B6%E5%A4%B9%E5%AF%BB%E6%89%BE%E9%87%8D%E5%A4%8D%E6%96%87%E4%BB%B6/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Python高效率遍历文件夹寻找重复文件",
+  "name": "Python高效率遍历文件夹寻找重复文件",
+  "description": "前言 为什么要写这篇文章呢。。。主要还是业务中有个需求，遍历一个将近200w数据的文件夹，大部分还都是视频文件那种，但是这玩意用的次数还不多，做文件夹index也不是很ok，所以写了一个脚本来处理这个问题，从而发现了自己的一些薄弱点，将其记录下来，方便自己，也方便未来其他的兄弟使用\n",
+  "keywords": [
+    "其他技术", "前后端"
+  ],
+  "articleBody": "前言 为什么要写这篇文章呢。。。主要还是业务中有个需求，遍历一个将近200w数据的文件夹，大部分还都是视频文件那种，但是这玩意用的次数还不多，做文件夹index也不是很ok，所以写了一个脚本来处理这个问题，从而发现了自己的一些薄弱点，将其记录下来，方便自己，也方便未来其他的兄弟使用\n基本需求 把文件夹中的重复文件找出来 找出来之后用csv输出，左边是源文件，右边是重复文件 效率不能差，不能直接撑爆内存，不能占用过多资源 检测的文件夹和存放csv的地方可以自己定义，加上终端交互 重复文件筛选支持md5，大小等方式 需求分析 首先要分析一点，就是我们该如何去做重复文件的对比，并且效率还要高，首先网上过多的递归，os.walk的方法不可用，因为他们都会把遍历到的内容直接做成一个大列表，塞到内存里面，数据量大很容易爆掉，并且还要进行MD5，或者是大小比对，这个就非常难缠了。\n基础想法 其实说白了，拿到所有文件列表file_list，把文件依次对比，这里我们可以用dict，分两种情况\n按照文件名和大小 设定两个dict，例如record和dup，遍历file_list,生成一个数组，比对其中的文件名和大小\n按照大小和MD5值 设定两个dict，例如record和dup，遍历file_list,生成一个数组，比对其中的md5值和大小\n具体代码 闲话休提，我们开始写代码吧\n定义遍历函数代码 首先定义遍历文件夹的部分diskwalk.py\n# coding: utf-8 __author__ = \"lau.wenbo\" import os,sys class diskwalk(object): def __init__(self, path): self.path = path def paths(self): path = self.path # 这里用了一个迭代器逻辑，防止所有数据塞内存爆掉 path_collection = (os.path.join(root,fn) for root,dirs,files in os.walk(path) for fn in files) return path_collection 定义检查md5值代码 接着我们定义检查md5值的一个逻辑checksum.py\n# coding: utf-8 __author__ = \"lau.wenbo\" import hashlib,sys # 分块读MD，速度快 def create_checksum(path): fp = open(path) checksum = hashlib.md5() while True: buffer = fp.read(8192) if not buffer: break checksum.update(buffer) fp.close() checksum = checksum.digest() return checksum 定义主函数代码 # coding: utf-8 __author__ = \"lau.wenbo\" from checksum import create_checksum from diskwalk import diskwalk from os.path import getsize import csv import os import sys reload(sys) sys.setdefaultencoding('utf8') def findDupes(path): record = {} dup = {} d = diskwalk(path) files = d.paths() for file in files: try: # 这里使用了大小，文件名的对比方式，如果你需要MD5值的对比方式，可以打开下面的注释 #compound_key = (getsize(file),create_checksum(file)) compound_key = (getsize(file), file.split(\"/\")[-1]) if compound_key in record: dup[file] = record[compound_key] else: record[compound_key]=file except: continue return dup if __name__ == '__main__': path = sys.argv[1] csv_path = sys.argv[2] if not os.path.isdir(path) or not os.path.isdir(csv_path) or csv_path[-1] != \"/\": print u\"参数不是一个有效的文件夹！\" exit() else: path = path.decode(\"utf-8\") print u\"待检测的文件夹为{path}\".format(path=path) with open(u\"{csv_path}重复文件.csv\".format(csv_path=csv_path),\"w+\") as csvfile: # 源文件 重复文件 header = [\"Source\", \"Duplicate\"] writer = csv.DictWriter(csvfile, fieldnames=header) writer.writeheader() print u\"开始遍历文件夹，寻找重复文件，请等待.........\" print u\"开始写入CSV文件，请等待........\" for file in findDupes(path).items(): writer.writerow({\"Source\":file[1],\"Duplicate\":file[0]}) 结语 实现了哪些功能呢，哈哈，结尾来说一下，其实核心就是我用了一个列表生成器，加了一个迭代器，迭代器可是好东西，不会撑内存，不错了，效率也还可以，200w数据判定也就20多分钟，支持大数据量，如果有什么不懂的，可以邮件联系我或者等待我的评论系统搞完，over\ngithub地址在这: https://github.com/Alexanderklau/Amusing_python/tree/master/File_operation/repeat\n",
+  "wordCount" : "1259",
+  "inLanguage": "zh-cn",
+  "datePublished": "2019-10-28T12:31:15Z",
+  "dateModified": "2019-10-28T12:31:15Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/python%E9%AB%98%E6%95%88%E7%8E%87%E9%81%8D%E5%8E%86%E6%96%87%E4%BB%B6%E5%A4%B9%E5%AF%BB%E6%89%BE%E9%87%8D%E5%A4%8D%E6%96%87%E4%BB%B6/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            Python高效率遍历文件夹寻找重复文件
+        </h1>
+        <div class="post-meta"><span title='2019-10-28 12:31:15 +0000 UTC'>October 28, 2019</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>1259 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e5%89%8d%e8%a8%80" aria-label="前言">前言</a></li>
+            <li>
+                <a href="#%e5%9f%ba%e6%9c%ac%e9%9c%80%e6%b1%82" aria-label="基本需求">基本需求</a></li>
+            <li>
+                <a href="#%e9%9c%80%e6%b1%82%e5%88%86%e6%9e%90" aria-label="需求分析">需求分析</a></li>
+            <li>
+                <a href="#%e5%9f%ba%e7%a1%80%e6%83%b3%e6%b3%95" aria-label="基础想法">基础想法</a><ul>
+                    
+            <li>
+                <a href="#%e6%8c%89%e7%85%a7%e6%96%87%e4%bb%b6%e5%90%8d%e5%92%8c%e5%a4%a7%e5%b0%8f" aria-label="按照文件名和大小">按照文件名和大小</a></li>
+            <li>
+                <a href="#%e6%8c%89%e7%85%a7%e5%a4%a7%e5%b0%8f%e5%92%8cmd5%e5%80%bc" aria-label="按照大小和MD5值">按照大小和MD5值</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e5%85%b7%e4%bd%93%e4%bb%a3%e7%a0%81" aria-label="具体代码">具体代码</a><ul>
+                    
+            <li>
+                <a href="#%e5%ae%9a%e4%b9%89%e9%81%8d%e5%8e%86%e5%87%bd%e6%95%b0%e4%bb%a3%e7%a0%81" aria-label="定义遍历函数代码">定义遍历函数代码</a></li>
+            <li>
+                <a href="#%e5%ae%9a%e4%b9%89%e6%a3%80%e6%9f%a5md5%e5%80%bc%e4%bb%a3%e7%a0%81" aria-label="定义检查md5值代码">定义检查md5值代码</a></li>
+            <li>
+                <a href="#%e5%ae%9a%e4%b9%89%e4%b8%bb%e5%87%bd%e6%95%b0%e4%bb%a3%e7%a0%81" aria-label="定义主函数代码">定义主函数代码</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e7%bb%93%e8%af%ad" aria-label="结语">结语</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="前言">前言<a hidden class="anchor" aria-hidden="true" href="#前言">#</a></h2>
+<p>为什么要写这篇文章呢。。。主要还是业务中有个需求，遍历一个将近200w数据的文件夹，大部分还都是视频文件那种，但是这玩意用的次数还不多，做文件夹index也不是很ok，所以写了一个脚本来处理这个问题，从而发现了自己的一些薄弱点，将其记录下来，方便自己，也方便未来其他的兄弟使用</p>
+<h2 id="基本需求">基本需求<a hidden class="anchor" aria-hidden="true" href="#基本需求">#</a></h2>
+<ol>
+<li>把文件夹中的重复文件找出来</li>
+<li>找出来之后用csv输出，左边是源文件，右边是重复文件</li>
+<li>效率不能差，不能直接撑爆内存，不能占用过多资源</li>
+<li>检测的文件夹和存放csv的地方可以自己定义，加上终端交互</li>
+<li>重复文件筛选支持md5，大小等方式</li>
+</ol>
+<h2 id="需求分析">需求分析<a hidden class="anchor" aria-hidden="true" href="#需求分析">#</a></h2>
+<p>首先要分析一点，就是我们该如何去做重复文件的对比，并且效率还要高，首先网上过多的递归，os.walk的方法不可用，因为他们都会把遍历到的内容直接做成一个大列表，塞到内存里面，数据量大很容易爆掉，并且还要进行MD5，或者是大小比对，这个就非常难缠了。</p>
+<h2 id="基础想法">基础想法<a hidden class="anchor" aria-hidden="true" href="#基础想法">#</a></h2>
+<p>其实说白了，拿到所有文件列表file_list，把文件依次对比，这里我们可以用dict，分两种情况</p>
+<h3 id="按照文件名和大小">按照文件名和大小<a hidden class="anchor" aria-hidden="true" href="#按照文件名和大小">#</a></h3>
+<p>设定两个dict，例如record和dup，遍历file_list,生成一个数组，比对其中的文件名和大小</p>
+<h3 id="按照大小和md5值">按照大小和MD5值<a hidden class="anchor" aria-hidden="true" href="#按照大小和md5值">#</a></h3>
+<p>设定两个dict，例如record和dup，遍历file_list,生成一个数组，比对其中的md5值和大小</p>
+<h2 id="具体代码">具体代码<a hidden class="anchor" aria-hidden="true" href="#具体代码">#</a></h2>
+<p>闲话休提，我们开始写代码吧</p>
+<h3 id="定义遍历函数代码">定义遍历函数代码<a hidden class="anchor" aria-hidden="true" href="#定义遍历函数代码">#</a></h3>
+<p>首先定义遍历文件夹的部分diskwalk.py</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># coding: utf-8</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>__author__ <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;lau.wenbo&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> os<span style="color:#f92672">,</span>sys
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">diskwalk</span>(object):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, path):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>path <span style="color:#f92672">=</span> path
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">paths</span>(self):
+</span></span><span style="display:flex;"><span>        path <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>path
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 这里用了一个迭代器逻辑，防止所有数据塞内存爆掉</span>
+</span></span><span style="display:flex;"><span>        path_collection <span style="color:#f92672">=</span> (os<span style="color:#f92672">.</span>path<span style="color:#f92672">.</span>join(root,fn) <span style="color:#66d9ef">for</span> root,dirs,files <span style="color:#f92672">in</span> os<span style="color:#f92672">.</span>walk(path) <span style="color:#66d9ef">for</span> fn <span style="color:#f92672">in</span> files)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> path_collection
+</span></span></code></pre></div><h3 id="定义检查md5值代码">定义检查md5值代码<a hidden class="anchor" aria-hidden="true" href="#定义检查md5值代码">#</a></h3>
+<p>接着我们定义检查md5值的一个逻辑checksum.py</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># coding: utf-8</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>__author__ <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;lau.wenbo&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> hashlib<span style="color:#f92672">,</span>sys
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 分块读MD，速度快</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">create_checksum</span>(path):
+</span></span><span style="display:flex;"><span>    fp <span style="color:#f92672">=</span> open(path)
+</span></span><span style="display:flex;"><span>    checksum <span style="color:#f92672">=</span> hashlib<span style="color:#f92672">.</span>md5()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span> <span style="color:#66d9ef">True</span>:
+</span></span><span style="display:flex;"><span>        buffer <span style="color:#f92672">=</span> fp<span style="color:#f92672">.</span>read(<span style="color:#ae81ff">8192</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> buffer: <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>        checksum<span style="color:#f92672">.</span>update(buffer)
+</span></span><span style="display:flex;"><span>    fp<span style="color:#f92672">.</span>close()
+</span></span><span style="display:flex;"><span>    checksum <span style="color:#f92672">=</span> checksum<span style="color:#f92672">.</span>digest()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> checksum
+</span></span></code></pre></div><h3 id="定义主函数代码">定义主函数代码<a hidden class="anchor" aria-hidden="true" href="#定义主函数代码">#</a></h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># coding: utf-8</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>__author__ <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;lau.wenbo&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> checksum <span style="color:#f92672">import</span> create_checksum
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> diskwalk <span style="color:#f92672">import</span> diskwalk
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> os.path <span style="color:#f92672">import</span> getsize
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> csv
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> os
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> sys
+</span></span><span style="display:flex;"><span>reload(sys)
+</span></span><span style="display:flex;"><span>sys<span style="color:#f92672">.</span>setdefaultencoding(<span style="color:#e6db74">&#39;utf8&#39;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">findDupes</span>(path):
+</span></span><span style="display:flex;"><span>    record <span style="color:#f92672">=</span> {}
+</span></span><span style="display:flex;"><span>    dup <span style="color:#f92672">=</span> {}
+</span></span><span style="display:flex;"><span>    d <span style="color:#f92672">=</span> diskwalk(path)
+</span></span><span style="display:flex;"><span>    files <span style="color:#f92672">=</span> d<span style="color:#f92672">.</span>paths()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> file <span style="color:#f92672">in</span> files:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e"># 这里使用了大小，文件名的对比方式，如果你需要MD5值的对比方式，可以打开下面的注释</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">#compound_key = (getsize(file),create_checksum(file))</span>
+</span></span><span style="display:flex;"><span>            compound_key <span style="color:#f92672">=</span> (getsize(file), file<span style="color:#f92672">.</span>split(<span style="color:#e6db74">&#34;/&#34;</span>)[<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> compound_key <span style="color:#f92672">in</span> record:
+</span></span><span style="display:flex;"><span>                dup[file] <span style="color:#f92672">=</span> record[compound_key]
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                record[compound_key]<span style="color:#f92672">=</span>file
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">except</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> dup
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;__main__&#39;</span>:
+</span></span><span style="display:flex;"><span>    path <span style="color:#f92672">=</span> sys<span style="color:#f92672">.</span>argv[<span style="color:#ae81ff">1</span>]
+</span></span><span style="display:flex;"><span>    csv_path <span style="color:#f92672">=</span> sys<span style="color:#f92672">.</span>argv[<span style="color:#ae81ff">2</span>]
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> os<span style="color:#f92672">.</span>path<span style="color:#f92672">.</span>isdir(path) <span style="color:#f92672">or</span> <span style="color:#f92672">not</span> os<span style="color:#f92672">.</span>path<span style="color:#f92672">.</span>isdir(csv_path) <span style="color:#f92672">or</span> csv_path[<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">!=</span> <span style="color:#e6db74">&#34;/&#34;</span>:
+</span></span><span style="display:flex;"><span>        print <span style="color:#e6db74">u</span><span style="color:#e6db74">&#34;参数不是一个有效的文件夹！&#34;</span>
+</span></span><span style="display:flex;"><span>        exit()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>        path <span style="color:#f92672">=</span> path<span style="color:#f92672">.</span>decode(<span style="color:#e6db74">&#34;utf-8&#34;</span>)
+</span></span><span style="display:flex;"><span>        print <span style="color:#e6db74">u</span><span style="color:#e6db74">&#34;待检测的文件夹为</span><span style="color:#e6db74">{path}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(path<span style="color:#f92672">=</span>path)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">with</span> open(<span style="color:#e6db74">u</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{csv_path}</span><span style="color:#e6db74">重复文件.csv&#34;</span><span style="color:#f92672">.</span>format(csv_path<span style="color:#f92672">=</span>csv_path),<span style="color:#e6db74">&#34;w+&#34;</span>) <span style="color:#66d9ef">as</span> csvfile:
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e"># 源文件 重复文件</span>
+</span></span><span style="display:flex;"><span>            header <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#34;Source&#34;</span>, <span style="color:#e6db74">&#34;Duplicate&#34;</span>]
+</span></span><span style="display:flex;"><span>            writer <span style="color:#f92672">=</span> csv<span style="color:#f92672">.</span>DictWriter(csvfile, fieldnames<span style="color:#f92672">=</span>header)
+</span></span><span style="display:flex;"><span>            writer<span style="color:#f92672">.</span>writeheader()
+</span></span><span style="display:flex;"><span>            print <span style="color:#e6db74">u</span><span style="color:#e6db74">&#34;开始遍历文件夹，寻找重复文件，请等待.........&#34;</span>
+</span></span><span style="display:flex;"><span>            print <span style="color:#e6db74">u</span><span style="color:#e6db74">&#34;开始写入CSV文件，请等待........&#34;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> file <span style="color:#f92672">in</span> findDupes(path)<span style="color:#f92672">.</span>items():
+</span></span><span style="display:flex;"><span>                writer<span style="color:#f92672">.</span>writerow({<span style="color:#e6db74">&#34;Source&#34;</span>:file[<span style="color:#ae81ff">1</span>],<span style="color:#e6db74">&#34;Duplicate&#34;</span>:file[<span style="color:#ae81ff">0</span>]})
+</span></span></code></pre></div><h2 id="结语">结语<a hidden class="anchor" aria-hidden="true" href="#结语">#</a></h2>
+<p>实现了哪些功能呢，哈哈，结尾来说一下，其实核心就是我用了一个列表生成器，加了一个迭代器，迭代器可是好东西，不会撑内存，不错了，效率也还可以，200w数据判定也就20多分钟，支持大数据量，如果有什么不懂的，可以邮件联系我或者等待我的评论系统搞完，over<br>
+github地址在这: <a href="https://github.com/Alexanderklau/Amusing_python/tree/master/File_operation/repeat">https://github.com/Alexanderklau/Amusing_python/tree/master/File_operation/repeat</a></p>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a></li>
+            <li><a href="http://localhost:1313/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/%E7%AE%97%E6%B3%95%E7%AC%94%E8%AE%B0-%E5%85%A5%E9%97%A8-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%AF%87/">
+    <span class="title">« </span>
+    <span>算法笔记-入门-数据结构篇</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/elasticsearch-for-python-api%E6%A8%A1%E5%9D%97%E5%8C%96%E5%B0%81%E8%A3%85/">
+    <span class="title"> »</span>
+    <span>Elasticsearch for python API模块化封装</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>为什么要使用消息队列服务 | yemilice</title>
+<meta name="keywords" content="前后端">
+<meta name="description" content="消息队列是什么？
+化繁为简一下，分拆一下这个词汇，首先，先来看队列（queue）
+队列是一种常用的数据结构，特点是先进先出
+消息队列，顾名思义一下，就是把消息放在队列当中进行处理">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="为什么要使用消息队列服务">
+  <meta property="og:description" content="消息队列是什么？ 化繁为简一下，分拆一下这个词汇，首先，先来看队列（queue）
+队列是一种常用的数据结构，特点是先进先出
+消息队列，顾名思义一下，就是把消息放在队列当中进行处理">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2021-05-08T09:48:28+00:00">
+    <meta property="article:modified_time" content="2021-05-08T09:48:28+00:00">
+    <meta property="article:tag" content="前后端">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="为什么要使用消息队列服务">
+  <meta name="twitter:description" content="消息队列是什么？ 化繁为简一下，分拆一下这个词汇，首先，先来看队列（queue）
+队列是一种常用的数据结构，特点是先进先出
+消息队列，顾名思义一下，就是把消息放在队列当中进行处理">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "为什么要使用消息队列服务",
+      "item": "http://localhost:1313/posts/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "为什么要使用消息队列服务",
+  "name": "为什么要使用消息队列服务",
+  "description": "消息队列是什么？ 化繁为简一下，分拆一下这个词汇，首先，先来看队列（queue）\n队列是一种常用的数据结构，特点是先进先出\n消息队列，顾名思义一下，就是把消息放在队列当中进行处理\n",
+  "keywords": [
+    "前后端"
+  ],
+  "articleBody": "消息队列是什么？ 化繁为简一下，分拆一下这个词汇，首先，先来看队列（queue）\n队列是一种常用的数据结构，特点是先进先出\n消息队列，顾名思义一下，就是把消息放在队列当中进行处理\n这个消息，肯定是等待处理的消息，我们应该要获取消息做什么事\n比如获取一个返回结果，接受一个参数等等。\n所以这里引出了新的概念，消费者和生产者\n生产者就是往队列里面塞数据\n消费者就是往队列里面取数据\n这就是消息队列的基础概念。\n消息队列解决了什么问题 按理说，消息队列只是一个队列类数据结构，这个我们完全可以自己实现\n例如Python的队列queue，或者java的Deque都可以实现队列的功能\n再去实现一个消费者／生产者逻辑就好了，那为什么要用消息队列呢？\n这边举几个我开发中遇见的例子\n异步 拿初始化服务来说，初始化服务的步骤如下\n初始化开始 --\u003e 服务A初始化 --\u003e 服务B初始化 --\u003e 服务C初始化 --\u003e 返回成功 来看个图，大概类似这样。\n初始化的流程类似是一个链表，一走到底，这样你让人家客户等很久，客户心理也不开心啊，不能这么搞，所以得想个好办法处理一下。\n如果有了消息队列，我们就可以把这个处理方法优化一下\n如图所示\n现在我们利用了消息队列作为中间件，当传入ip给消息队列之后，可以直接返回一个初始化进行中的状态，立马返回，减少等待。\n各个服务会自己去消息队列中获取ip进行操作，这样就避免了一步步调用造成的时间浪费，这里就将整个流程异步化。\n这是消息队列的第一个好处。\n解耦/复用 解耦，这个翻译一下，说人话就是，解除相互的依赖，让大家能独立运行。\n还是老样子，举个例子。\n现在我们有一个处理订单的程序\n主要的功能有获取订单，订单入库，订单校验，费用计算，记录日志等\n这个画个图，流程如下\n现在可以看出，订单入库，订单校验，费用计算，日志记录这几个功能都依赖订单处理这个模块\n写一个伪代码来看的话\n//Order_process 订单处理 func Order_process() { //获取订单的函数 Order, _ := GetOrder() // 获取到订单去做几个功能 // 订单入库 _ := OrderStorage(Order) // 订单校验 _ := OrderVer(Order) // 订单金额 _ := OrderAmount(Order) // 日志 - := OrderLog(Order) } 现在只有四个功能，如果后序功能越来越多，那么Order_process这个函数也会越来越长，并且每次都要重新编译主函数，这个是非常不可取的。\n假设我们现在用了消息队列，它的流程就变成了这样\n首先，订单处理模块，解除了其他四个功能对它的依赖，只将订单传输进消息队列当中\n其他几个功能模块要做的就是去消息队列中获取订单，分别处理就好了\n这样我们的伪代码就变成了\n//Order_process 订单处理 func Order_process() { //获取订单的函数 Order, _ := GetOrder() // 订单入消息队列 mq.put(Order) } 完全破处了其他几个功能模块的依赖，如果未来需要进行功能添加，只需要单独开发，并且订阅mq队列就可以。\n也降低了维护成本，处理问题也针对到模块本身，减少了排错占用的人力成本。\n这是消息队列的第二个好处。\n削峰/限流 说人话就是，当访问量激增，咱们的数据库或者是服务顶不住的时候，先往消息队列里面写，等着后面数据库/服务根据自身设置，从消息队列里面取数据消费。\n这个其实说起来比较简单，画个图吧（突然发觉我已经不讨厌画图了\n现在有个大批量的访问来了，直接去访问服务A，服务A假设上限是1000，结果你访问量是10000，好了，直接凉凉\n现在加上消息队列，访问先存放到消息队列里面，然后服务A直接去消息队列取1000条出来先消费了，然后继续从队列里面取就行了，避免服务直接挂掉。\n不过这不是缓存嘛？？？？\n我寻思redis好像也是干这个的。。。。不过的确还是有不一样的地方，我在下面的会详细说下。\n为什么要选择消息队列中间件？ 这个其实是我曾经一直思考过的一个问题\n首先\n在Python里，我们有collections 的 queue\n在Java里，我们有JDK 的 Deque\n在Golang里，我们有slice作为简单队列\n我们还可以多线程，多进行处理一些问题。\n如果只是为了实现一些功能，我们甚至可以用redis这个更简单的玩意儿。\n那么，为什么我们还是要选择例如rabbitmq，rocketmq，kafka这类做消息队列服务呢？\n下面我将从我自己收集到的一些信息，总结一些自己的感悟，希望可以帮助大家。\n持久化 首先，持久化就可以把前面说的那几种干死一大片\n对，你可以用queue实现一个队列，但是万一断电了，你队列里面的消息不就没了吗？\n对，你也可以往硬盘里写，你甚至可以另写一个定时同步的脚本去做这件事\n但是。。。这不麻烦吗。。\n万一你是分布式的，你存一份同步一份，妈耶，那工作量。\n类似redis这种，可以把数据存在磁盘上。同理，消息队列的数据也是要存起来的。这样才可以减少意外情况带来的损失。\n所以，你要自己写的话，简单的队列还是可以滴，但是消息队列嘛，免了。\n高可用 用消息队列的都是他娘的分布式服务，如果你是个自己写的单机的消息队列，你这台机器挂了，岂不是消息队列服务就没了？\n像rabbitmq这种，带着主从模式的，可以保证多少个节点down掉之后，消息服务依旧可用\n一般的内存消息队列可没有这个功能哈，you know？\nRedis Vs 消息队列 上面两个还是比较好理解，完全排除了那些内存数据库，也就是断了你自己写消息队列的这条心\n因为你的多线程，多进程，queue，deque，永远都是单节点内存队列\n但是有个特殊的玩意儿，Redis\n上面我说过了，其实削峰的功能，还挺像Redis的，因为Redis也有这个功能，而且用的人还不少。\n在互联网，大家都把这个叫做Redis缓存。\nRedis其实可以覆盖很多消息队列的功能，但是！它终究有些功能是做不到的，下面我还是来详细讲一下redis和消息队列的对比不同吧。\n首先，Redis也可以做消息队列\n这个毋庸置疑，并且Redis的消息队列实现起来还挺简单的。\n老版本的Redis，功能需求不多的，直接可以上 Redis Pub/Sub\n如果Redis的版本大于5.0, 可以直接上Redis Stream，这个就是Redis专门用来做消息队列的实现方案。\nRedis Stream的概念如下\nRedis Stream 提供了消息的持久化和主备复制功能 可以让任何客户端访问任何时刻的数据 并且能记住每一个客户端的访问位置，还能保证消息不丢失 既然，Redis已经这么厉害了，那为什么还要用消息队列的中间件呢，例如rabbitmq，rocketmq\n其实Redis和消息队列中间件还是有区别的，下面我把我总结的几个点拿出来，给大家讲讲\nRedis的机制，本来就是做缓存的 Redis严格上来讲是一个内存数据库 Redis如果pop任务从队列出去，失败了不会回到队列重试，需要手动重新push Redis自己本身有一个基于Redis源码的消息队列disque 一般的消息队列中间件都有持久化设置，Redis需要手动设置 一般的消息队列中间件处理之后可以手动ack，也可以自动ack 以rabbitmq为例，如果rabbitmq没有收到ack，会将消息放回消息队列进行处理，保证消息不丢失 一般的消息队列中间件具有更完善的MQ机制。 消息队列在项目上的使用 一般什么情况下才会用消息队列呢，这个问题我也反复问过我自己，下面我就从我自己做过的几个项目来分析一下一般什么情况才会上消息队列吧，可能并不完善，不过胜在都是自己的经验，也算有一点点可取之处吧。\n需要异步的情况下 这种情况我在上面的章节举过例子，但是我举一个我开发的项目的例子吧，这样更加直观。\n我开发了一个文件同步系统，类似百度网盘，需要从远端下载文件到本地，并且要对每个文件的同步结果进行日志记录。\n分析一下，我的大概步骤就是\n获取文件 -\u003e 文件传输 -\u003e 下发文件 -\u003e 同步文件 -\u003e 记录状态 -\u003e 结束同步 -\u003e 日志记录 可以看到，这是一个很长的步骤，并且可以通过异步逻辑去改装这个步骤\n所以这里调用了消息队列做异步服务\n修改过的服务步骤如下\nRabbitmq服务 —————————————————————————————— 获取文件 -\u003e |文件传输 -\u003e 下发文件 -\u003e 同步文件| -\u003e 记录状态 -\u003e 结束同步 -\u003e 日志记录 首先，从获取文件开始，后面的任务状态直接修改为“待同步”，等rabbitmq服务跑外内部的步骤，再去修改服务状态，然后结束同步，记录日志。\n这样做就可以减少业务在前端的等待时间。\n这样就是我的大概想法。\n微服务的架构下 公司的微服务架构我参与了设计，其实主要的核心就是解耦，这个我上面也说过了\n主要的核心就是降低每个业务之间的互相依赖，比如A依赖B，B依赖C，这样如果A丢失或者挂掉，那么B，C都会一起完蛋，这是高可用的系统中非常不可取的。\n所以，消息队列中间件，起到一个链接各方，传递消息的作用，以前是互相依赖传递消息，现在是用电话（消息队列）去传递消息，并且只用记住电话号码（订阅的消息队列）就可以了。\n实时性要求不高的情况下 以rabbitmq为例，rabbitmq在上传消息到队列的时候是有一些延迟的，并不是实时操作的\n而且rabbitmq还有ack机制消费者获取消息之后才会ack通知消息队列，如果没有ack通知，消息会重新放入消息队列，再次等待消费\n所以消息队列，例如rabbitmq，kafka等，都不是实时的，如果需要追求实时性操作，你需要redis。\n几种常见的消息队列盘点 这里直接上个图，这个图的原地址是\nhttps://zhuanlan.zhihu.com/p/60288391\n感谢您！您的图让我醍醐灌顶！\n并且将消息队列优缺点总结如下\nActiveMQ 优点 单机吞吐量：万级 topic数量都吞吐量的影响： 时效性：ms级 可用性：高，基于主从架构实现高可用性 消息可靠性：有较低的概率丢失数据 功能支持：MQ领域的功能极其完备 缺点 ActiveMQ 5.x维护越来越少，较少在大规模吞吐的场景中使用。\nKafka 号称大数据的杀手锏，谈到大数据领域内的消息传输，则绕不开Kafka，这款为大数据而生的消息中间件，以其百万级TPS的吞吐量名声大噪，迅速成为大数据领域的宠儿，在数据采集、传输、存储的过程中发挥着举足轻重的作用。\nApache Kafka它最初由LinkedIn公司基于独特的设计实现为一个分布式的提交日志系统( a distributed commit log)，之后成为Apache项目的一部分。\n目前已经被LinkedIn，Uber, Twitter, Netflix等大公司所采纳。\n优点 性能卓越，单机写入TPS约在百万条/秒，最大的优点，就是吞吐量高。 时效性：ms级 可用性：非常高，kafka是分布式的，一个数据多个副本，少数机器宕机，不会丢失数据，不会导致不可用 消费者采用Pull方式获取消息, 消息有序, 通过控制能够保证所有消息被消费且仅被消费一次 有优秀的第三方Kafka Web管理界面Kafka-Manager 在日志领域比较成熟，被多家公司和多个开源项目使用 功能支持：功能较为简单，主要支持简单的MQ功能，在大数据领域的实时计算以及日志采集被大规模使用 缺点 Kafka单机超过64个队列/分区，Load会发生明显的飙高现象，队列越多，load越高，发送消息响应时间变长 使用短轮询方式，实时性取决于轮询间隔时间 消费失败不支持重试 支持消息顺序，但是一台代理宕机后，就会产生消息乱序 社区更新较慢 RabbitMQ RabbitMQ 2007年发布，是一个在AMQP(高级消息队列协议)基础上完成的，可复用的企业消息系统，是当前最主流的消息中间件之一。\n优点 由于erlang语言的特性，mq 性能较好，高并发； 吞吐量到万级，MQ功能比较完备 健壮、稳定、易用、跨平台、支持多种语言、文档齐全 开源提供的管理界面非常棒，用起来很好用 社区活跃度高 缺点： erlang开发，很难去看懂源码，基本职能依赖于开源社区的快速维护和修复bug，不利于做二次开发和维护。 RabbitMQ吞吐量相比其他消息队列低 需要学习比较复杂的接口和协议，学习和维护成本较高。 性能差，每秒只能处理几万到十几万 消息堆积的时候，性能会马上下降 RocketMQ RocketMQ阿里的开源，用Java语言实现，在设计时参考了Kafka，并做出了自己的一些改进。\nRocketMQ在阿里集团被广泛应用在订单，交易，充值，流计算，消息推送，日志流式处理，binglog分发等场景。\n优点 单机吞吐量：十万级 可用性：非常高，分布式架构 消息可靠性：经过参数优化配置，消息可以做到0丢失 功能支持：MQ功能较为完善，还是分布式的，扩展性好 支持10亿级别的消息堆积，不会因为堆积导致性能下降 源码是java，可以自己阅读源码，定制MQ 缺点 支持的客户端语言不多，目前是java及c++，其中c++不成熟 社区活跃度一般 没有在 mq 核心中去实现JMS等接口，迁移需要修改大量代码 选择消息队列的建议 如果你的只是轻量级使用mq消息队列\n数据量可能每秒10W以下，对于持久化要求不高\n上Redis\n如果你只是轻量级使用mq消息队列\n数据量10w以下，需要一定的持久化操作\n上Rabbitmq\n如果你是互联网业务，并且数据量时高时低，高的时候特别高，低的时候几乎没有（好像都是这样。。）\n你要求数据不能丢失\n你要求分布式\n你要求高吞吐\n上kafka\n结尾 差不多就这样些，作为5月第一篇blog，我要加油！大家也要加油！\n我们一起刷题，一起离开！\n",
+  "wordCount" : "5150",
+  "inLanguage": "zh-cn",
+  "datePublished": "2021-05-08T09:48:28Z",
+  "dateModified": "2021-05-08T09:48:28Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            为什么要使用消息队列服务
+        </h1>
+        <div class="post-meta"><span title='2021-05-08 09:48:28 +0000 UTC'>May 8, 2021</span>&nbsp;·&nbsp;<span>11 min</span>&nbsp;·&nbsp;<span>5150 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e6%b6%88%e6%81%af%e9%98%9f%e5%88%97%e6%98%af%e4%bb%80%e4%b9%88" aria-label="消息队列是什么？">消息队列是什么？</a></li>
+            <li>
+                <a href="#%e6%b6%88%e6%81%af%e9%98%9f%e5%88%97%e8%a7%a3%e5%86%b3%e4%ba%86%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98" aria-label="消息队列解决了什么问题">消息队列解决了什么问题</a><ul>
+                    
+            <li>
+                <a href="#%e5%bc%82%e6%ad%a5" aria-label="异步">异步</a></li>
+            <li>
+                <a href="#%e8%a7%a3%e8%80%a6%e5%a4%8d%e7%94%a8" aria-label="解耦/复用">解耦/复用</a></li>
+            <li>
+                <a href="#%e5%89%8a%e5%b3%b0%e9%99%90%e6%b5%81" aria-label="削峰/限流">削峰/限流</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%a6%81%e9%80%89%e6%8b%a9%e6%b6%88%e6%81%af%e9%98%9f%e5%88%97%e4%b8%ad%e9%97%b4%e4%bb%b6" aria-label="为什么要选择消息队列中间件？">为什么要选择消息队列中间件？</a><ul>
+                    
+            <li>
+                <a href="#%e6%8c%81%e4%b9%85%e5%8c%96" aria-label="持久化">持久化</a></li>
+            <li>
+                <a href="#%e9%ab%98%e5%8f%af%e7%94%a8" aria-label="高可用">高可用</a></li>
+            <li>
+                <a href="#redis-vs-%e6%b6%88%e6%81%af%e9%98%9f%e5%88%97" aria-label="Redis Vs 消息队列">Redis Vs 消息队列</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e6%b6%88%e6%81%af%e9%98%9f%e5%88%97%e5%9c%a8%e9%a1%b9%e7%9b%ae%e4%b8%8a%e7%9a%84%e4%bd%bf%e7%94%a8" aria-label="消息队列在项目上的使用">消息队列在项目上的使用</a><ul>
+                    
+            <li>
+                <a href="#%e9%9c%80%e8%a6%81%e5%bc%82%e6%ad%a5%e7%9a%84%e6%83%85%e5%86%b5%e4%b8%8b" aria-label="需要异步的情况下">需要异步的情况下</a></li>
+            <li>
+                <a href="#%e5%be%ae%e6%9c%8d%e5%8a%a1%e7%9a%84%e6%9e%b6%e6%9e%84%e4%b8%8b" aria-label="微服务的架构下">微服务的架构下</a></li>
+            <li>
+                <a href="#%e5%ae%9e%e6%97%b6%e6%80%a7%e8%a6%81%e6%b1%82%e4%b8%8d%e9%ab%98%e7%9a%84%e6%83%85%e5%86%b5%e4%b8%8b" aria-label="实时性要求不高的情况下">实时性要求不高的情况下</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e5%87%a0%e7%a7%8d%e5%b8%b8%e8%a7%81%e7%9a%84%e6%b6%88%e6%81%af%e9%98%9f%e5%88%97%e7%9b%98%e7%82%b9" aria-label="几种常见的消息队列盘点">几种常见的消息队列盘点</a><ul>
+                    
+            <li>
+                <a href="#activemq" aria-label="ActiveMQ">ActiveMQ</a><ul>
+                    
+            <li>
+                <a href="#%e4%bc%98%e7%82%b9" aria-label="优点">优点</a></li>
+            <li>
+                <a href="#%e7%bc%ba%e7%82%b9" aria-label="缺点">缺点</a></li></ul>
+            </li>
+            <li>
+                <a href="#kafka" aria-label="Kafka">Kafka</a><ul>
+                    
+            <li>
+                <a href="#%e4%bc%98%e7%82%b9-1" aria-label="优点">优点</a></li>
+            <li>
+                <a href="#%e7%bc%ba%e7%82%b9-1" aria-label="缺点">缺点</a></li></ul>
+            </li>
+            <li>
+                <a href="#rabbitmq" aria-label="RabbitMQ">RabbitMQ</a><ul>
+                    
+            <li>
+                <a href="#%e4%bc%98%e7%82%b9-2" aria-label="优点">优点</a></li>
+            <li>
+                <a href="#%e7%bc%ba%e7%82%b9-2" aria-label="缺点：">缺点：</a></li></ul>
+            </li>
+            <li>
+                <a href="#rocketmq" aria-label="RocketMQ">RocketMQ</a><ul>
+                    
+            <li>
+                <a href="#%e4%bc%98%e7%82%b9-3" aria-label="优点">优点</a></li>
+            <li>
+                <a href="#%e7%bc%ba%e7%82%b9-3" aria-label="缺点">缺点</a></li></ul>
+            </li></ul>
+            </li>
+            <li>
+                <a href="#%e9%80%89%e6%8b%a9%e6%b6%88%e6%81%af%e9%98%9f%e5%88%97%e7%9a%84%e5%bb%ba%e8%ae%ae" aria-label="选择消息队列的建议">选择消息队列的建议</a></li>
+            <li>
+                <a href="#%e7%bb%93%e5%b0%be" aria-label="结尾">结尾</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="消息队列是什么">消息队列是什么？<a hidden class="anchor" aria-hidden="true" href="#消息队列是什么">#</a></h2>
+<p>化繁为简一下，分拆一下这个词汇，首先，先来看队列（queue）</p>
+<p>队列是一种常用的数据结构，特点是<strong>先进先出</strong></p>
+<p>消息队列，顾名思义一下，就是把<strong>消息</strong>放在<strong>队列</strong>当中进行处理</p>
+<p>这个消息，肯定是等待处理的消息，我们应该要获取消息做什么事</p>
+<p>比如获取一个返回结果，接受一个参数等等。</p>
+<p>所以这里引出了新的概念，<strong>消费者</strong>和<strong>生产者</strong></p>
+<p><strong>生产者</strong>就是往<strong>队列</strong>里面塞数据</p>
+<p><strong>消费者</strong>就是往<strong>队列</strong>里面取数据</p>
+<p>这就是消息队列的基础概念。</p>
+<h2 id="消息队列解决了什么问题">消息队列解决了什么问题<a hidden class="anchor" aria-hidden="true" href="#消息队列解决了什么问题">#</a></h2>
+<p>按理说，消息队列只是一个队列类数据结构，这个我们完全可以自己实现</p>
+<p>例如Python的队列queue，或者java的Deque都可以实现队列的功能</p>
+<p>再去实现一个消费者／生产者逻辑就好了，那为什么要用消息队列呢？</p>
+<p>这边举几个我开发中遇见的例子</p>
+<h3 id="异步">异步<a hidden class="anchor" aria-hidden="true" href="#异步">#</a></h3>
+<p>拿初始化服务来说，初始化服务的步骤如下</p>
+<pre tabindex="0"><code>初始化开始 --&gt; 服务A初始化 --&gt; 服务B初始化 --&gt; 服务C初始化 --&gt; 返回成功
+</code></pre><p>来看个图，大概类似这样。</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/1.jpg"></p>
+<p>初始化的流程类似是一个链表，一走到底，这样你让人家客户等很久，客户心理也不开心啊，不能这么搞，所以得想个好办法处理一下。</p>
+<p>如果有了消息队列，我们就可以把这个处理方法优化一下</p>
+<p>如图所示</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/2.jpg"></p>
+<p>现在我们利用了消息队列作为中间件，当传入ip给消息队列之后，可以直接返回一个<strong>初始化进行中</strong>的状态，立马返回，减少等待。</p>
+<p>各个服务会自己去消息队列中获取ip进行操作，这样就避免了一步步调用造成的时间浪费，这里就将整个流程异步化。</p>
+<p>这是消息队列的第一个好处。</p>
+<h3 id="解耦复用">解耦/复用<a hidden class="anchor" aria-hidden="true" href="#解耦复用">#</a></h3>
+<p>解耦，这个翻译一下，说人话就是，解除相互的依赖，让大家能独立运行。</p>
+<p>还是老样子，举个例子。</p>
+<p>现在我们有一个<strong>处理订单</strong>的程序</p>
+<p>主要的功能有获取订单，订单入库，订单校验，费用计算，记录日志等</p>
+<p>这个画个图，流程如下</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/3.jpg"></p>
+<p>现在可以看出，订单入库，订单校验，费用计算，日志记录这几个功能都依赖订单处理这个模块</p>
+<p>写一个伪代码来看的话</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#75715e">//Order_process 订单处理 </span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Order_process</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//获取订单的函数</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Order</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">GetOrder</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 获取到订单去做几个功能</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 订单入库</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">OrderStorage</span>(<span style="color:#a6e22e">Order</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 订单校验</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">OrderVer</span>(<span style="color:#a6e22e">Order</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 订单金额</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">OrderAmount</span>(<span style="color:#a6e22e">Order</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 日志</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">-</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">OrderLog</span>(<span style="color:#a6e22e">Order</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>现在只有四个功能，如果后序功能越来越多，那么Order_process这个函数也会越来越长，并且每次都要重新编译主函数，这个是非常不可取的。</p>
+<p>假设我们现在用了消息队列，它的流程就变成了这样</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/4.png"></p>
+<p>首先，订单处理模块，解除了其他四个功能对它的依赖，只将订单传输进消息队列当中</p>
+<p>其他几个功能模块要做的就是去消息队列中获取订单，分别处理就好了</p>
+<p>这样我们的伪代码就变成了</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-golang" data-lang="golang"><span style="display:flex;"><span><span style="color:#75715e">//Order_process 订单处理 </span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Order_process</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//获取订单的函数</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Order</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">GetOrder</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 订单入消息队列</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">mq</span>.<span style="color:#a6e22e">put</span>(<span style="color:#a6e22e">Order</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>完全破处了其他几个功能模块的依赖，如果未来需要进行功能添加，只需要单独开发，并且订阅mq队列就可以。</p>
+<p>也降低了维护成本，处理问题也针对到模块本身，减少了排错占用的人力成本。</p>
+<p>这是消息队列的第二个好处。</p>
+<h3 id="削峰限流">削峰/限流<a hidden class="anchor" aria-hidden="true" href="#削峰限流">#</a></h3>
+<p>说人话就是，当访问量激增，咱们的数据库或者是服务顶不住的时候，先往消息队列里面写，等着后面数据库/服务根据自身设置，从消息队列里面取数据消费。</p>
+<p>这个其实说起来比较简单，画个图吧（突然发觉我已经不讨厌画图了</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/5.jpg"></p>
+<p>现在有个大批量的访问来了，直接去访问服务A，服务A假设上限是1000，结果你访问量是10000，好了，直接凉凉</p>
+<p>现在加上消息队列，访问先存放到消息队列里面，然后服务A直接去消息队列取1000条出来先消费了，然后继续从队列里面取就行了，避免服务直接挂掉。</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/6.jpg"></p>
+<p>不过这不是缓存嘛？？？？</p>
+<p>我寻思redis好像也是干这个的。。。。不过的确还是有不一样的地方，我在下面的会详细说下。</p>
+<h2 id="为什么要选择消息队列中间件">为什么要选择消息队列中间件？<a hidden class="anchor" aria-hidden="true" href="#为什么要选择消息队列中间件">#</a></h2>
+<p>这个其实是我曾经一直思考过的一个问题</p>
+<p>首先</p>
+<p>在Python里，我们有collections 的 queue</p>
+<p>在Java里，我们有JDK 的 Deque</p>
+<p>在Golang里，我们有slice作为简单队列</p>
+<p>我们还可以多线程，多进行处理一些问题。</p>
+<p>如果只是为了实现一些功能，我们甚至可以用redis这个更简单的玩意儿。</p>
+<p>那么，为什么我们还是要选择例如rabbitmq，rocketmq，kafka这类做消息队列服务呢？</p>
+<p>下面我将从我自己收集到的一些信息，总结一些自己的感悟，希望可以帮助大家。</p>
+<h3 id="持久化">持久化<a hidden class="anchor" aria-hidden="true" href="#持久化">#</a></h3>
+<p>首先，持久化就可以把前面说的那几种干死一大片</p>
+<p>对，你可以用queue实现一个队列，但是万一断电了，你队列里面的消息不就没了吗？</p>
+<p>对，你也可以往硬盘里写，你甚至可以另写一个定时同步的脚本去做这件事</p>
+<p>但是。。。这不麻烦吗。。</p>
+<p>万一你是分布式的，你存一份同步一份，妈耶，那工作量。</p>
+<p>类似redis这种，可以把数据存在磁盘上。同理，消息队列的数据也是要存起来的。这样才可以减少意外情况带来的损失。</p>
+<p>所以，你要自己写的话，简单的队列还是可以滴，但是消息队列嘛，免了。</p>
+<h3 id="高可用">高可用<a hidden class="anchor" aria-hidden="true" href="#高可用">#</a></h3>
+<p>用消息队列的都是他娘的分布式服务，如果你是个自己写的单机的消息队列，你这台机器挂了，岂不是消息队列服务就没了？</p>
+<p>像rabbitmq这种，带着主从模式的，可以保证多少个节点down掉之后，消息服务依旧可用</p>
+<p>一般的内存消息队列可没有这个功能哈，you know？</p>
+<h3 id="redis-vs-消息队列">Redis Vs 消息队列<a hidden class="anchor" aria-hidden="true" href="#redis-vs-消息队列">#</a></h3>
+<p>上面两个还是比较好理解，完全排除了那些内存数据库，也就是断了你自己写消息队列的这条心</p>
+<p>因为你的多线程，多进程，queue，deque，永远都是<strong>单节点内存队列</strong></p>
+<p>但是有个特殊的玩意儿，<strong>Redis</strong></p>
+<p>上面我说过了，其实削峰的功能，还挺像Redis的，因为Redis也有这个功能，而且用的人还不少。</p>
+<p>在互联网，大家都把这个叫做Redis缓存。</p>
+<p>Redis其实可以覆盖很多消息队列的功能，但是！它终究有些功能是做不到的，下面我还是来详细讲一下redis和消息队列的对比不同吧。</p>
+<p>首先，<strong>Redis也可以做消息队列</strong></p>
+<p>这个毋庸置疑，并且Redis的消息队列实现起来还挺简单的。</p>
+<p>老版本的Redis，功能需求不多的，直接可以上 <strong>Redis Pub/Sub</strong></p>
+<p>如果Redis的版本大于5.0, 可以直接上<strong>Redis Stream</strong>，这个就是Redis专门用来做消息队列的实现方案。</p>
+<p>Redis Stream的概念如下</p>
+<pre tabindex="0"><code>Redis Stream 提供了消息的持久化和主备复制功能
+
+可以让任何客户端访问任何时刻的数据
+
+并且能记住每一个客户端的访问位置，还能保证消息不丢失
+</code></pre><p>既然，Redis已经这么厉害了，那为什么还要用消息队列的中间件呢，例如rabbitmq，rocketmq</p>
+<p>其实Redis和消息队列中间件还是有区别的，下面我把我总结的几个点拿出来，给大家讲讲</p>
+<ol>
+<li>Redis的机制，本来就是做缓存的</li>
+<li>Redis严格上来讲是一个内存数据库</li>
+<li>Redis如果pop任务从队列出去，失败了不会回到队列重试，需要手动重新push</li>
+<li>Redis自己本身有一个基于Redis源码的消息队列disque</li>
+<li>一般的消息队列中间件都有持久化设置，Redis需要手动设置</li>
+<li>一般的消息队列中间件处理之后可以手动ack，也可以自动ack</li>
+<li>以rabbitmq为例，如果rabbitmq没有收到ack，会将消息放回消息队列进行处理，保证消息不丢失</li>
+<li>一般的消息队列中间件具有更完善的MQ机制。</li>
+</ol>
+<h2 id="消息队列在项目上的使用">消息队列在项目上的使用<a hidden class="anchor" aria-hidden="true" href="#消息队列在项目上的使用">#</a></h2>
+<p>一般什么情况下才会用消息队列呢，这个问题我也反复问过我自己，下面我就从我自己做过的几个项目来分析一下一般什么情况才会上消息队列吧，可能并不完善，不过胜在都是自己的经验，也算有一点点可取之处吧。</p>
+<h3 id="需要异步的情况下">需要异步的情况下<a hidden class="anchor" aria-hidden="true" href="#需要异步的情况下">#</a></h3>
+<p>这种情况我在上面的章节举过例子，但是我举一个我开发的项目的例子吧，这样更加直观。</p>
+<p>我开发了一个文件同步系统，类似百度网盘，需要从远端下载文件到本地，并且要对每个文件的同步结果进行日志记录。</p>
+<p>分析一下，我的大概步骤就是</p>
+<pre tabindex="0"><code>获取文件 -&gt; 文件传输 -&gt; 下发文件 -&gt; 同步文件 -&gt; 记录状态 -&gt; 结束同步 -&gt; 日志记录
+</code></pre><p>可以看到，这是一个很长的步骤，并且可以通过异步逻辑去改装这个步骤</p>
+<p>所以这里调用了消息队列做异步服务</p>
+<p>修改过的服务步骤如下</p>
+<pre tabindex="0"><code>                     Rabbitmq服务
+            ——————————————————————————————         
+获取文件 -&gt; |文件传输 -&gt; 下发文件 -&gt; 同步文件| -&gt; 记录状态 -&gt; 结束同步 -&gt; 日志记录
+</code></pre><p>首先，从获取文件开始，后面的任务状态直接修改为“待同步”，等rabbitmq服务跑外内部的步骤，再去修改服务状态，然后结束同步，记录日志。</p>
+<p>这样做就可以减少业务在前端的等待时间。</p>
+<p>这样就是我的大概想法。</p>
+<h3 id="微服务的架构下">微服务的架构下<a hidden class="anchor" aria-hidden="true" href="#微服务的架构下">#</a></h3>
+<p>公司的微服务架构我参与了设计，其实主要的核心就是<strong>解耦</strong>，这个我上面也说过了</p>
+<p>主要的核心就是降低每个业务之间的互相依赖，比如A依赖B，B依赖C，这样如果A丢失或者挂掉，那么B，C都会一起完蛋，这是高可用的系统中非常不可取的。</p>
+<p>所以，消息队列中间件，起到一个链接各方，传递消息的作用，以前是互相依赖传递消息，现在是用电话（消息队列）去传递消息，并且只用记住电话号码（订阅的消息队列）就可以了。</p>
+<h3 id="实时性要求不高的情况下">实时性要求不高的情况下<a hidden class="anchor" aria-hidden="true" href="#实时性要求不高的情况下">#</a></h3>
+<p>以rabbitmq为例，rabbitmq在上传消息到队列的时候是有一些延迟的，并不是实时操作的</p>
+<p>而且rabbitmq还有ack机制消费者获取消息之后才会ack通知消息队列，如果没有ack通知，消息会重新放入消息队列，再次等待消费</p>
+<p>所以消息队列，例如rabbitmq，kafka等，都不是实时的，如果需要追求实时性操作，你需要redis。</p>
+<h2 id="几种常见的消息队列盘点">几种常见的消息队列盘点<a hidden class="anchor" aria-hidden="true" href="#几种常见的消息队列盘点">#</a></h2>
+<p>这里直接上个图，这个图的原地址是</p>
+<p><a href="https://zhuanlan.zhihu.com/p/60288391">https://zhuanlan.zhihu.com/p/60288391</a></p>
+<p>感谢您！您的图让我醍醐灌顶！</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/v2-87643ff65973d1860f1ab6919f4b0aa4_r.jpg"></p>
+<p>并且将消息队列优缺点总结如下</p>
+<h3 id="activemq">ActiveMQ<a hidden class="anchor" aria-hidden="true" href="#activemq">#</a></h3>
+<h4 id="优点">优点<a hidden class="anchor" aria-hidden="true" href="#优点">#</a></h4>
+<ol>
+<li>单机吞吐量：万级</li>
+<li>topic数量都吞吐量的影响：</li>
+<li>时效性：ms级</li>
+<li>可用性：高，基于主从架构实现高可用性</li>
+<li>消息可靠性：有较低的概率丢失数据</li>
+<li>功能支持：MQ领域的功能极其完备</li>
+</ol>
+<h4 id="缺点">缺点<a hidden class="anchor" aria-hidden="true" href="#缺点">#</a></h4>
+<p>ActiveMQ 5.x维护越来越少，较少在大规模吞吐的场景中使用。</p>
+<h3 id="kafka">Kafka<a hidden class="anchor" aria-hidden="true" href="#kafka">#</a></h3>
+<p>号称大数据的杀手锏，谈到大数据领域内的消息传输，则绕不开Kafka，这款为大数据而生的消息中间件，以其百万级TPS的吞吐量名声大噪，迅速成为大数据领域的宠儿，在数据采集、传输、存储的过程中发挥着举足轻重的作用。</p>
+<p>Apache Kafka它最初由LinkedIn公司基于独特的设计实现为一个分布式的提交日志系统( a distributed commit log)，之后成为Apache项目的一部分。</p>
+<p>目前已经被LinkedIn，Uber, Twitter, Netflix等大公司所采纳。</p>
+<h4 id="优点-1">优点<a hidden class="anchor" aria-hidden="true" href="#优点-1">#</a></h4>
+<ol>
+<li>性能卓越，单机写入TPS约在百万条/秒，最大的优点，就是吞吐量高。</li>
+<li>时效性：ms级</li>
+<li>可用性：非常高，kafka是分布式的，一个数据多个副本，少数机器宕机，不会丢失数据，不会导致不可用</li>
+<li>消费者采用Pull方式获取消息, 消息有序, 通过控制能够保证所有消息被消费且仅被消费一次</li>
+<li>有优秀的第三方Kafka Web管理界面Kafka-Manager</li>
+<li>在日志领域比较成熟，被多家公司和多个开源项目使用</li>
+<li>功能支持：功能较为简单，主要支持简单的MQ功能，在大数据领域的实时计算以及日志采集被大规模使用</li>
+</ol>
+<h4 id="缺点-1">缺点<a hidden class="anchor" aria-hidden="true" href="#缺点-1">#</a></h4>
+<ol>
+<li>Kafka单机超过64个队列/分区，Load会发生明显的飙高现象，队列越多，load越高，发送消息响应时间变长</li>
+<li>使用短轮询方式，实时性取决于轮询间隔时间</li>
+<li>消费失败不支持重试</li>
+<li>支持消息顺序，但是一台代理宕机后，就会产生消息乱序</li>
+<li>社区更新较慢</li>
+</ol>
+<h3 id="rabbitmq">RabbitMQ<a hidden class="anchor" aria-hidden="true" href="#rabbitmq">#</a></h3>
+<p>RabbitMQ 2007年发布，是一个在AMQP(高级消息队列协议)基础上完成的，可复用的企业消息系统，是当前最主流的消息中间件之一。</p>
+<h4 id="优点-2">优点<a hidden class="anchor" aria-hidden="true" href="#优点-2">#</a></h4>
+<ol>
+<li>由于erlang语言的特性，mq 性能较好，高并发；</li>
+<li>吞吐量到万级，MQ功能比较完备</li>
+<li>健壮、稳定、易用、跨平台、支持多种语言、文档齐全</li>
+<li>开源提供的管理界面非常棒，用起来很好用</li>
+<li>社区活跃度高</li>
+</ol>
+<h4 id="缺点-2">缺点：<a hidden class="anchor" aria-hidden="true" href="#缺点-2">#</a></h4>
+<ol>
+<li>erlang开发，很难去看懂源码，基本职能依赖于开源社区的快速维护和修复bug，不利于做二次开发和维护。</li>
+<li>RabbitMQ吞吐量相比其他消息队列低</li>
+<li>需要学习比较复杂的接口和协议，学习和维护成本较高。</li>
+<li>性能差，每秒只能处理几万到十几万</li>
+<li>消息堆积的时候，性能会马上下降</li>
+</ol>
+<h3 id="rocketmq">RocketMQ<a hidden class="anchor" aria-hidden="true" href="#rocketmq">#</a></h3>
+<p>RocketMQ阿里的开源，用Java语言实现，在设计时参考了Kafka，并做出了自己的一些改进。</p>
+<p>RocketMQ在阿里集团被广泛应用在订单，交易，充值，流计算，消息推送，日志流式处理，binglog分发等场景。</p>
+<h4 id="优点-3">优点<a hidden class="anchor" aria-hidden="true" href="#优点-3">#</a></h4>
+<ol>
+<li>单机吞吐量：十万级</li>
+<li>可用性：非常高，分布式架构</li>
+<li>消息可靠性：经过参数优化配置，消息可以做到0丢失</li>
+<li>功能支持：MQ功能较为完善，还是分布式的，扩展性好</li>
+<li>支持10亿级别的消息堆积，不会因为堆积导致性能下降</li>
+<li>源码是java，可以自己阅读源码，定制MQ</li>
+</ol>
+<h4 id="缺点-3">缺点<a hidden class="anchor" aria-hidden="true" href="#缺点-3">#</a></h4>
+<ol>
+<li>支持的客户端语言不多，目前是java及c++，其中c++不成熟</li>
+<li>社区活跃度一般</li>
+<li>没有在 mq 核心中去实现JMS等接口，迁移需要修改大量代码</li>
+</ol>
+<h2 id="选择消息队列的建议">选择消息队列的建议<a hidden class="anchor" aria-hidden="true" href="#选择消息队列的建议">#</a></h2>
+<p>如果你的只是轻量级使用mq消息队列</p>
+<p>数据量可能每秒10W以下，对于持久化要求不高</p>
+<p>上<strong>Redis</strong></p>
+<p>如果你只是轻量级使用mq消息队列</p>
+<p>数据量10w以下，需要一定的持久化操作</p>
+<p>上<strong>Rabbitmq</strong></p>
+<p>如果你是互联网业务，并且数据量时高时低，高的时候特别高，低的时候几乎没有（好像都是这样。。）</p>
+<p>你要求数据不能丢失</p>
+<p>你要求分布式</p>
+<p>你要求高吞吐</p>
+<p>上<strong>kafka</strong></p>
+<h2 id="结尾">结尾<a hidden class="anchor" aria-hidden="true" href="#结尾">#</a></h2>
+<p>差不多就这样些，作为5月第一篇blog，我要加油！大家也要加油！</p>
+<p>我们一起刷题，一起离开！</p>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/">
+    <span class="title">« </span>
+    <span>ElasticSearch检索的核心-倒排索引解读</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84dfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/">
+    <span class="title"> »</span>
+    <span>弄懂难缠的DFS算法和相关变种(Python实现)</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

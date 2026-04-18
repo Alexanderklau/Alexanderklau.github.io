@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>弄懂难缠的DFS算法和相关变种(Python实现) | yemilice</title>
+<meta name="keywords" content="算法">
+<meta name="description" content="前言
+这次不废话，直接接上次的BFS，直接来看DFS。
+什么是DFS算法
+DFS，全名深度优先搜索
+用大白话来说，其实就是 一条路走到黑，走不通再回来，直到无路可走
+举个简单的例子，现在我们有一个树，就像下面这样">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84dfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84dfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84dfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="弄懂难缠的DFS算法和相关变种(Python实现)">
+  <meta property="og:description" content="前言 这次不废话，直接接上次的BFS，直接来看DFS。
+什么是DFS算法 DFS，全名深度优先搜索
+用大白话来说，其实就是 一条路走到黑，走不通再回来，直到无路可走
+举个简单的例子，现在我们有一个树，就像下面这样">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2021-04-28T17:21:07+00:00">
+    <meta property="article:modified_time" content="2021-04-28T17:21:07+00:00">
+    <meta property="article:tag" content="算法">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="弄懂难缠的DFS算法和相关变种(Python实现)">
+  <meta name="twitter:description" content="前言 这次不废话，直接接上次的BFS，直接来看DFS。
+什么是DFS算法 DFS，全名深度优先搜索
+用大白话来说，其实就是 一条路走到黑，走不通再回来，直到无路可走
+举个简单的例子，现在我们有一个树，就像下面这样">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "弄懂难缠的DFS算法和相关变种(Python实现)",
+      "item": "http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84dfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "弄懂难缠的DFS算法和相关变种(Python实现)",
+  "name": "弄懂难缠的DFS算法和相关变种(Python实现)",
+  "description": "前言 这次不废话，直接接上次的BFS，直接来看DFS。\n什么是DFS算法 DFS，全名深度优先搜索\n用大白话来说，其实就是 一条路走到黑，走不通再回来，直到无路可走\n举个简单的例子，现在我们有一个树，就像下面这样\n",
+  "keywords": [
+    "算法"
+  ],
+  "articleBody": "前言 这次不废话，直接接上次的BFS，直接来看DFS。\n什么是DFS算法 DFS，全名深度优先搜索\n用大白话来说，其实就是 一条路走到黑，走不通再回来，直到无路可走\n举个简单的例子，现在我们有一个树，就像下面这样\nA / \\ B C / \\ / \\ D E F G 假设我们要用DFS算法来进行遍历／搜索\n它的步骤如下\n从初始节点A出发，并且将A标记为已访问 查找A的一个临接顶点B。 如果B存在，继续执行访问，否则回退到上一步，继续查找临接顶点 将B标记为可访问，继续执行查找临界点D的操作 重复操作，直到所有的值都访问完了，无值可以访问为止。 那么，遍历树的顺序应该是\nA -\u003e B -\u003e D -\u003e E - \u003e C -\u003e F -\u003e G\n是不是有点像树的前序遍历，其实差不了多少\n它的遍历步骤用图来表示，就像下面这样\n其实换一种走迷宫的说法，就是把所有能走的路都给走了。\n来个图，一看你就明白了\n很感谢这个图的作者！我找不到您的出处了，如果您看到，请联系我，我会加上引用！感恩！感恩！\n这就是俗称的一条路走到黑，撞墙了要么回去，要么继续找路。\nDFS的实现 现在弄明白原理了，问题就在实践上了\n其实看下上面的步骤，基于DFS\n首先，我们需要标记一个已经访问的对象，并且持续性访问子节点，直到无法访问为止。\n这种一般呼之欲出的方法就是递归，我们可以通过递归实现这些操作。\n或者我们也可以利用栈实现，先将根入栈，再将根出栈，并将根的右子树，左子树存入栈，按照栈的先进后出规则来实现DFS\n栈的方法\ndef DFS(root): if root: res = [] stack = [root] # 当 stack 有值 while stack: currentNode = stack.pop() res.append(currentNode.val) if currentNode.right: stack.append(currentNode.right) if currentNode.left: stack.append(currentNode.left) return res 递归的方法\ndef DFS(root): if root is not None: print(root.key) if root.left is not None: return DFS(root.left) if root.right is not None: return DFS(root.right) DFS的几道变种算法题 94. 二叉树的中序遍历 给定一个二叉树的根节点 root ，返回它的 中序 遍历。\n输入：root = [1,null,2,3] 输出：[1,3,2] 这是一道基础的DFS算法题，中序遍历，直接递归走你\nclass Solution(object): def inorderTraversal(self, root): \"\"\" :type root: TreeNode :rtype: List[int] \"\"\" # 搞个全局的列表 z = [] if root == None: return [] # 这边写个递归 def dfs(root): if root: dfs(root.left) z.append(root.val) dfs(root.right) dfs(root) return z 112. 路径总和 给你二叉树的根节点 root 和一个表示目标和的整数 targetSum ，判断该树中是否存在 根节点到叶子节点 的路径，这条路径上所有节点值相加等于目标和 targetSum 。\n叶子节点 是指没有子节点的节点。\n输入：root = [5,4,8,11,null,13,4,7,2,null,null,null,1], targetSum = 22 输出：true 这是一道典型的DFS题，需要一条路走到黑那种\n并且你需要记录下来到底走了那些路，能不能综合成一个总数\n这边我用的方法是，所有路线走遍，分别记录，一条条再去匹配targetSum，没有匹配到，直接返回false\n把上面那个模版拿过来，加两个参数\n第一个，加一个stact_val，这个是用来记录和的\n第二个，在每一步遍历的的时候，都去做一步加法，最后统计总量对比\nclass Solution(object): def hasPathSum(self, root, targetSum): \"\"\" :type root: TreeNode :type targetSum: int :rtype: bool \"\"\" if not root: return False if root: stack = [root] stack_val = [root.val] # 当 stack 有值 while stack: currentNode = stack.pop() temp = stack_val.pop() if not currentNode.left and not currentNode.right: if temp == targetSum: return True continue if currentNode.right: stack.append(currentNode.right) stack_val.append(currentNode.right.val + temp) if currentNode.left: stack.append(currentNode.left) stack_val.append(currentNode.left.val + temp) return False 129. 求根节点到叶节点数字之和 给你一个二叉树的根节点 root ，树中每个节点都存放有一个 0 到 9 之间的数字。 每条从根节点到叶节点的路径都代表一个数字： 例如，从根节点到叶节点的路径 1 -\u003e 2 -\u003e 3 表示数字 123 。 计算从根节点到叶节点生成的 所有数字之和 。 叶节点 是指没有子节点的节点。 输入：root = [1,2,3] 输出：25 解释： 从根到叶子节点路径 1-\u003e2 代表数字 12 从根到叶子节点路径 1-\u003e3 代表数字 13 因此，数字总和 = 12 + 13 = 25 输入：root = [4,9,0,5,1] 输出：1026 解释： 从根到叶子节点路径 4-\u003e9-\u003e5 代表数字 495 从根到叶子节点路径 4-\u003e9-\u003e1 代表数字 491 从根到叶子节点路径 4-\u003e0 代表数字 40 因此，数字总和 = 495 + 491 + 40 = 1026 这道题的解法，其实就是遍历所有子树，到底，然后把每个子树的数字组成新数字，最后返回一个和。\n分析一下，按照1，2，3这个来看，上层子树永远是下层的10倍数\n也就得出\n(1 * 10 + 2) + (1 * 10 + 3) = 25\n根据这个逻辑，开始写代码\n首先把那个DFS的遍历模版拿出来\ndef DFS(root): if root is not None: print(root.key) if root.left is not None: return DFS(root.left) if root.right is not None: return DFS(root.right) 改一下，先写个伪代码\ndef dfs(root): if not root: return 0 num = 上一个子树的节点 * 10 + root.val if not root.left and not root.right: return num else: return 左节点num + 右节点num 现在我们要获取到的数据就是，上一个子树的节点，这个我们决定，以参数的形式传输进去，因为第一个节点树，都是0\n改一下代码\ndef dfs(root, nodeval): if not root: return 0 num = nodeval + root.val if not root.left and not root.right: return num else: return dfs(root.left, num) + dfs(root.right, num) 把我们的代码嵌入到主代码当中\nclass Solution(object): def sumNumbers(self, root): \"\"\" :type root: TreeNode :rtype: int \"\"\" def dfs(root, nodeval): if not root: return 0 total = nodeval * 10 + root.val if not root.left and not root.right: return total else: return dfs(root.left, total) + dfs(root.right, total) return dfs(root, 0) 这样就完成了这道题。\n总结 这段时间觉得自己越来越不努力了，我不喜欢自己这样，我一点也不喜欢。\n我觉得每天我都要努力前进，后续我会持续性输出算法和其他的东西，请期待吧。\n今天的freestyle说点什么呢？说点开心的事儿吧。\n突然想到的小样，不代表任何事物。哈哈。\ncheck it~ 初见的记忆浮现 是不是爱神射错了离弦的箭？ 曾几何时你我只是互相平行的线 是谁在中间接了莫名其妙的姻缘？ 似乎曾经相见 是石头记下宝玉渊源？ 最近好累，感觉真的挺累，学习不会停止，你，我，我们，都要在春暖花开的地方相见。\n",
+  "wordCount" : "1963",
+  "inLanguage": "zh-cn",
+  "datePublished": "2021-04-28T17:21:07Z",
+  "dateModified": "2021-04-28T17:21:07Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84dfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            弄懂难缠的DFS算法和相关变种(Python实现)
+        </h1>
+        <div class="post-meta"><span title='2021-04-28 17:21:07 +0000 UTC'>April 28, 2021</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1963 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e5%89%8d%e8%a8%80" aria-label="前言">前言</a></li>
+            <li>
+                <a href="#%e4%bb%80%e4%b9%88%e6%98%afdfs%e7%ae%97%e6%b3%95" aria-label="什么是DFS算法">什么是DFS算法</a></li>
+            <li>
+                <a href="#dfs%e7%9a%84%e5%ae%9e%e7%8e%b0" aria-label="DFS的实现">DFS的实现</a></li>
+            <li>
+                <a href="#dfs%e7%9a%84%e5%87%a0%e9%81%93%e5%8f%98%e7%a7%8d%e7%ae%97%e6%b3%95%e9%a2%98" aria-label="DFS的几道变种算法题">DFS的几道变种算法题</a><ul>
+                    
+            <li>
+                <a href="#94-%e4%ba%8c%e5%8f%89%e6%a0%91%e7%9a%84%e4%b8%ad%e5%ba%8f%e9%81%8d%e5%8e%86" aria-label="94. 二叉树的中序遍历">94. 二叉树的中序遍历</a></li>
+            <li>
+                <a href="#112-%e8%b7%af%e5%be%84%e6%80%bb%e5%92%8c" aria-label="112. 路径总和">112. 路径总和</a></li>
+            <li>
+                <a href="#129-%e6%b1%82%e6%a0%b9%e8%8a%82%e7%82%b9%e5%88%b0%e5%8f%b6%e8%8a%82%e7%82%b9%e6%95%b0%e5%ad%97%e4%b9%8b%e5%92%8c" aria-label="129. 求根节点到叶节点数字之和">129. 求根节点到叶节点数字之和</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e6%80%bb%e7%bb%93" aria-label="总结">总结</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="前言">前言<a hidden class="anchor" aria-hidden="true" href="#前言">#</a></h2>
+<p>这次不废话，直接接上次的BFS，直接来看DFS。</p>
+<h2 id="什么是dfs算法">什么是DFS算法<a hidden class="anchor" aria-hidden="true" href="#什么是dfs算法">#</a></h2>
+<p>DFS，全名深度优先搜索</p>
+<p>用大白话来说，其实就是 <strong>一条路走到黑，走不通再回来，直到无路可走</strong></p>
+<p>举个简单的例子，现在我们有一个树，就像下面这样</p>
+<pre tabindex="0"><code>     A
+   /   \
+  B     C
+ / \   / \
+D   E  F  G
+</code></pre><p>假设我们要用DFS算法来进行遍历／搜索</p>
+<p>它的步骤如下</p>
+<ol>
+<li>从初始节点<strong>A</strong>出发，并且将<strong>A</strong>标记为已访问</li>
+<li>查找<strong>A</strong>的一个临接顶点<strong>B</strong>。</li>
+<li>如果<strong>B</strong>存在，继续执行访问，否则回退到上一步，继续查找临接顶点</li>
+<li>将<strong>B</strong>标记为可访问，继续执行查找临界点<strong>D</strong>的操作</li>
+<li>重复操作，直到所有的值都访问完了，无值可以访问为止。</li>
+</ol>
+<p>那么，遍历树的顺序应该是</p>
+<p>A -&gt; B -&gt; D -&gt; E - &gt; C -&gt; F -&gt; G</p>
+<p>是不是有点像树的前序遍历，其实差不了多少</p>
+<p>它的遍历步骤用图来表示，就像下面这样</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/dfs/7c01d5c3efe54b0f9f6ec5af938a8df9.png"></p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/dfs/be7a3d1472f345119c2b863e16fc27ea.png"></p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/dfs/3881d7eacb3e490fa55ff67811b069aa.png"></p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/dfs/c704cf1ebe154115bf3c0dee0dc5758e.png"></p>
+<p>其实换一种走迷宫的说法，就是把所有能走的路都给走了。</p>
+<p>来个图，一看你就明白了</p>
+<p>很感谢这个图的作者！我找不到您的出处了，如果您看到，请联系我，我会加上引用！感恩！感恩！</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/dfs/alogrithm_10_3.gif"></p>
+<p>这就是俗称的一条路走到黑，撞墙了要么回去，要么继续找路。</p>
+<h2 id="dfs的实现">DFS的实现<a hidden class="anchor" aria-hidden="true" href="#dfs的实现">#</a></h2>
+<p>现在弄明白原理了，问题就在实践上了</p>
+<p>其实看下上面的步骤，基于DFS</p>
+<p>首先，我们需要标记一个已经访问的对象，并且持续性访问子节点，直到无法访问为止。</p>
+<p>这种一般呼之欲出的方法就是<strong>递归</strong>，我们可以通过递归实现这些操作。</p>
+<p>或者我们也可以利用<strong>栈</strong>实现，先将根入栈，再将根出栈，并将根的右子树，左子树存入栈，按照栈的先进后出规则来实现DFS</p>
+<p><strong>栈的方法</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">DFS</span>(root):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> root:
+</span></span><span style="display:flex;"><span>        res <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>        stack <span style="color:#f92672">=</span> [root]
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 当 stack 有值</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> stack:
+</span></span><span style="display:flex;"><span>            currentNode <span style="color:#f92672">=</span> stack<span style="color:#f92672">.</span>pop()
+</span></span><span style="display:flex;"><span>            res<span style="color:#f92672">.</span>append(currentNode<span style="color:#f92672">.</span>val)
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> currentNode<span style="color:#f92672">.</span>right:
+</span></span><span style="display:flex;"><span>                stack<span style="color:#f92672">.</span>append(currentNode<span style="color:#f92672">.</span>right)
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> currentNode<span style="color:#f92672">.</span>left:
+</span></span><span style="display:flex;"><span>                stack<span style="color:#f92672">.</span>append(currentNode<span style="color:#f92672">.</span>left)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> res
+</span></span></code></pre></div><p><strong>递归的方法</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">DFS</span>(root):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> root <span style="color:#f92672">is</span> <span style="color:#f92672">not</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>        print(root<span style="color:#f92672">.</span>key)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> root<span style="color:#f92672">.</span>left <span style="color:#f92672">is</span> <span style="color:#f92672">not</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> DFS(root<span style="color:#f92672">.</span>left)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> root<span style="color:#f92672">.</span>right <span style="color:#f92672">is</span> <span style="color:#f92672">not</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> DFS(root<span style="color:#f92672">.</span>right)
+</span></span></code></pre></div><h2 id="dfs的几道变种算法题">DFS的几道变种算法题<a hidden class="anchor" aria-hidden="true" href="#dfs的几道变种算法题">#</a></h2>
+<h3 id="94-二叉树的中序遍历"><a href="https://leetcode-cn.com/problems/binary-tree-inorder-traversal/">94. 二叉树的中序遍历</a><a hidden class="anchor" aria-hidden="true" href="#94-二叉树的中序遍历">#</a></h3>
+<p>给定一个二叉树的根节点 root ，返回它的 中序 遍历。</p>
+<pre tabindex="0"><code>输入：root = [1,null,2,3]
+输出：[1,3,2]
+</code></pre><p>这是一道基础的DFS算法题，中序遍历，直接递归走你</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Solution</span>(object):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">inorderTraversal</span>(self, root):
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        :type root: TreeNode
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        :rtype: List[int]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 搞个全局的列表</span>
+</span></span><span style="display:flex;"><span>        z <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> root <span style="color:#f92672">==</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> []
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 这边写个递归</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dfs</span>(root):
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> root:
+</span></span><span style="display:flex;"><span>                dfs(root<span style="color:#f92672">.</span>left)
+</span></span><span style="display:flex;"><span>                z<span style="color:#f92672">.</span>append(root<span style="color:#f92672">.</span>val)
+</span></span><span style="display:flex;"><span>                dfs(root<span style="color:#f92672">.</span>right)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        dfs(root)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> z
+</span></span></code></pre></div><h3 id="112-路径总和"><a href="https://leetcode-cn.com/problems/path-sum/">112. 路径总和</a><a hidden class="anchor" aria-hidden="true" href="#112-路径总和">#</a></h3>
+<p>给你二叉树的根节点 root 和一个表示目标和的整数 targetSum ，判断该树中是否存在 根节点到叶子节点 的路径，这条路径上所有节点值相加等于目标和 targetSum 。</p>
+<p>叶子节点 是指没有子节点的节点。</p>
+<pre tabindex="0"><code>输入：root = [5,4,8,11,null,13,4,7,2,null,null,null,1], targetSum = 22
+输出：true
+</code></pre><p>这是一道典型的DFS题，需要一条路走到黑那种</p>
+<p>并且你需要记录下来到底走了那些路，能不能综合成一个总数</p>
+<p>这边我用的方法是，所有路线走遍，分别记录，一条条再去匹配targetSum，没有匹配到，直接返回false</p>
+<p>把上面那个模版拿过来，加两个参数</p>
+<p>第一个，加一个stact_val，这个是用来记录和的</p>
+<p>第二个，在每一步遍历的的时候，都去做一步加法，最后统计总量对比</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Solution</span>(object):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">hasPathSum</span>(self, root, targetSum):
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        :type root: TreeNode
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        :type targetSum: int
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        :rtype: bool
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> root:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">False</span> 
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> root:
+</span></span><span style="display:flex;"><span>            stack <span style="color:#f92672">=</span> [root]
+</span></span><span style="display:flex;"><span>            stack_val <span style="color:#f92672">=</span> [root<span style="color:#f92672">.</span>val]
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e"># 当 stack 有值</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">while</span> stack:
+</span></span><span style="display:flex;"><span>                currentNode <span style="color:#f92672">=</span> stack<span style="color:#f92672">.</span>pop()
+</span></span><span style="display:flex;"><span>                temp <span style="color:#f92672">=</span> stack_val<span style="color:#f92672">.</span>pop()
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> currentNode<span style="color:#f92672">.</span>left <span style="color:#f92672">and</span> <span style="color:#f92672">not</span> currentNode<span style="color:#f92672">.</span>right:
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span> temp <span style="color:#f92672">==</span> targetSum:
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> currentNode<span style="color:#f92672">.</span>right:
+</span></span><span style="display:flex;"><span>                    stack<span style="color:#f92672">.</span>append(currentNode<span style="color:#f92672">.</span>right)
+</span></span><span style="display:flex;"><span>                    stack_val<span style="color:#f92672">.</span>append(currentNode<span style="color:#f92672">.</span>right<span style="color:#f92672">.</span>val <span style="color:#f92672">+</span> temp)
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> currentNode<span style="color:#f92672">.</span>left:
+</span></span><span style="display:flex;"><span>                    stack<span style="color:#f92672">.</span>append(currentNode<span style="color:#f92672">.</span>left)
+</span></span><span style="display:flex;"><span>                    stack_val<span style="color:#f92672">.</span>append(currentNode<span style="color:#f92672">.</span>left<span style="color:#f92672">.</span>val <span style="color:#f92672">+</span> temp)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">False</span>
+</span></span></code></pre></div><h3 id="129-求根节点到叶节点数字之和"><a href="https://leetcode-cn.com/problems/sum-root-to-leaf-numbers/">129. 求根节点到叶节点数字之和</a><a hidden class="anchor" aria-hidden="true" href="#129-求根节点到叶节点数字之和">#</a></h3>
+<pre tabindex="0"><code>给你一个二叉树的根节点 root ，树中每个节点都存放有一个 0 到 9 之间的数字。
+每条从根节点到叶节点的路径都代表一个数字：
+
+例如，从根节点到叶节点的路径 1 -&gt; 2 -&gt; 3 表示数字 123 。
+计算从根节点到叶节点生成的 所有数字之和 。
+
+叶节点 是指没有子节点的节点。
+
+输入：root = [1,2,3]
+输出：25
+解释：
+从根到叶子节点路径 1-&gt;2 代表数字 12
+从根到叶子节点路径 1-&gt;3 代表数字 13
+因此，数字总和 = 12 + 13 = 25
+
+
+输入：root = [4,9,0,5,1]
+输出：1026
+解释：
+从根到叶子节点路径 4-&gt;9-&gt;5 代表数字 495
+从根到叶子节点路径 4-&gt;9-&gt;1 代表数字 491
+从根到叶子节点路径 4-&gt;0 代表数字 40
+因此，数字总和 = 495 + 491 + 40 = 1026
+</code></pre><p>这道题的解法，其实就是遍历所有子树，到底，然后把每个子树的数字组成新数字，最后返回一个和。</p>
+<p>分析一下，按照1，2，3这个来看，上层子树永远是下层的10倍数</p>
+<p>也就得出</p>
+<p>(1 * 10 + 2) + (1 * 10 + 3) = 25</p>
+<p>根据这个逻辑，开始写代码</p>
+<p>首先把那个DFS的遍历模版拿出来</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">DFS</span>(root):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> root <span style="color:#f92672">is</span> <span style="color:#f92672">not</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>        print(root<span style="color:#f92672">.</span>key)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> root<span style="color:#f92672">.</span>left <span style="color:#f92672">is</span> <span style="color:#f92672">not</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> DFS(root<span style="color:#f92672">.</span>left)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> root<span style="color:#f92672">.</span>right <span style="color:#f92672">is</span> <span style="color:#f92672">not</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> DFS(root<span style="color:#f92672">.</span>right)
+</span></span></code></pre></div><p>改一下，先写个伪代码</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dfs</span>(root):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> root:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>    num <span style="color:#f92672">=</span> 上一个子树的节点 <span style="color:#f92672">*</span> <span style="color:#ae81ff">10</span> <span style="color:#f92672">+</span> root<span style="color:#f92672">.</span>val
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> root<span style="color:#f92672">.</span>left <span style="color:#f92672">and</span> <span style="color:#f92672">not</span> root<span style="color:#f92672">.</span>right:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> num
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> 左节点num <span style="color:#f92672">+</span> 右节点num
+</span></span></code></pre></div><p>现在我们要获取到的数据就是，上一个子树的节点，这个我们决定，以参数的形式传输进去，因为第一个节点树，都是0</p>
+<p>改一下代码</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dfs</span>(root, nodeval):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> root:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>    num <span style="color:#f92672">=</span> nodeval <span style="color:#f92672">+</span> root<span style="color:#f92672">.</span>val
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> root<span style="color:#f92672">.</span>left <span style="color:#f92672">and</span> <span style="color:#f92672">not</span> root<span style="color:#f92672">.</span>right:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> num
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> dfs(root<span style="color:#f92672">.</span>left, num) <span style="color:#f92672">+</span> dfs(root<span style="color:#f92672">.</span>right, num)
+</span></span></code></pre></div><p>把我们的代码嵌入到主代码当中</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Solution</span>(object):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">sumNumbers</span>(self, root):
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        :type root: TreeNode
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        :rtype: int
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dfs</span>(root, nodeval):
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> root:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>            total <span style="color:#f92672">=</span> nodeval <span style="color:#f92672">*</span> <span style="color:#ae81ff">10</span> <span style="color:#f92672">+</span> root<span style="color:#f92672">.</span>val
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> root<span style="color:#f92672">.</span>left <span style="color:#f92672">and</span> <span style="color:#f92672">not</span> root<span style="color:#f92672">.</span>right:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span> total
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span> dfs(root<span style="color:#f92672">.</span>left, total) <span style="color:#f92672">+</span> dfs(root<span style="color:#f92672">.</span>right, total)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> dfs(root, <span style="color:#ae81ff">0</span>) 
+</span></span></code></pre></div><p>这样就完成了这道题。</p>
+<h2 id="总结">总结<a hidden class="anchor" aria-hidden="true" href="#总结">#</a></h2>
+<p>这段时间觉得自己越来越不努力了，我不喜欢自己这样，我一点也不喜欢。</p>
+<p>我觉得每天我都要努力前进，后续我会持续性输出算法和其他的东西，请期待吧。</p>
+<p>今天的freestyle说点什么呢？说点开心的事儿吧。</p>
+<p>突然想到的小样，不代表任何事物。哈哈。</p>
+<pre tabindex="0"><code>check it~
+
+初见的记忆浮现
+
+是不是爱神射错了离弦的箭？
+
+曾几何时你我只是互相平行的线
+
+是谁在中间接了莫名其妙的姻缘？
+
+似乎曾经相见
+
+是石头记下宝玉渊源？
+</code></pre><p>最近好累，感觉真的挺累，学习不会停止，你，我，我们，都要在春暖花开的地方相见。</p>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E7%AE%97%E6%B3%95/">算法</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1/">
+    <span class="title">« </span>
+    <span>为什么要使用消息队列服务</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/etcd%E7%9A%84%E6%B6%88%E6%81%AF%E5%8D%8F%E8%AE%AE-grpc%E5%AD%A6%E4%B9%A0%E9%9A%8F%E6%83%B3/">
+    <span class="title"> »</span>
+    <span>学习etcd的消息协议gRPC一点随想</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

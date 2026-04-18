@@ -1,0 +1,696 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Posts on yemilice</title>
+    <link>http://localhost:1313/posts/</link>
+    <description>Recent content in Posts on yemilice</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Mon, 21 Apr 2025 09:40:45 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>COD(使命召唤)-排位赛匹配机制详解</title>
+      <link>http://localhost:1313/posts/cod%E4%BD%BF%E5%91%BD%E5%8F%AC%E5%94%A4-%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/</link>
+      <pubDate>Mon, 21 Apr 2025 09:40:45 +0000</pubDate>
+      <guid>http://localhost:1313/posts/cod%E4%BD%BF%E5%91%BD%E5%8F%AC%E5%94%A4-%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;当使奴太久了，从cod8 - cod21，前几天卖了PS5，打算彻底脱坑，再也不玩了&lt;/p&gt;
+&lt;p&gt;&lt;img alt=&#34;alt text&#34; loading=&#34;lazy&#34; src=&#34;https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/image-7.png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;之前被折磨的太多了，现在真的不想玩了，动视的匹配机制真的是个迷&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>GitLab/ArgoCD/Jenkins CI/CD方案梳理和对比</title>
+      <link>http://localhost:1313/posts/gitlab-argocd-jenkins%E6%96%B9%E6%A1%88%E6%A2%B3%E7%90%86%E5%92%8C%E5%AF%B9%E6%AF%94/</link>
+      <pubDate>Tue, 30 Jul 2024 21:07:25 +0000</pubDate>
+      <guid>http://localhost:1313/posts/gitlab-argocd-jenkins%E6%96%B9%E6%A1%88%E6%A2%B3%E7%90%86%E5%92%8C%E5%AF%B9%E6%AF%94/</guid>
+      <description>&lt;h2 id=&#34;cicd的概述&#34;&gt;CI/CD的概述&lt;/h2&gt;
+&lt;h3 id=&#34;良好的cicd应该拥有哪些功能&#34;&gt;良好的CI/CD应该拥有哪些功能&lt;/h3&gt;
+&lt;h4 id=&#34;自动化构建&#34;&gt;自动化构建&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;自动化构建触发：每次代码提交、合并请求、或其他触发事件时，自动启动构建过程。&lt;/li&gt;
+&lt;li&gt;依赖管理：自动处理项目依赖，确保构建环境的一致性。&lt;/li&gt;
+&lt;li&gt;可复用的构建脚本：使用脚本或配置文件（如Makefile、Gradle、Maven等）来定义构建过程，确保构建步骤的一致性和可复用性。&lt;/li&gt;
+&lt;li&gt;版本控制：构建过程中自动生成版本号或构建标签，以便于版本管理和追踪。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;自动化测试&#34;&gt;自动化测试&lt;/h4&gt;
+&lt;p&gt;自动化测试是CI/CD系统确保代码质量的重要功能，通过自动化测试，开发团队可以快速发现和修复问题。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>多人游戏网络技术基础</title>
+      <link>http://localhost:1313/posts/%E5%A4%9A%E4%BA%BA%E6%B8%B8%E6%88%8F%E6%8A%80%E6%9C%AF%E5%9F%BA%E7%A1%80/</link>
+      <pubDate>Sun, 14 Apr 2024 09:06:47 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%A4%9A%E4%BA%BA%E6%B8%B8%E6%88%8F%E6%8A%80%E6%9C%AF%E5%9F%BA%E7%A1%80/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;很久不更新Blog了，是自己懈怠了很多，所以在思考了一下之后明白，我需要继续加强学习&lt;/p&gt;
+&lt;p&gt;加入ubisoft之后其实也没做什么值得称道的事儿&lt;/p&gt;
+&lt;p&gt;只是一个基础的开发人员，不过工作当中有一些可以被记录和梳理的地方&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>2022开年礼物-拿下育碧/EA/动视Offer的随想</title>
+      <link>http://localhost:1313/posts/2022%E5%BC%80%E5%B9%B4%E7%A4%BC%E7%89%A9-%E6%8B%BF%E4%B8%8B%E8%82%B2%E7%A2%A7-%E5%8A%A8%E8%A7%86-eaoffer%E7%9A%84%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Tue, 25 Jan 2022 09:02:04 +0000</pubDate>
+      <guid>http://localhost:1313/posts/2022%E5%BC%80%E5%B9%B4%E7%A4%BC%E7%89%A9-%E6%8B%BF%E4%B8%8B%E8%82%B2%E7%A2%A7-%E5%8A%A8%E8%A7%86-eaoffer%E7%9A%84%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;大家好，好久不见！&lt;/p&gt;
+&lt;p&gt;最近太忙了，实在没时间上来写blog，昨天收获了最后一个offer（育碧），自此，我的跳槽计划完全结束&lt;/p&gt;
+&lt;p&gt;我在一个月的时间拿下了育碧，动视，EA的Offer&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang协程通信探究</title>
+      <link>http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E9%80%9A%E4%BF%A1%E6%8E%A2%E7%A9%B6/</link>
+      <pubDate>Fri, 17 Dec 2021 16:40:00 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E9%80%9A%E4%BF%A1%E6%8E%A2%E7%A9%B6/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;这几天攻关了一下协程通信，也顺利完成了&lt;/p&gt;
+&lt;p&gt;我觉得每次学习都是一个新的经验&lt;/p&gt;
+&lt;p&gt;狗公司今年没有年终&lt;/p&gt;
+&lt;p&gt;我肯定是要走的，没必要继续停留&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;&lt;a href=&#34;https://yemilice.com/2021/10/27/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/&#34;&gt;Golang协程基础 （已经完成！）&lt;/a&gt;&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;a href=&#34;https://yemilice.com/2021/11/08/golang%E5%8D%8F%E7%A8%8B%E8%B0%83%E5%BA%A6%E6%8E%A2%E7%A9%B6/&#34;&gt;Golang协程调度 （已经完成！）&lt;/a&gt;&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;Golang协程通信 (已经完成)&lt;/li&gt;
+&lt;li&gt;Golang协程控制&lt;/li&gt;
+&lt;li&gt;Golang垃圾回收机制&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;csp思想&#34;&gt;CSP思想&lt;/h2&gt;
+&lt;p&gt;要了解协程通信，首先就要了解CSP思想&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ElasticSearch重大漏洞-log4j的处理方案-12月20日更新！！！！！</title>
+      <link>http://localhost:1313/posts/elasticsearch%E9%87%8D%E5%A4%A7%E6%BC%8F%E6%B4%9E-log4j%E7%9A%84%E5%A4%84%E7%90%86%E6%96%B9%E6%A1%88/</link>
+      <pubDate>Tue, 14 Dec 2021 15:45:12 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch%E9%87%8D%E5%A4%A7%E6%BC%8F%E6%B4%9E-log4j%E7%9A%84%E5%A4%84%E7%90%86%E6%96%B9%E6%A1%88/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;最近暴露出一个炸弹级别的漏洞 log4j&lt;/p&gt;
+&lt;p&gt;Log4j的GitHub公开披露了一个影响 Apache Log4j 2 实用程序多个版本的高严重性漏洞 (CVE-2021-44228)。&lt;/p&gt;
+&lt;p&gt;该漏洞影响了 Apache Log4j 2 的 2.0 到 2.14.1 版本。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Black Hole（黑洞）（Cover MC 몽 ／ Feat. Ailee(에일리）</title>
+      <link>http://localhost:1313/posts/black-hole%E9%BB%91%E6%B4%9Ecover-mc%E6%A2%A6--ailee/</link>
+      <pubDate>Tue, 30 Nov 2021 12:23:48 +0000</pubDate>
+      <guid>http://localhost:1313/posts/black-hole%E9%BB%91%E6%B4%9Ecover-mc%E6%A2%A6--ailee/</guid>
+      <description>&lt;h1 id=&#34;前言&#34;&gt;前言&lt;/h1&gt;
+&lt;p&gt;翻唱，听听就得&lt;/p&gt;
+&lt;p&gt;原版&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.youtube.com/watch?v=-OE1DvOaq7o&#34;&gt;https://www.youtube.com/watch?v=-OE1DvOaq7o&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&#34;歌曲&#34;&gt;歌曲&lt;/h2&gt;
+
+&lt;audio src=&#34;https://blog-1256169066.cos.ap-chengdu.myqcloud.com/music/%EB%B8%94%EB%9E%99%ED%99%80%EF%BC%88%E9%BB%91%E6%B4%9E%EF%BC%89%EF%BC%88Cover%20MC%E6%A2%A6%20%EF%BC%8F%20Ailee%EF%BC%89.mp3&#34; controls muted loading=&#34;lazy&#34;&gt;&lt;/audio&gt;
+
+&lt;h2 id=&#34;歌词&#34;&gt;歌词&lt;/h2&gt;
+&lt;p&gt;내가 널 울린 적 있니
+我曾把你弄哭&lt;/p&gt;
+&lt;p&gt;넌 항상 옳은 선택을 했니
+你总是做正确的选择&lt;/p&gt;
+&lt;p&gt;넌 이미 그런 길에 서 있어
+你已经处于那样的一条路上&lt;/p&gt;
+&lt;p&gt;나 역시 낭떠러지에 서 있어
+而我果然还是站在了悬崖边&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang协程调度探究</title>
+      <link>http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E8%B0%83%E5%BA%A6%E6%8E%A2%E7%A9%B6/</link>
+      <pubDate>Mon, 08 Nov 2021 09:43:19 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E8%B0%83%E5%BA%A6%E6%8E%A2%E7%A9%B6/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;这几天攻关了一下go协程的调度，然后写了这篇文章&lt;/p&gt;
+&lt;p&gt;这篇文章的工作量真挺大的，我看的也很累，找资料也很累&lt;/p&gt;
+&lt;p&gt;这篇文章，需要感谢《Go语言底层原理剖析》这本书的作者，这本书给了我很大启发&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang协程基础探究</title>
+      <link>http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/</link>
+      <pubDate>Wed, 27 Oct 2021 11:39:17 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;最近我把Go重新过了一遍，特别是Go的协程这一块，我感觉任何事都是从简单到复杂&lt;/p&gt;
+&lt;p&gt;包括现在，所以我重新开始学习基础，后序我会出一个系列&lt;/p&gt;
+&lt;p&gt;分别为&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Golang协程基础 （已经完成！）&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;Golang协程调度&lt;/li&gt;
+&lt;li&gt;Golang协程控制&lt;/li&gt;
+&lt;li&gt;Golang协程通信&lt;/li&gt;
+&lt;li&gt;Golang垃圾回收机制&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;所以我会持续更新，大家请期待吧，爱你们！&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>设计高可用的ElasicSearch索引</title>
+      <link>http://localhost:1313/posts/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84elasicsaerch%E7%B4%A2%E5%BC%95/</link>
+      <pubDate>Thu, 09 Sep 2021 15:36:23 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84elasicsaerch%E7%B4%A2%E5%BC%95/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;最近又是学习的爆发期，我戒除了上班划水和看知乎故事会，也戒除了游戏和小说&lt;/p&gt;
+&lt;p&gt;也戒除了频繁参加外面的无用活动，也逐渐修复了寂寞侵蚀内心的恐惧&lt;/p&gt;
+&lt;p&gt;将心思逐渐稳定下来，所以，我本月开始到年底，将会爆发式更新blog和歌曲&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>写一个高可用Rpc服务（基础知识篇）</title>
+      <link>http://localhost:1313/posts/%E5%86%99%E4%B8%80%E4%B8%AA%E9%AB%98%E5%8F%AF%E7%94%A8rpc%E6%9C%8D%E5%8A%A1%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E7%AF%87/</link>
+      <pubDate>Mon, 30 Aug 2021 18:30:31 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%86%99%E4%B8%80%E4%B8%AA%E9%AB%98%E5%8F%AF%E7%94%A8rpc%E6%9C%8D%E5%8A%A1%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E7%AF%87/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;最近实在是太忙啦，每天都加班，这是开博这么久首次，一个月都没UPDATE，my bad，这个月保证日更三篇，补上补上。&lt;/p&gt;
+&lt;p&gt;久违的freestyle时间，（虽然我现在玩爵士了）&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>望江亭(remix)</title>
+      <link>http://localhost:1313/posts/%E6%9C%9B%E6%B1%9F%E4%BA%ADremix/</link>
+      <pubDate>Fri, 20 Aug 2021 14:33:17 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E6%9C%9B%E6%B1%9F%E4%BA%ADremix/</guid>
+      <description>&lt;h2 id=&#34;望江亭remix&#34;&gt;望江亭（remix）&lt;/h2&gt;
+&lt;p&gt;很喜欢王诗安，一直非常喜欢&lt;/p&gt;
+&lt;p&gt;listen&lt;/p&gt;
+&lt;p&gt;remix听听就好&lt;/p&gt;
+
+&lt;audio src=&#34;https://blog-1256169066.cos.ap-chengdu.myqcloud.com/rap/%E6%9C%9B%E6%B1%9F%E4%BA%AD-remix.mp3&#34; controls muted loading=&#34;lazy&#34;&gt;&lt;/audio&gt;
+
+&lt;h2 id=&#34;歌词&#34;&gt;歌词&lt;/h2&gt;
+&lt;p&gt;后面补&lt;/p&gt;
+&lt;p&gt;最近忙&lt;/p&gt;
+&lt;h2 id=&#34;结尾&#34;&gt;结尾&lt;/h2&gt;
+&lt;p&gt;我&lt;/p&gt;
+&lt;p&gt;间歇性写歌&lt;/p&gt;
+&lt;p&gt;间歇性录歌&lt;/p&gt;
+&lt;p&gt;不忙的时候会参加比赛&lt;/p&gt;
+&lt;p&gt;平常在soundcloud发歌多一些&lt;/p&gt;
+&lt;p&gt;最近加班太多&lt;/p&gt;
+&lt;p&gt;不想干了&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>刷KPI的HR就不要给我发面试邀请了吧</title>
+      <link>http://localhost:1313/posts/%E5%88%B7kpi%E7%9A%84hr%E5%B0%B1%E4%B8%8D%E8%A6%81%E7%BB%99%E6%88%91%E5%8F%91%E9%9D%A2%E8%AF%95%E9%82%80%E8%AF%B7%E4%BA%86%E5%90%A7/</link>
+      <pubDate>Wed, 23 Jun 2021 14:42:49 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%88%B7kpi%E7%9A%84hr%E5%B0%B1%E4%B8%8D%E8%A6%81%E7%BB%99%E6%88%91%E5%8F%91%E9%9D%A2%E8%AF%95%E9%82%80%E8%AF%B7%E4%BA%86%E5%90%A7/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;去年这个时候面试了一家小公司叫&lt;strong&gt;无糖信息&lt;/strong&gt;，大概是叫这个名字&lt;/p&gt;
+&lt;p&gt;面试的体验极差，HR从头到尾都是隐形人，我感觉就是不停的刷KPI的，忽悠你去面试&lt;/p&gt;
+&lt;p&gt;我过去先等了半个小时，那面试官都没来&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>爵士乐和声进行的中心与精华-导音</title>
+      <link>http://localhost:1313/posts/%E7%88%B5%E5%A3%AB%E4%B9%90%E5%92%8C%E5%A3%B0%E8%BF%9B%E8%A1%8C%E7%9A%84%E4%B8%AD%E5%BF%83%E4%B8%8E%E7%B2%BE%E5%8D%8E-%E5%AF%BC%E9%9F%B3/</link>
+      <pubDate>Wed, 23 Jun 2021 10:42:01 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E7%88%B5%E5%A3%AB%E4%B9%90%E5%92%8C%E5%A3%B0%E8%BF%9B%E8%A1%8C%E7%9A%84%E4%B8%AD%E5%BF%83%E4%B8%8E%E7%B2%BE%E5%8D%8E-%E5%AF%BC%E9%9F%B3/</guid>
+      <description>&lt;h2 id=&#34;什么是导音&#34;&gt;什么是导音？&lt;/h2&gt;
+&lt;p&gt;What isguide tones?&lt;/p&gt;
+&lt;p&gt;在爵士乐中，和弦大部分为&lt;strong&gt;七和弦&lt;/strong&gt;，导音主要是指的&lt;strong&gt;七和弦&lt;/strong&gt;的&lt;strong&gt;三音&lt;/strong&gt;或&lt;strong&gt;七音&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;在一个七和弦中，最能体现和弦色彩的音就是三七音。&lt;/p&gt;
+&lt;p&gt;三音为稳定音级，七音为不稳定音级，两者决定一个和弦的大，小，属等重要属性。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ElasticSearch-新老选主算法对比</title>
+      <link>http://localhost:1313/posts/elasticsearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/</link>
+      <pubDate>Wed, 16 Jun 2021 15:17:06 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;首先，ElasticSearch 7，也就是Es 7， 变动还是有点儿大，改了很多东西，例如取消了type，修改了选主算法之类的操作&lt;/p&gt;
+&lt;p&gt;正好几天在钻研一些选主算法一类的东西，看了ETCD，rabbitmq，kafka之类的一些选主算法，想起来似乎对于Es，我还没有细致研究&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ElasticSearch检索的核心-倒排索引解读</title>
+      <link>http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/</link>
+      <pubDate>Fri, 14 May 2021 15:09:41 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;ElasticSearch为什么适合做检索服务器？&lt;/p&gt;
+&lt;p&gt;因为快啊，大佬！&lt;/p&gt;
+&lt;p&gt;为什么快啊？&lt;/p&gt;
+&lt;p&gt;因为&lt;strong&gt;倒排索引&lt;/strong&gt;啊！&lt;/p&gt;
+&lt;p&gt;什么是&lt;strong&gt;倒排索引&lt;/strong&gt;？&lt;/p&gt;
+&lt;p&gt;这个，就要细细分析一下了，这篇文章可能写的不是那么全，但是我也会尽量总结所有重点！希望能帮到大家，爱你们！&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>为什么要使用消息队列服务</title>
+      <link>http://localhost:1313/posts/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1/</link>
+      <pubDate>Sat, 08 May 2021 09:48:28 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%9C%8D%E5%8A%A1/</guid>
+      <description>&lt;h2 id=&#34;消息队列是什么&#34;&gt;消息队列是什么？&lt;/h2&gt;
+&lt;p&gt;化繁为简一下，分拆一下这个词汇，首先，先来看队列（queue）&lt;/p&gt;
+&lt;p&gt;队列是一种常用的数据结构，特点是&lt;strong&gt;先进先出&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;消息队列，顾名思义一下，就是把&lt;strong&gt;消息&lt;/strong&gt;放在&lt;strong&gt;队列&lt;/strong&gt;当中进行处理&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>弄懂难缠的DFS算法和相关变种(Python实现)</title>
+      <link>http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84dfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/</link>
+      <pubDate>Wed, 28 Apr 2021 17:21:07 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84dfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;这次不废话，直接接上次的BFS，直接来看DFS。&lt;/p&gt;
+&lt;h2 id=&#34;什么是dfs算法&#34;&gt;什么是DFS算法&lt;/h2&gt;
+&lt;p&gt;DFS，全名深度优先搜索&lt;/p&gt;
+&lt;p&gt;用大白话来说，其实就是 &lt;strong&gt;一条路走到黑，走不通再回来，直到无路可走&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;举个简单的例子，现在我们有一个树，就像下面这样&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>学习etcd的消息协议gRPC一点随想</title>
+      <link>http://localhost:1313/posts/etcd%E7%9A%84%E6%B6%88%E6%81%AF%E5%8D%8F%E8%AE%AE-grpc%E5%AD%A6%E4%B9%A0%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Tue, 06 Apr 2021 10:39:55 +0000</pubDate>
+      <guid>http://localhost:1313/posts/etcd%E7%9A%84%E6%B6%88%E6%81%AF%E5%8D%8F%E8%AE%AE-grpc%E5%AD%A6%E4%B9%A0%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;首先，要在这里说明一个情况，我的etcd的学习进入了第二个阶段&lt;/p&gt;
+&lt;p&gt;再一个，未来我将不会更新一些基础代码用法，未来的博客文章将会持续性输出阅读源码和算法之类的文章，因为我的学习也进入了另一个阶段。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>学习etcd核心机制Raft协议的一点随想</title>
+      <link>http://localhost:1313/posts/%E5%AD%A6%E4%B9%A0etcd%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6raft%E5%8D%8F%E8%AE%AE%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Sun, 04 Apr 2021 14:50:25 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%AD%A6%E4%B9%A0etcd%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6raft%E5%8D%8F%E8%AE%AE%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;最近开始学习k8s相关的东西，不可避免的和etcd搭上了交道，说来使用etcd的日子也不短了&lt;/p&gt;
+&lt;p&gt;中途开源过Python和Golang的etcd的api，代码在github上，公布一下&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang进阶-必须知道的一些事</title>
+      <link>http://localhost:1313/posts/golang%E8%BF%9B%E9%98%B6-%E5%BF%85%E9%A1%BB%E7%9F%A5%E9%81%93%E7%9A%84%E4%B8%80%E4%BA%9B%E4%BA%8B/</link>
+      <pubDate>Fri, 19 Mar 2021 16:46:16 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E8%BF%9B%E9%98%B6-%E5%BF%85%E9%A1%BB%E7%9F%A5%E9%81%93%E7%9A%84%E4%B8%80%E4%BA%9B%E4%BA%8B/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;最近感觉自己又陷入了无尽的自我循环和自我否定，不知道自己到底是怎么了&lt;/p&gt;
+&lt;p&gt;我，出生于忧患之中，但是告诫自己，不能死于安乐。&lt;/p&gt;
+&lt;p&gt;这篇文章是收集的一些Golang进阶的知识，作为我自己更上一层楼的笔记，也希望可以帮助大家&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>读诗的感悟</title>
+      <link>http://localhost:1313/posts/%E8%AF%BB%E8%AF%97%E7%9A%84%E6%84%9F%E6%82%9F/</link>
+      <pubDate>Wed, 03 Mar 2021 13:42:41 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E8%AF%BB%E8%AF%97%E7%9A%84%E6%84%9F%E6%82%9F/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;今年我陷入迷茫&lt;/p&gt;
+&lt;p&gt;我不知道我的路是否还在远方？&lt;/p&gt;
+&lt;p&gt;到底停下还是持续hold on？&lt;/p&gt;
+&lt;p&gt;难道这就是生活给予我的前路渺茫？&lt;/p&gt;
+&lt;h2 id=&#34;one&#34;&gt;ONE&lt;/h2&gt;
+&lt;p&gt;算命先生说我天赋异禀，功成名就&lt;/p&gt;
+&lt;p&gt;20年后，格子间的工蚁是我难辞其咎&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>弄懂难缠的BFS算法和相关变种(Python实现)</title>
+      <link>http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84bfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/</link>
+      <pubDate>Tue, 23 Feb 2021 16:22:51 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84bfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;这段时间频繁刷题，leetcode真的好难啊！！每次都他娘的做不出来，除了刷题，最近还在复习各种架构，或者是完成公司的开发。这些占据了我过多时间，所以blog其实一直想写，但是实在腾不出时间，今天在针对性刷leetcode的时候，对BFS/DFS有了一点别的感悟，所以就写一篇博客，作为自己的笔记，在记录的同时，也帮助其他兄弟少走弯路，希望，能够帮到大家。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>2020的回顾和2021的展望</title>
+      <link>http://localhost:1313/posts/2020%E7%9A%84%E5%9B%9E%E9%A1%BE%E5%92%8C2021%E7%9A%84%E5%B1%95%E6%9C%9B/</link>
+      <pubDate>Mon, 04 Jan 2021 09:13:05 +0000</pubDate>
+      <guid>http://localhost:1313/posts/2020%E7%9A%84%E5%9B%9E%E9%A1%BE%E5%92%8C2021%E7%9A%84%E5%B1%95%E6%9C%9B/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;现在是2021年1月4日早上的九点十四分&lt;/p&gt;
+&lt;p&gt;这是我2021开年第一篇日志，就为2020做一个回顾和2021年做一个展望吧。&lt;/p&gt;
+&lt;h2 id=&#34;回顾2020&#34;&gt;回顾2020&lt;/h2&gt;
+&lt;p&gt;2020其实是一个特殊的年份，想一想似乎大家都在生活当中挣扎。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ElasticSearch定义自己的分词器词典（检索生僻词）</title>
+      <link>http://localhost:1313/posts/elasticsearch%E5%AE%9A%E4%B9%89%E8%87%AA%E5%B7%B1%E7%9A%84%E5%88%86%E8%AF%8D%E5%99%A8%E8%AF%8D%E5%85%B8%E6%A3%80%E7%B4%A2%E7%94%9F%E5%83%BB%E8%AF%8D/</link>
+      <pubDate>Tue, 08 Dec 2020 15:20:23 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch%E5%AE%9A%E4%B9%89%E8%87%AA%E5%B7%B1%E7%9A%84%E5%88%86%E8%AF%8D%E5%99%A8%E8%AF%8D%E5%85%B8%E6%A3%80%E7%B4%A2%E7%94%9F%E5%83%BB%E8%AF%8D/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;ElasticSearch当中，有许多的分词器供我们调用，中文用的最多的就是IK分词器，一些基本的词汇都包含了。&lt;/p&gt;
+&lt;p&gt;但是，一些基本的生僻词就很难检索了，比如一些特定专业词汇，或者一些流行词汇之类的，所以这篇文章，我会讲一下自定义分词器词典的设置和扩展，让我们能够检索的词汇变的更多。如果能帮到你，我也会很开心！&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ElasticSearch高级用法(Golang实现)</title>
+      <link>http://localhost:1313/posts/elasticsearch%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95golang%E5%AE%9E%E7%8E%B0/</link>
+      <pubDate>Wed, 02 Dec 2020 14:38:21 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95golang%E5%AE%9E%E7%8E%B0/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;前阵子开发了一个检索服务器，用了一些Es的高阶功能，网上随便看了一圈，基本没有人公开这些功能的中文版，我寻思咱们不能只满足了自己，不满足其他老哥吧，所以，我将开发中用到的Es高阶功能总结输出.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>完全搞懂Python的线程机制</title>
+      <link>http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E6%90%9E%E6%87%82python%E7%9A%84%E7%BA%BF%E7%A8%8B%E6%9C%BA%E5%88%B6/</link>
+      <pubDate>Tue, 01 Dec 2020 13:28:46 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E6%90%9E%E6%87%82python%E7%9A%84%E7%BA%BF%E7%A8%8B%E6%9C%BA%E5%88%B6/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;总觉得用了Python那么久，感觉隔一层面纱似的，只是会用而已。&lt;/p&gt;
+&lt;p&gt;现在Python更新了3.9，越来越厉害了，多了很多新的语法特性。&lt;/p&gt;
+&lt;p&gt;想想自己，也不能总是写一些Golang的东西，Python也要持续跟上，所以打算开一个Python三巨头的坑，把Python的线程，进程，协程都讲明白，这样第一个是让我加深理解，第二个是让我彻底搞懂这三者的机制，我认为这样我才可以走的更远。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang的并发机制探究</title>
+      <link>http://localhost:1313/posts/golang%E7%9A%84%E5%B9%B6%E5%8F%91%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/</link>
+      <pubDate>Fri, 27 Nov 2020 10:19:02 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E7%9A%84%E5%B9%B6%E5%8F%91%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;虽然上两篇文章讲了几个并发示例和Goroutine的使用，但是我仔细看了一下，还是不够清楚，这次这篇文章将会是一篇纯理论的文章，主要讲一下Go的并发机制的原理还有Goroutine还有channel。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>完全理解Golang并发模式(2)</title>
+      <link>http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-2/</link>
+      <pubDate>Tue, 10 Nov 2020 10:46:02 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-2/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;这几天的攻关都是在Golang并发上面，也算是有了一些收获，把一些基础的并发场景和并发模式都过了一遍，觉得自己又提升了一层楼，其实我发觉，在我的开发生涯中，总是纠结实现，却不是去看最底层的东西，任何东西，都是由简到难，或者就是从底层到核心，无论是Python还是Golang，或者是我正在狂刷算法的Java，我都是去纠结实现，但是不会钻研核心，所以我写代码都是面向搜素引擎编程。所以，也是时候该改变一些东西。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>完全理解Golang并发模式(1)</title>
+      <link>http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-1/</link>
+      <pubDate>Tue, 03 Nov 2020 18:22:08 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-1/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;其实我写Golang有段时间了，平常写一些业务代码，也涉及不到什么高端东西，Golang的核心其实就是在于&lt;strong&gt;goroutine&lt;/strong&gt;这套东西，在处理高并发任务的时候非常强势，甩Python一个车位，所以，写下这篇博客，作为笔记，记录Golang核心的并发机制，并且给出一些自己写的代码作为示例，本次博客大部分代码为自己手写，参考了《Golang并发之道》，《Go语言圣经》这两本书，这两本书是我的进阶之路上的灯塔，感谢这两本书的译者，也希望大家去看看这两本书。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>架构设计和项目管理心得-写于第三个独立开发项目之后</title>
+      <link>http://localhost:1313/posts/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%92%8C%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86-%E5%86%99%E4%BA%8E%E7%AC%AC%E4%B8%89%E4%B8%AA%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91%E9%A1%B9%E7%9B%AE%E4%B9%8B%E5%90%8E/</link>
+      <pubDate>Tue, 20 Oct 2020 10:15:51 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%92%8C%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86-%E5%86%99%E4%BA%8E%E7%AC%AC%E4%B8%89%E4%B8%AA%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91%E9%A1%B9%E7%9B%AE%E4%B9%8B%E5%90%8E/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;本月20号，我完成了我第三个独立开发项目，并且通过测试顺利交付了。&lt;/p&gt;
+&lt;p&gt;首先先总结一下我这半年都干了什么吧。&lt;/p&gt;
+&lt;p&gt;回想一下，从去年开始，我就被安排独立开发，从无到有，从惶恐到上手，从不知所措到游刃有余，其实还是度过了一个比较漫长的阶段，还好挺过来了。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Elasticsearch大数据量下的优化方法</title>
+      <link>http://localhost:1313/posts/elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/</link>
+      <pubDate>Fri, 09 Oct 2020 09:10:22 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;十一在家待着玩了两天COD，突然想起来似乎放假前有一个Elasticsearch的问题需要处理，的确，现在距离开工也只剩下四天了，哎，假期的日子过的飞快，又到时候说拜拜，又要开始社畜的生活啦，想到心里就万分悲痛。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Python的协程知识</title>
+      <link>http://localhost:1313/posts/python%E7%9A%84%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/</link>
+      <pubDate>Tue, 01 Sep 2020 10:20:47 +0000</pubDate>
+      <guid>http://localhost:1313/posts/python%E7%9A%84%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;最近心情一直不是太好，写出来的东西感觉也没有灵感，有些时候做了很多事，但是回想起来感觉自己还是什么都没有做。这是9月份第一次更新blog，也更新一篇相对高级一些的技术吧，有一阵没看Python了，想想还是不要落下了，剧透一下，下一篇文章还是针对Elasticsearch或者是前端框架React的，学习还是不能停下来，最近写歌也有问题，感觉自己什么也写不出来，仿佛失去了灵感，是生活还是时间消磨了我的灵气呢？我不愿意这么想，我会努力的，状态会调整过来的。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>读Python的协程库asyncio源码随想</title>
+      <link>http://localhost:1313/posts/%E8%AF%BBpython%E7%9A%84%E5%8D%8F%E7%A8%8B%E5%BA%93asyncio%E6%BA%90%E7%A0%81%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Thu, 27 Aug 2020 14:39:33 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E8%AF%BBpython%E7%9A%84%E5%8D%8F%E7%A8%8B%E5%BA%93asyncio%E6%BA%90%E7%A0%81%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;其实想了一下，Python有一阵没好好看了，这样不好。刚好前阵子看了一下Golang的协程，我寻思看了那么多协程逻辑，也该看看Python的。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang语言的一些基础(针对面向基础的笔/面试)</title>
+      <link>http://localhost:1313/posts/golang%E8%AF%AD%E8%A8%80%E7%9A%84%E4%B8%80%E4%BA%9B%E5%9F%BA%E7%A1%80-%E9%92%88%E5%AF%B9%E9%9D%A2%E5%90%91%E5%9F%BA%E7%A1%80%E7%9A%84%E7%AC%94-%E9%9D%A2%E8%AF%95/</link>
+      <pubDate>Tue, 25 Aug 2020 09:43:13 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E8%AF%AD%E8%A8%80%E7%9A%84%E4%B8%80%E4%BA%9B%E5%9F%BA%E7%A1%80-%E9%92%88%E5%AF%B9%E9%9D%A2%E5%90%91%E5%9F%BA%E7%A1%80%E7%9A%84%E7%AC%94-%E9%9D%A2%E8%AF%95/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;昨天让无糖信息的面试官嘲讽了之后，我火速写了一篇博客嘲讽回去一波，但是嘲讽归嘲讽，该做的事儿还是要做的，所以昨天晚上花了一些时间总结了一些Golang的基础，作为查漏补缺和自己学习。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>似乎要沉下心来处理一些事</title>
+      <link>http://localhost:1313/posts/%E4%BC%BC%E4%B9%8E%E8%A6%81%E6%B2%89%E4%B8%8B%E5%BF%83%E6%9D%A5%E5%A4%84%E7%90%86%E4%B8%80%E4%BA%9B%E4%BA%8B/</link>
+      <pubDate>Mon, 24 Aug 2020 16:22:14 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E4%BC%BC%E4%B9%8E%E8%A6%81%E6%B2%89%E4%B8%8B%E5%BF%83%E6%9D%A5%E5%A4%84%E7%90%86%E4%B8%80%E4%BA%9B%E4%BA%8B/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;今天面试感觉不是特别好&lt;/p&gt;
+&lt;p&gt;其实我一直都觉得自己的技术似乎还行，我估摸着&amp;quot;还行&amp;quot;这个定义真的稍微模糊了一点，更多可能就是我什么都懂一些，其实内部什么也不懂&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>中文分词的算法分析</title>
+      <link>http://localhost:1313/posts/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/</link>
+      <pubDate>Fri, 21 Aug 2020 09:57:46 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;起因是一次电话面试，面一个技术比较好的公司，我认为自己玩Elasticsearch还是比较久了，还是能交锋几个回合吧，结果人家一问，中文分词的算法，你有了解吗？&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>一次Golang服务占用CPU过大的排查经过</title>
+      <link>http://localhost:1313/posts/%E4%B8%80%E6%AC%A1golang%E6%9C%8D%E5%8A%A1%E5%8D%A0%E7%94%A8cpu%E8%BF%87%E5%A4%A7%E7%9A%84%E6%8E%92%E6%9F%A5%E7%BB%8F%E8%BF%87/</link>
+      <pubDate>Mon, 17 Aug 2020 09:51:47 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E4%B8%80%E6%AC%A1golang%E6%9C%8D%E5%8A%A1%E5%8D%A0%E7%94%A8cpu%E8%BF%87%E5%A4%A7%E7%9A%84%E6%8E%92%E6%9F%A5%E7%BB%8F%E8%BF%87/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;前阵子写了个ETCD选主的代码，持续后台执行，相安无事一阵我就干别的事儿去了，我寻思小爷虽然代码写的一般，但是不至于出错啊。&lt;/p&gt;
+&lt;p&gt;但是我想的实在是太单纯了，应了那句话，我还是too young啊，高估了自己的姿势水平，一下搞出来一个大新闻。周六大半夜告警在那里 biubiubiu 的往我邮箱里塞，我当时正在COD战场上挥汗如雨，手机的震动就像电动马达一样给我腿都快整麻了，一看邮箱，好家伙，CPU占用百分之200多！Cgroup都没给它限制住。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>出埃及记_普通程序员的买房之路</title>
+      <link>http://localhost:1313/posts/%E5%87%BA%E5%9F%83%E5%8F%8A%E8%AE%B0-%E6%99%AE%E9%80%9A%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E4%B9%B0%E6%88%BF%E4%B9%8B%E8%B7%AF/</link>
+      <pubDate>Mon, 10 Aug 2020 08:56:30 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%87%BA%E5%9F%83%E5%8F%8A%E8%AE%B0-%E6%99%AE%E9%80%9A%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E4%B9%B0%E6%88%BF%E4%B9%8B%E8%B7%AF/</guid>
+      <description>&lt;h2 id=&#34;出埃及记-前篇-买房理由&#34;&gt;出埃及记-前篇-买房理由&lt;/h2&gt;
+&lt;p&gt;有时候时间一晃，就过去了4年多，我2016年毕业，现在已经是2020年。&lt;/p&gt;
+&lt;p&gt;按道理说我也是老油条了，不比刚入行的小鲜肉了，但是依旧没个成就，也没个方向。说起买房，无非就是和兄弟朋友推杯换盏中听到的，谁又买了房，谁又结了婚罢了。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Elasticsearch检索PDF和Office文档的方案测评</title>
+      <link>http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2pdf%E5%92%8Coffice%E6%96%87%E6%A1%A3%E7%9A%84%E6%96%B9%E6%A1%88%E6%B5%8B%E8%AF%84/</link>
+      <pubDate>Wed, 29 Jul 2020 14:02:32 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2pdf%E5%92%8Coffice%E6%96%87%E6%A1%A3%E7%9A%84%E6%96%B9%E6%A1%88%E6%B5%8B%E8%AF%84/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;这段时间主要攻关了一下Elasticsearch的一些特性，发觉Elasticsearch还是个挺牛逼的玩意儿，我以前经常用它存日志，还没想着拿来存别的东西，一般不都SQL嘛，但是我看了一下现在流行的检索方案，基本都是elasticsearch做检索引擎，说明这个东西经历了时间的考研，用了的人都说好。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Grow_Up</title>
+      <link>http://localhost:1313/posts/grow-up/</link>
+      <pubDate>Tue, 28 Jul 2020 14:38:28 +0000</pubDate>
+      <guid>http://localhost:1313/posts/grow-up/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;有时候觉得自己快要撑不下去&lt;/p&gt;
+&lt;p&gt;但是依旧不能放弃&lt;/p&gt;
+&lt;p&gt;为了爸妈&lt;/p&gt;
+&lt;p&gt;为了自己&lt;/p&gt;
+&lt;p&gt;为了所有人&lt;/p&gt;
+&lt;h2 id=&#34;one&#34;&gt;ONE&lt;/h2&gt;
+&lt;p&gt;温热的咖啡升腾起轻薄的水雾&lt;/p&gt;
+&lt;p&gt;满屏未敲完的代码依旧在提醒&lt;/p&gt;
+&lt;p&gt;忙碌和疲惫的一天即将结束&lt;/p&gt;
+&lt;p&gt;next，即将来到下一个季节&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>使用Golang的gRPC框架的一点随想</title>
+      <link>http://localhost:1313/posts/%E4%BD%BF%E7%94%A8golang%E7%9A%84grpc%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Tue, 07 Jul 2020 13:32:21 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E4%BD%BF%E7%94%A8golang%E7%9A%84grpc%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h2 id=&#34;前言写文章的原因&#34;&gt;前言（写文章的原因）&lt;/h2&gt;
+&lt;p&gt;最近开发项目太重了，我有些感觉自己状态不太对，想要去换一个地方生活，但是说到要做的事就一定要做，学习是不能停下来的。&lt;/p&gt;
+&lt;p&gt;最近开发使用了一下gRPC，不同于以前我自己写的Python 的 RPC，gRPC相对来说用起来更简单，写起来更容易，可能一开始有点不好使，其实熟悉了也还是不错的，那么，这篇文章主要就写一下，gRPC的基础使用和在我项目中的实际应用吧。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>恶性循环</title>
+      <link>http://localhost:1313/posts/%E6%81%B6%E6%80%A7%E5%BE%AA%E7%8E%AF/</link>
+      <pubDate>Wed, 17 Jun 2020 12:43:19 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E6%81%B6%E6%80%A7%E5%BE%AA%E7%8E%AF/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;改 不 了 写 前 言 的 毛 病&lt;/p&gt;
+&lt;p&gt;这 个 月 心 情 很 不 美 丽&lt;/p&gt;
+&lt;p&gt;来 自 心 底 的 呐 喊&lt;/p&gt;
+&lt;p&gt;释 放 出 深 渊 的 野 兽&lt;/p&gt;
+&lt;h2 id=&#34;one&#34;&gt;one&lt;/h2&gt;
+&lt;p&gt;我 得 了 名 为 平 庸 的 不 治 之 症&lt;/p&gt;
+&lt;p&gt;就 让 我 在 灰 暗 的 地 底 死 去&lt;/p&gt;
+&lt;p&gt;双 手 合 十 祈 求 神 明 的 营救&lt;/p&gt;
+&lt;p&gt;看 不 到 的 希 望 的 祷 告 不 会 得 到 回 应&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>我的自我介绍</title>
+      <link>http://localhost:1313/posts/%E6%88%91%E7%9A%84%E8%87%AA%E6%88%91%E4%BB%8B%E7%BB%8D/</link>
+      <pubDate>Tue, 02 Jun 2020 15:05:31 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E6%88%91%E7%9A%84%E8%87%AA%E6%88%91%E4%BB%8B%E7%BB%8D/</guid>
+      <description>&lt;h1 id=&#34;我的自我介绍&#34;&gt;我的自我介绍&lt;/h1&gt;
+&lt;p&gt;hello, 这是我，&lt;/p&gt;
+&lt;p&gt;你可能不认识我，&lt;/p&gt;
+&lt;p&gt;那么，&lt;/p&gt;
+&lt;p&gt;现在由我来进行自我介绍。&lt;/p&gt;
+&lt;p&gt;do it。&lt;/p&gt;
+&lt;p&gt;我 叫 Y k，你 可 以 叫 我 l k，来 自 c d c&lt;/p&gt;
+&lt;p&gt;出 生 在 钟 鸣 鼎 食 之 家，其 他 都 是 secret&lt;/p&gt;
+&lt;p&gt;有 个 很 爱 我 的 妈 妈，更 多 一 点 不 能 告 诉 你&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Python写一个自动点餐程序</title>
+      <link>http://localhost:1313/posts/python%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%8A%A8%E7%82%B9%E9%A4%90%E7%A8%8B%E5%BA%8F/</link>
+      <pubDate>Tue, 02 Jun 2020 10:17:12 +0000</pubDate>
+      <guid>http://localhost:1313/posts/python%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%8A%A8%E7%82%B9%E9%A4%90%E7%A8%8B%E5%BA%8F/</guid>
+      <description>&lt;h1 id=&#34;python写一个自动点餐程序&#34;&gt;Python写一个自动点餐程序&lt;/h1&gt;
+&lt;h2 id=&#34;为什么要写这个&#34;&gt;为什么要写这个&lt;/h2&gt;
+&lt;p&gt;公司现在用meican作为点餐渠道，每天规定的时间是早7：00-9：40点餐，有时候我经常容易忘记，或者是在地铁/公交上没办法点餐，所以总是没饭吃，只有去楼下711买点饭团之类的玩意儿，所以这是促使我写点餐小程序的原因。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang中Context使用的一点随想</title>
+      <link>http://localhost:1313/posts/golang%E4%B8%ADcontext%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Mon, 01 Jun 2020 10:18:36 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E4%B8%ADcontext%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h1 id=&#34;golang中context使用的一点随想&#34;&gt;Golang中Context使用的一点随想&lt;/h1&gt;
+&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;这一篇是三巨头最后一篇了，前两篇介绍了channel，waitgroup，今天这篇来介绍一下context，相比于其他两种，我倒是更推荐context（上下文）这种控制goroutine的方法，为什呢，下面我就来详细的说一说吧。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang中WaitGroup使用的一点随想</title>
+      <link>http://localhost:1313/posts/golang%E4%B8%ADwaitgroup%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Tue, 26 May 2020 13:29:11 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E4%B8%ADwaitgroup%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h1 id=&#34;golang中waitgroup使用的一点随想&#34;&gt;Golang中WaitGroup使用的一点随想&lt;/h1&gt;
+&lt;h2 id=&#34;前言为什么又要写一篇随想文&#34;&gt;前言（为什么又要写一篇随想文）&lt;/h2&gt;
+&lt;p&gt;上次我写了一个channel的文章，我寻思，这Golang控制三大巨头，channel，waitgroup，context，我得尽快都安排上，最近工作太忙，压力过大，但是Update Blog还是不能够停下来，所以继续补上，学习还是不能停，那么来吧。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang中Channel使用的一点随想</title>
+      <link>http://localhost:1313/posts/golang%E4%B8%ADchannel%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Mon, 25 May 2020 18:25:38 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E4%B8%ADchannel%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h1 id=&#34;golang中channel使用的一点随想&#34;&gt;Golang中Channel使用的一点随想&lt;/h1&gt;
+&lt;h2 id=&#34;前言为什么要写这篇文章&#34;&gt;前言（为什么要写这篇文章）&lt;/h2&gt;
+&lt;p&gt;在Golang中，搞同步/并发控制的方法有很多，有channel(管道)，WaitGroup(等待线程结束)，context(上下文管理)，我一直想深入研究一下它们，因为这次开发我遇到了很多比较棘手的问题，我认为万变不离其宗，所以我看了一下他们的源码，然后简单的写了几个Demo，结合了我自己的开发经验，写成此文，做记录的同时，希望可以帮到其他兄弟，未来我还会出context随想，waitgroup随想，一点一点来吧。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>分布式数据库如何选择，几种分布式数据库优缺点一览</title>
+      <link>http://localhost:1313/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/</link>
+      <pubDate>Fri, 22 May 2020 16:16:20 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/</guid>
+      <description>&lt;h1 id=&#34;分布式数据库如何选择几种分布式数据库优缺点一览&#34;&gt;分布式数据库如何选择？几种分布式数据库优缺点一览&lt;/h1&gt;
+&lt;h2 id=&#34;为什么选择分布式数据库&#34;&gt;为什么选择分布式数据库？&lt;/h2&gt;
+&lt;p&gt;优点如下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;具有灵活的体系结构&lt;/li&gt;
+&lt;li&gt;适应分布式的管理和控制机构&lt;/li&gt;
+&lt;li&gt;经济性能优越&lt;/li&gt;
+&lt;li&gt;系统的可靠性高、可用性好&lt;/li&gt;
+&lt;li&gt;局部应用的响应速度快&lt;/li&gt;
+&lt;li&gt;可扩展性好，易于集成现有系统。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;相关的技术概念介绍&#34;&gt;相关的技术概念介绍&lt;/h2&gt;
+&lt;h3 id=&#34;什么是分布式数据库&#34;&gt;什么是分布式数据库？&lt;/h3&gt;
+&lt;p&gt;常见的分布式系统分为，&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>开发中常用的Golang高级用法</title>
+      <link>http://localhost:1313/posts/%E5%BC%80%E5%8F%91%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84golang%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/</link>
+      <pubDate>Fri, 22 May 2020 14:37:09 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%BC%80%E5%8F%91%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84golang%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/</guid>
+      <description>&lt;h1 id=&#34;开发中常用的golang高级用法&#34;&gt;开发中常用的Golang高级用法&lt;/h1&gt;
+&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;忙碌了两个月，这次开发终于要结束了，今天下午公司在重组集群机器，也没办法干活儿了，就写一些东西，相当于，留住一些东西，来纪念这辛苦的两个月吧。做一个纪念，也是为了方便以后自己去查看。在这次开发中，学习了不少Golang的高级特性，并且付诸于实现，也踩了不少坑，留下这篇文字，也是方便其他人能够查看，或者借鉴，如果帮到你，那么我也会很开心你。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang封装Elasticsearch常用功能</title>
+      <link>http://localhost:1313/posts/golang%E5%B0%81%E8%A3%85elasticsearch%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/</link>
+      <pubDate>Thu, 14 May 2020 09:45:49 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E5%B0%81%E8%A3%85elasticsearch%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/</guid>
+      <description>&lt;h2 id=&#34;前言为什么要写这篇文章&#34;&gt;前言（为什么要写这篇文章）&lt;/h2&gt;
+&lt;p&gt;首先看过我博客的都应该知道，我去年发了一篇Python封装Elasticsearch的文章。但那是去年了，今年我将我的检索服务后端用Golang全部重写了一波，相当于用Go重构了以前的Python代码，不过我个人感觉Golang的效率还是高于Python的，而且我还加了一些异常判断和处理，这次的代码只会比以前更好更牛逼，为了纪念这一个多月的重构历程，我将关键功能记录下来，方便自己复习和各位兄弟姐妹查看。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>这次绩效考评会成为压垮我的稻草么？</title>
+      <link>http://localhost:1313/posts/%E8%BF%99%E6%AC%A1%E7%BB%A9%E6%95%88%E8%80%83%E8%AF%84%E4%BC%9A%E6%88%90%E4%B8%BA%E5%8E%8B%E5%9E%AE%E6%88%91%E7%9A%84%E7%A8%BB%E8%8D%89%E4%B9%88/</link>
+      <pubDate>Tue, 14 Apr 2020 10:06:30 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E8%BF%99%E6%AC%A1%E7%BB%A9%E6%95%88%E8%80%83%E8%AF%84%E4%BC%9A%E6%88%90%E4%B8%BA%E5%8E%8B%E5%9E%AE%E6%88%91%E7%9A%84%E7%A8%BB%E8%8D%89%E4%B9%88/</guid>
+      <description>&lt;h2 id=&#34;写这篇文章的原因&#34;&gt;写这篇文章的原因&lt;/h2&gt;
+&lt;p&gt;按理说，你们看过我博客的人，都知道，我是一个相当乐观的人，我从来都不会怎么丧气一些事儿，特别是在工作上，我永远都是顶在最前面，有困难bug我来，有难题我来攻关，按理说我就像是一个长者，身经百战，见的多了！那些naive的问题，我都不放在心上，可今天，恩，一个绩效考评，算是让我有了一些感到心累或者说是心寒吧。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang调用Rabbitmq消息队列和封装</title>
+      <link>http://localhost:1313/posts/golang%E8%B0%83%E7%94%A8rabbitmq%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%92%8C%E5%B0%81%E8%A3%85/</link>
+      <pubDate>Mon, 13 Apr 2020 10:11:00 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E8%B0%83%E7%94%A8rabbitmq%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%92%8C%E5%B0%81%E8%A3%85/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;h3 id=&#34;介绍rabbimq&#34;&gt;介绍Rabbimq&lt;/h3&gt;
+&lt;h4 id=&#34;rabbitmq消息队列是干嘛的&#34;&gt;Rabbitmq消息队列是干嘛的？&lt;/h4&gt;
+&lt;p&gt;简单的说，消息队列，引申一下就是传递消息用的队列，也可以称为传递消息的通信方法。用争抢订单的快车举个例子，假如，A用户发送了一个用车的消息，那么消息队列要做的就是把A用户用车的这个消息广而告之，发送到一个公用队列当中，司机只管取到消息，而不管是谁发布的，这就是一个简单的消息队列例子，Rabbitmq其实就是消息队列的一种，用的比较多的还可能有Redis，kafka，ActiceMq等等，这个后面的博文里面我会说，这次我们只说Rabbimq消息队列&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang 完成一个 Crontab定时器（2）</title>
+      <link>http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A82/</link>
+      <pubDate>Mon, 23 Mar 2020 09:14:40 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A82/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;上篇文章，大概讲了一下robfig/cron 包的使用，怎么开始一个定时任务，那个东西比较简单，也就是调用函数而已，人家都给你把包都封装好了。鉴于上一章我没提到cron相关，这一章专门我写个cron相关，讲讲怎么cron语法，然后再实现一个自动生成cron语句的逻辑。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang 完成一个 Crontab定时器（1）</title>
+      <link>http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A81/</link>
+      <pubDate>Mon, 23 Mar 2020 09:12:36 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A81/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;Linux的Crontab定时器似乎已经足够强大，但是我认为还是没有办法满足我们所有的需求，例如定时器某一瞬间需要动态添加／删除任务的功能，例如定时器只能在指定的节点上启动（主节点），其他节点不需要定时服务，这种情况Linux自带的Crontab就不能够满足我们的需求了，所以这次要徒手定义一个Crontab定时器，作为自己的备用。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang利用context实现一个任务并发框架</title>
+      <link>http://localhost:1313/posts/golang%E5%88%A9%E7%94%A8context%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E4%BB%BB%E5%8A%A1%E5%B9%B6%E5%8F%91%E6%A1%86%E6%9E%B6/</link>
+      <pubDate>Fri, 20 Mar 2020 15:57:48 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E5%88%A9%E7%94%A8context%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E4%BB%BB%E5%8A%A1%E5%B9%B6%E5%8F%91%E6%A1%86%E6%9E%B6/</guid>
+      <description>&lt;h1 id=&#34;golang利用context实现一个任务并发框架&#34;&gt;Golang利用context实现一个任务并发框架&lt;/h1&gt;
+&lt;h2 id=&#34;消失这么久的原因&#34;&gt;消失这么久的原因&lt;/h2&gt;
+&lt;p&gt;疫情太严重，哥们本来打算在新疆滑雪+吃烤肉度过一个美好的假期，结果没成想给困那里了，这不就尴尬了么，这不，博客没更新，现在我又回来了，哈哈哈哈！&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ETCD分布式锁实现选主机制(Golang)</title>
+      <link>http://localhost:1313/posts/etcd%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E9%80%89%E4%B8%BB%E6%9C%BA%E5%88%B6-golang/</link>
+      <pubDate>Fri, 13 Dec 2019 15:41:04 +0000</pubDate>
+      <guid>http://localhost:1313/posts/etcd%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E9%80%89%E4%B8%BB%E6%9C%BA%E5%88%B6-golang/</guid>
+      <description>&lt;h1 id=&#34;etcd分布式锁实现选主机制golang&#34;&gt;ETCD分布式锁实现选主机制(Golang)&lt;/h1&gt;
+&lt;h2 id=&#34;为什么要写这篇文章&#34;&gt;为什么要写这篇文章&lt;/h2&gt;
+&lt;p&gt;做架构的时候，涉及到系统的一个功能，有一个服务必须在指定的节点执行，并且需要有个节点来做任务分发，想了半天，那就搞个主节点做这事呗，所以就有了这篇文章的诞生，我把踩的坑和收获记录下来，方便未来查看和各位兄弟们参考。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>算法笔记-入门-数据结构篇</title>
+      <link>http://localhost:1313/posts/%E7%AE%97%E6%B3%95%E7%AC%94%E8%AE%B0-%E5%85%A5%E9%97%A8-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%AF%87/</link>
+      <pubDate>Wed, 13 Nov 2019 11:26:18 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E7%AE%97%E6%B3%95%E7%AC%94%E8%AE%B0-%E5%85%A5%E9%97%A8-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%AF%87/</guid>
+      <description>&lt;p&gt;算法笔记-入门-数据结构篇
+从大学毕业之后就没研究过算法，都快忘光了，现在开个新坑，从头学起算法，哈哈，希望自己能够坚持住，不过我一定可以坚持住的，我就像易筋洗髓一样，将自己全身打断，重塑自己的一切，回归初心，以一个听者的名义对待一切，因为我做的都是我自己喜欢的事儿。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Python高效率遍历文件夹寻找重复文件</title>
+      <link>http://localhost:1313/posts/python%E9%AB%98%E6%95%88%E7%8E%87%E9%81%8D%E5%8E%86%E6%96%87%E4%BB%B6%E5%A4%B9%E5%AF%BB%E6%89%BE%E9%87%8D%E5%A4%8D%E6%96%87%E4%BB%B6/</link>
+      <pubDate>Mon, 28 Oct 2019 12:31:15 +0000</pubDate>
+      <guid>http://localhost:1313/posts/python%E9%AB%98%E6%95%88%E7%8E%87%E9%81%8D%E5%8E%86%E6%96%87%E4%BB%B6%E5%A4%B9%E5%AF%BB%E6%89%BE%E9%87%8D%E5%A4%8D%E6%96%87%E4%BB%B6/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;为什么要写这篇文章呢。。。主要还是业务中有个需求，遍历一个将近200w数据的文件夹，大部分还都是视频文件那种，但是这玩意用的次数还不多，做文件夹index也不是很ok，所以写了一个脚本来处理这个问题，从而发现了自己的一些薄弱点，将其记录下来，方便自己，也方便未来其他的兄弟使用&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Elasticsearch for python API模块化封装</title>
+      <link>http://localhost:1313/posts/elasticsearch-for-python-api%E6%A8%A1%E5%9D%97%E5%8C%96%E5%B0%81%E8%A3%85/</link>
+      <pubDate>Fri, 25 Oct 2019 09:57:50 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch-for-python-api%E6%A8%A1%E5%9D%97%E5%8C%96%E5%B0%81%E8%A3%85/</guid>
+      <description>&lt;h1 id=&#34;elasticsearch-for-python-api模块化封装&#34;&gt;Elasticsearch for python API模块化封装&lt;/h1&gt;
+&lt;h2 id=&#34;模块的具体功能&#34;&gt;模块的具体功能&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;检测Elasticsearch节点是否畅通&lt;/li&gt;
+&lt;li&gt;查询Elasticsearch节点健康状态&lt;/li&gt;
+&lt;li&gt;查询包含的关键字的日志（展示前10条）&lt;/li&gt;
+&lt;li&gt;查询指定的索引下的数据，并且分页&lt;/li&gt;
+&lt;li&gt;输出所有日志(输出全部)&lt;/li&gt;
+&lt;li&gt;输出去重后的日志(分页，带关键字）&lt;/li&gt;
+&lt;li&gt;删除指定索引的值&lt;/li&gt;
+&lt;li&gt;往索引中添加数据&lt;/li&gt;
+&lt;li&gt;获取指定index、type、id对应的数据&lt;/li&gt;
+&lt;li&gt;更新指定index、type、id所对应的数据&lt;/li&gt;
+&lt;li&gt;批量插入数据&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;使用方法&#34;&gt;使用方法&lt;/h2&gt;
+&lt;p&gt;一般作为独立的包进行导入，并且对其进行了大数据预览的优化和处理&lt;br&gt;
+作为一个独立Python模块进行导入，并且调取接口使用。&lt;br&gt;
+调用方法&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang 调用 aws-sdk 操作 S3对象存储</title>
+      <link>http://localhost:1313/posts/golang-%E8%B0%83%E7%94%A8-aws-sdk-%E6%93%8D%E4%BD%9C-s3%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8/</link>
+      <pubDate>Fri, 25 Oct 2019 09:55:52 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang-%E8%B0%83%E7%94%A8-aws-sdk-%E6%93%8D%E4%BD%9C-s3%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8/</guid>
+      <description>&lt;h1 id=&#34;golang-调用-aws-sdk-操作-s3对象存储&#34;&gt;Golang 调用 aws-sdk 操作 S3对象存储&lt;/h1&gt;
+&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;因为业务问题，要写一个S3对象存储管理代码，由于一直写Go，所以这次采用了Go，Go嘛，快，自带多线程，这种好处就不用多说了吧。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>程序员如何锻炼自己的产品思维</title>
+      <link>http://localhost:1313/posts/%E7%A8%8B%E5%BA%8F%E5%91%98%E5%A6%82%E4%BD%95%E9%94%BB%E7%82%BC%E8%87%AA%E5%B7%B1%E7%9A%84%E4%BA%A7%E5%93%81%E6%80%9D%E7%BB%B4/</link>
+      <pubDate>Fri, 25 Oct 2019 09:46:55 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E7%A8%8B%E5%BA%8F%E5%91%98%E5%A6%82%E4%BD%95%E9%94%BB%E7%82%BC%E8%87%AA%E5%B7%B1%E7%9A%84%E4%BA%A7%E5%93%81%E6%80%9D%E7%BB%B4/</guid>
+      <description>&lt;h1 id=&#34;程序员如何锻炼自己的产品思维&#34;&gt;程序员如何锻炼自己的产品思维&lt;/h1&gt;
+&lt;h2 id=&#34;写作目的&#34;&gt;写作目的&lt;/h2&gt;
+&lt;p&gt;源于一次需求会议被怼，大老板总是说我以技术思维决定一切。&lt;br&gt;
+后来我一思考，卧槽，果然是这样，每次我都是非常纠结于技术实现和技术细节，总是纠缠在业务实现里面，所以渐渐就养成了那个习惯。思考了一下，有些地方也的确是应该做出一点点改变了，老话说，种一棵树，最早是十年前，其次就是现在，那么我们就开始种树吧。趁着放假读几本产品思维的书，有一点点感悟，所以将此文写下，方便自己，也方便急于转型的各位程序员老哥。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>新旧博客迁移的一点感悟</title>
+      <link>http://localhost:1313/posts/%E6%96%B0%E6%97%A7%E5%8D%9A%E5%AE%A2%E8%BF%81%E7%A7%BB%E7%9A%84%E4%B8%80%E7%82%B9%E6%84%9F%E6%82%9F/</link>
+      <pubDate>Thu, 24 Oct 2019 17:50:37 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E6%96%B0%E6%97%A7%E5%8D%9A%E5%AE%A2%E8%BF%81%E7%A7%BB%E7%9A%84%E4%B8%80%E7%82%B9%E6%84%9F%E6%82%9F/</guid>
+      <description>&lt;h2 id=&#34;算是日记吧&#34;&gt;算是日记吧&lt;/h2&gt;
+&lt;p&gt;其实自己一直在cnblog上更新自己的博客，从16年3月入行到现在，已经过去了三个春秋，发觉自己的技术还是个渣渣，最近生活真的忙成一团，工作也很忙，生活也很忙，有时候饭都不容易吃上，感觉自己学习真的学不动了，不知道自己是不是懈怠了，运动，音乐什么的，也停下来了，感觉真的缺少了一点点乐趣。&lt;br&gt;
+不过说真的，自己也真的该动起来了，因为时间不等人啊，已经入行这么久，跌跌撞撞像个摇摆人，所以未来我还是要多学习，多更新我的博客，将自己的技术或者是一些感悟，哪怕是一些灵光一闪的理想，都记录下来，哈哈，这样会不会好一些呢？会不会明天就是更好的那一天呢？&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

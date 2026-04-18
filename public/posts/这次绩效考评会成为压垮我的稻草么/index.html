@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>这次绩效考评会成为压垮我的稻草么？ | yemilice</title>
+<meta name="keywords" content="杂七杂八">
+<meta name="description" content="写这篇文章的原因
+按理说，你们看过我博客的人，都知道，我是一个相当乐观的人，我从来都不会怎么丧气一些事儿，特别是在工作上，我永远都是顶在最前面，有困难bug我来，有难题我来攻关，按理说我就像是一个长者，身经百战，见的多了！那些naive的问题，我都不放在心上，可今天，恩，一个绩效考评，算是让我有了一些感到心累或者说是心寒吧。">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/%E8%BF%99%E6%AC%A1%E7%BB%A9%E6%95%88%E8%80%83%E8%AF%84%E4%BC%9A%E6%88%90%E4%B8%BA%E5%8E%8B%E5%9E%AE%E6%88%91%E7%9A%84%E7%A8%BB%E8%8D%89%E4%B9%88/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/%E8%BF%99%E6%AC%A1%E7%BB%A9%E6%95%88%E8%80%83%E8%AF%84%E4%BC%9A%E6%88%90%E4%B8%BA%E5%8E%8B%E5%9E%AE%E6%88%91%E7%9A%84%E7%A8%BB%E8%8D%89%E4%B9%88/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/%E8%BF%99%E6%AC%A1%E7%BB%A9%E6%95%88%E8%80%83%E8%AF%84%E4%BC%9A%E6%88%90%E4%B8%BA%E5%8E%8B%E5%9E%AE%E6%88%91%E7%9A%84%E7%A8%BB%E8%8D%89%E4%B9%88/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="这次绩效考评会成为压垮我的稻草么？">
+  <meta property="og:description" content="写这篇文章的原因 按理说，你们看过我博客的人，都知道，我是一个相当乐观的人，我从来都不会怎么丧气一些事儿，特别是在工作上，我永远都是顶在最前面，有困难bug我来，有难题我来攻关，按理说我就像是一个长者，身经百战，见的多了！那些naive的问题，我都不放在心上，可今天，恩，一个绩效考评，算是让我有了一些感到心累或者说是心寒吧。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-04-14T10:06:30+00:00">
+    <meta property="article:modified_time" content="2020-04-14T10:06:30+00:00">
+    <meta property="article:tag" content="杂七杂八">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="这次绩效考评会成为压垮我的稻草么？">
+  <meta name="twitter:description" content="写这篇文章的原因 按理说，你们看过我博客的人，都知道，我是一个相当乐观的人，我从来都不会怎么丧气一些事儿，特别是在工作上，我永远都是顶在最前面，有困难bug我来，有难题我来攻关，按理说我就像是一个长者，身经百战，见的多了！那些naive的问题，我都不放在心上，可今天，恩，一个绩效考评，算是让我有了一些感到心累或者说是心寒吧。">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "这次绩效考评会成为压垮我的稻草么？",
+      "item": "http://localhost:1313/posts/%E8%BF%99%E6%AC%A1%E7%BB%A9%E6%95%88%E8%80%83%E8%AF%84%E4%BC%9A%E6%88%90%E4%B8%BA%E5%8E%8B%E5%9E%AE%E6%88%91%E7%9A%84%E7%A8%BB%E8%8D%89%E4%B9%88/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "这次绩效考评会成为压垮我的稻草么？",
+  "name": "这次绩效考评会成为压垮我的稻草么？",
+  "description": "写这篇文章的原因 按理说，你们看过我博客的人，都知道，我是一个相当乐观的人，我从来都不会怎么丧气一些事儿，特别是在工作上，我永远都是顶在最前面，有困难bug我来，有难题我来攻关，按理说我就像是一个长者，身经百战，见的多了！那些naive的问题，我都不放在心上，可今天，恩，一个绩效考评，算是让我有了一些感到心累或者说是心寒吧。\n",
+  "keywords": [
+    "杂七杂八"
+  ],
+  "articleBody": "写这篇文章的原因 按理说，你们看过我博客的人，都知道，我是一个相当乐观的人，我从来都不会怎么丧气一些事儿，特别是在工作上，我永远都是顶在最前面，有困难bug我来，有难题我来攻关，按理说我就像是一个长者，身经百战，见的多了！那些naive的问题，我都不放在心上，可今天，恩，一个绩效考评，算是让我有了一些感到心累或者说是心寒吧。\n发生了什么事儿 说起来也是很尴尬，大家都知道，因为疫情，我整个二月和三月都在家办公，我那电脑没带回家，我用我家旧电脑和我舅舅的电脑，算是拼了个单片机，没图形界面那种，这是前提啊！本来我这边在开发一个比较大的项目，这项目，怎么说呢，用许嵩那句话就是 “作词作曲都是我自己”，咱不说别的，从策划，到架构涉及包括一些有的没的，都是我一个人搞定，那家伙，就差说我是CTO了哈哈，再一个，我作为整个项目组排头兵，第一个吃螃蟹涉足Golang开发，从一无所有，到文档齐备，就用了1月底，到2月底，这一个月时间，在家开发，日夜不眠不休，真正996，头发都给我掉了多少哈啊哈。\n这转折来了嘿，3月初，我有天正干活儿呢，你们知道，那开发机，一个人分好几台，我在我那几台开发机上正挥汗如雨呢，结果突然黑屏了，那一瞬间，我还傻x的拍了一下我电脑的后盖，我一寻思，不对啊，这不是电视，黑屏那就得是出事儿！\n果不其然，我把记录一发群里，才知道原来测试那边儿，有人在清理集群！一不小心把开发集群给清了！\n我勒个大擦！我寻思你这是灭霸啊，人灭霸打个响指，害得摆个造型。你这不声不响的，按个enter，就给我一个多月努力干没了，你可真是现代爆破专家啊你。这TM叫删库，你丫想跑路了吧！\n我当时的想法 我当时脑子里先是一片空白，然后我脑子里一直弥漫着老八那句话，奥莉给！干他就完事儿了！\n是，我当时那个气啊，我就想给他丫干了，X的，小爷不说别的，以前也算是胡同口拍黑砖第一人啊！\n然后我的老大，紧急发来微信，问，你备份了吗？\n我说，没，那集群20多台机器呢，我在其中几台配了定时同步。\n我老大说，完了。\n我知道，我被删库了。\n删库的损失 不说别的，项目代码损失是最大的，2w行代码，一个月不眠不休的成果，完蛋了，等于这个月白干，是呗，是我倒霉么？人一倒霉，喝凉水都塞牙，给我气的。\n同时丢失的，还有Elasticsearch的work脚本，优化过后的ETCD封装代码，大部分文档，编译机的环境和包。\n为什么不备份？ 首先开发集群有20多台机器，其中我的机器就用将近8台，8台机器啊老铁们，你会想到它们一瞬间都被干死么？\n好吧，我承认，我那个黑不溜秋的单片机linux只能处理一些逻辑问题，30G硬盘，安个Golang，python，jre都够呛了，害得跑个带gopls的Vim，备份？我这不寻思我过两天回去了备份么！\n绩效的定义 写这个原因是，今儿（2020-4-13），考评下来，我老大找我谈话，说这次考评给了我C。也就是我绩效考核，3月份是C。\n我当时就疑惑了，删库的第一不是我，第二我不眠不休写的东西被人删了，我TM才是受害者！it‘s me！你给受害者考勤打C？我的项目都进测试部分了，你把开发机测试机一起干死了，当中是有我没备份的原因，但是你直接给我打C？？？我一打听，删库的人也是C，我勒个去，你这什么意思，删库的人和我都是C的评级？？那你是真的牛皮，感情我被删库我还成C了是吧！那你要追究责任，怎么不追究运维，为什么他会给删库的人那么大权限？让我背锅也太无耻了吧！\n结尾 这次我感觉我有点寒心，是真的，我平常都写技术，很少写这种令人难过的玩意儿，但是我今天真的感觉心很累，也很寒心。看起来总是要人背锅，也就只有我了呗。呵呵。\n晚安了啊，如果哪位技术大佬或者是HR看到这篇文章，请不要误会，这只是我对这件事的一种寒心，我还是会继续输出高质量文章的。\nover\n",
+  "wordCount" : "1551",
+  "inLanguage": "zh-cn",
+  "datePublished": "2020-04-14T10:06:30Z",
+  "dateModified": "2020-04-14T10:06:30Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/%E8%BF%99%E6%AC%A1%E7%BB%A9%E6%95%88%E8%80%83%E8%AF%84%E4%BC%9A%E6%88%90%E4%B8%BA%E5%8E%8B%E5%9E%AE%E6%88%91%E7%9A%84%E7%A8%BB%E8%8D%89%E4%B9%88/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            这次绩效考评会成为压垮我的稻草么？
+        </h1>
+        <div class="post-meta"><span title='2020-04-14 10:06:30 +0000 UTC'>April 14, 2020</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1551 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e5%86%99%e8%bf%99%e7%af%87%e6%96%87%e7%ab%a0%e7%9a%84%e5%8e%9f%e5%9b%a0" aria-label="写这篇文章的原因">写这篇文章的原因</a></li>
+            <li>
+                <a href="#%e5%8f%91%e7%94%9f%e4%ba%86%e4%bb%80%e4%b9%88%e4%ba%8b%e5%84%bf" aria-label="发生了什么事儿">发生了什么事儿</a></li>
+            <li>
+                <a href="#%e6%88%91%e5%bd%93%e6%97%b6%e7%9a%84%e6%83%b3%e6%b3%95" aria-label="我当时的想法">我当时的想法</a></li>
+            <li>
+                <a href="#%e5%88%a0%e5%ba%93%e7%9a%84%e6%8d%9f%e5%a4%b1" aria-label="删库的损失">删库的损失</a></li>
+            <li>
+                <a href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e4%b8%8d%e5%a4%87%e4%bb%bd" aria-label="为什么不备份？">为什么不备份？</a></li>
+            <li>
+                <a href="#%e7%bb%a9%e6%95%88%e7%9a%84%e5%ae%9a%e4%b9%89" aria-label="绩效的定义">绩效的定义</a></li>
+            <li>
+                <a href="#%e7%bb%93%e5%b0%be" aria-label="结尾">结尾</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="写这篇文章的原因">写这篇文章的原因<a hidden class="anchor" aria-hidden="true" href="#写这篇文章的原因">#</a></h2>
+<p>按理说，你们看过我博客的人，都知道，我是一个相当乐观的人，我从来都不会怎么丧气一些事儿，特别是在工作上，我永远都是顶在最前面，有困难bug我来，有难题我来攻关，按理说我就像是一个长者，身经百战，见的多了！那些naive的问题，我都不放在心上，可今天，恩，一个绩效考评，算是让我有了一些感到心累或者说是心寒吧。</p>
+<h2 id="发生了什么事儿">发生了什么事儿<a hidden class="anchor" aria-hidden="true" href="#发生了什么事儿">#</a></h2>
+<p>说起来也是很尴尬，大家都知道，因为疫情，我整个二月和三月都在家办公，我那电脑没带回家，我用我家旧电脑和我舅舅的电脑，算是拼了个单片机，没图形界面那种，这是前提啊！本来我这边在开发一个比较大的项目，这项目，怎么说呢，用许嵩那句话就是 “作词作曲都是我自己”，咱不说别的，从策划，到架构涉及包括一些有的没的，都是我一个人搞定，那家伙，就差说我是CTO了哈哈，再一个，我作为整个项目组排头兵，第一个吃螃蟹涉足Golang开发，从一无所有，到文档齐备，就用了1月底，到2月底，这一个月时间，在家开发，日夜不眠不休，真正996，头发都给我掉了多少哈啊哈。<br>
+这转折来了嘿，3月初，我有天正干活儿呢，你们知道，那开发机，一个人分好几台，我在我那几台开发机上正挥汗如雨呢，结果突然黑屏了，那一瞬间，我还傻x的拍了一下我电脑的后盖，我一寻思，不对啊，这不是电视，黑屏那就得是出事儿！<br>
+果不其然，我把记录一发群里，才知道原来测试那边儿，有人在清理集群！一不小心把开发集群给清了！<br>
+我勒个大擦！我寻思你这是灭霸啊，人灭霸打个响指，害得摆个造型。你这不声不响的，按个enter，就给我一个多月努力干没了，你可真是现代爆破专家啊你。这TM叫删库，你丫想跑路了吧！</p>
+<h2 id="我当时的想法">我当时的想法<a hidden class="anchor" aria-hidden="true" href="#我当时的想法">#</a></h2>
+<p>我当时脑子里先是一片空白，然后我脑子里一直弥漫着老八那句话，奥莉给！干他就完事儿了！<br>
+是，我当时那个气啊，我就想给他丫干了，X的，小爷不说别的，以前也算是胡同口拍黑砖第一人啊！<br>
+然后我的老大，紧急发来微信，问，你备份了吗？<br>
+我说，没，那集群20多台机器呢，我在其中几台配了定时同步。<br>
+我老大说，完了。<br>
+我知道，我被删库了。</p>
+<h2 id="删库的损失">删库的损失<a hidden class="anchor" aria-hidden="true" href="#删库的损失">#</a></h2>
+<p>不说别的，项目代码损失是最大的，2w行代码，一个月不眠不休的成果，完蛋了，等于这个月白干，是呗，是我倒霉么？人一倒霉，喝凉水都塞牙，给我气的。<br>
+同时丢失的，还有Elasticsearch的work脚本，优化过后的ETCD封装代码，大部分文档，编译机的环境和包。</p>
+<h2 id="为什么不备份">为什么不备份？<a hidden class="anchor" aria-hidden="true" href="#为什么不备份">#</a></h2>
+<p>首先开发集群有20多台机器，其中我的机器就用将近8台，8台机器啊老铁们，你会想到它们一瞬间都被干死么？<br>
+好吧，我承认，我那个黑不溜秋的单片机linux只能处理一些逻辑问题，30G硬盘，安个Golang，python，jre都够呛了，害得跑个带gopls的Vim，备份？我这不寻思我过两天回去了备份么！</p>
+<h2 id="绩效的定义">绩效的定义<a hidden class="anchor" aria-hidden="true" href="#绩效的定义">#</a></h2>
+<p>写这个原因是，今儿（2020-4-13），考评下来，我老大找我谈话，说这次考评给了我C。也就是我绩效考核，3月份是C。<br>
+我当时就疑惑了，删库的第一不是我，第二我不眠不休写的东西被人删了，我TM才是受害者！it‘s me！你给受害者考勤打C？我的项目都进测试部分了，你把开发机测试机一起干死了，当中是有我没备份的原因，但是你直接给我打C？？？我一打听，删库的人也是C，我勒个去，你这什么意思，删库的人和我都是C的评级？？那你是真的牛皮，感情我被删库我还成C了是吧！那你要追究责任，怎么不追究运维，为什么他会给删库的人那么大权限？让我背锅也太无耻了吧！</p>
+<h2 id="结尾">结尾<a hidden class="anchor" aria-hidden="true" href="#结尾">#</a></h2>
+<p>这次我感觉我有点寒心，是真的，我平常都写技术，很少写这种令人难过的玩意儿，但是我今天真的感觉心很累，也很寒心。看起来总是要人背锅，也就只有我了呗。呵呵。<br>
+晚安了啊，如果哪位技术大佬或者是HR看到这篇文章，请不要误会，这只是我对这件事的一种寒心，我还是会继续输出高质量文章的。<br>
+over</p>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/golang%E5%B0%81%E8%A3%85elasticsearch%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/">
+    <span class="title">« </span>
+    <span>Golang封装Elasticsearch常用功能</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/golang%E8%B0%83%E7%94%A8rabbitmq%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%92%8C%E5%B0%81%E8%A3%85/">
+    <span class="title"> »</span>
+    <span>Golang调用Rabbitmq消息队列和封装</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

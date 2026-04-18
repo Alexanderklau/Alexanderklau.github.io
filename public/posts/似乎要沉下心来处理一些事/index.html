@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>似乎要沉下心来处理一些事 | yemilice</title>
+<meta name="keywords" content="杂七杂八">
+<meta name="description" content="前言
+今天面试感觉不是特别好
+其实我一直都觉得自己的技术似乎还行，我估摸着&quot;还行&quot;这个定义真的稍微模糊了一点，更多可能就是我什么都懂一些，其实内部什么也不懂">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/%E4%BC%BC%E4%B9%8E%E8%A6%81%E6%B2%89%E4%B8%8B%E5%BF%83%E6%9D%A5%E5%A4%84%E7%90%86%E4%B8%80%E4%BA%9B%E4%BA%8B/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/%E4%BC%BC%E4%B9%8E%E8%A6%81%E6%B2%89%E4%B8%8B%E5%BF%83%E6%9D%A5%E5%A4%84%E7%90%86%E4%B8%80%E4%BA%9B%E4%BA%8B/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/%E4%BC%BC%E4%B9%8E%E8%A6%81%E6%B2%89%E4%B8%8B%E5%BF%83%E6%9D%A5%E5%A4%84%E7%90%86%E4%B8%80%E4%BA%9B%E4%BA%8B/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="似乎要沉下心来处理一些事">
+  <meta property="og:description" content="前言 今天面试感觉不是特别好
+其实我一直都觉得自己的技术似乎还行，我估摸着&#34;还行&#34;这个定义真的稍微模糊了一点，更多可能就是我什么都懂一些，其实内部什么也不懂">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-08-24T16:22:14+00:00">
+    <meta property="article:modified_time" content="2020-08-24T16:22:14+00:00">
+    <meta property="article:tag" content="杂七杂八">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="似乎要沉下心来处理一些事">
+  <meta name="twitter:description" content="前言 今天面试感觉不是特别好
+其实我一直都觉得自己的技术似乎还行，我估摸着&#34;还行&#34;这个定义真的稍微模糊了一点，更多可能就是我什么都懂一些，其实内部什么也不懂">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "似乎要沉下心来处理一些事",
+      "item": "http://localhost:1313/posts/%E4%BC%BC%E4%B9%8E%E8%A6%81%E6%B2%89%E4%B8%8B%E5%BF%83%E6%9D%A5%E5%A4%84%E7%90%86%E4%B8%80%E4%BA%9B%E4%BA%8B/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "似乎要沉下心来处理一些事",
+  "name": "似乎要沉下心来处理一些事",
+  "description": "前言 今天面试感觉不是特别好\n其实我一直都觉得自己的技术似乎还行，我估摸着\u0026quot;还行\u0026quot;这个定义真的稍微模糊了一点，更多可能就是我什么都懂一些，其实内部什么也不懂\n",
+  "keywords": [
+    "杂七杂八"
+  ],
+  "articleBody": "前言 今天面试感觉不是特别好\n其实我一直都觉得自己的技术似乎还行，我估摸着\"还行\"这个定义真的稍微模糊了一点，更多可能就是我什么都懂一些，其实内部什么也不懂\n面试的经过真的就算了，毕竟都没到问我核心的那一步。拿了个笔试题让我做，我看了一下基本都是基础，类似校招题那种，返回什么具体值，该怎么返回，xx是干嘛的之类的，这种我就答的很差，错很多，然后华丽GG。\n主要是我平常干活基本都是多语言开发混用，有时候还写写自动化测试，写写前端（毕竟全栈。。。），对这种基础我觉得是真的8行，人家面试官也挺给力，判完卷子，直接就说了解了，就这样吧（你可以走了）。\n行，那就这样吧，这么多东西你也不问，做了什么你也不问，我做的东西您也不问，算法您也没考，真的不知道怎么说，菜是原罪，我菜我认。\n反思 具体问题总归是要具体分析，不能像歪嘴赘婿一样，动不动就土味打脸，出一时之气，喊一句“莫欺技术不好，将来让我面试你”就完事儿了，但是讲真，今天还是有点那啥，不甘心 这次面试我发现了我几个很严重的问题\n基础技术较差 其实很多东西，IDE都帮咱补全了，特别是JB家的IDE，谁用谁知道，设计流程就完事儿了，这次的面试题基本偏向于具体值返回/某个包是干嘛的，其实这种题真的意义不大，真的要考完全可以请出电脑，咱们现场编码，但是我寻思，如果失去IDE，是不是我就是两眼一抹黑？但是IDE存在的意义不就是解放双手？呸，跑题了，回到基础差的主题。\n其实有些题我真的知道一个大概，但是就是不知道怎么说，讲真，我觉得我可以和那个面试官好好聊一些别的东西，例如系统设计架构，或者是系统处理，业务高效处理之类的。而不是坐在这里聊一些什么值应该返回什么结果的问题，所以我觉得那个面试官，真的，您似乎不怎么了解我，不过您应该也不care我的想法，同理，我也不care你的。\n基础的技术包含了基础的语法，基础的技术思想，或者是一些语法特性，语法糖之类的，如果你是新手，了解这个还是很有必要了，我现在就是复习and查漏补缺，慢慢写手册慢慢复习，对吧。\n不知道谁会看到博客，不过我也不在意你们怎么看我，我真的认为啊，像我们这种工作了3年+的人，在每个项目中都扛了很多事儿，更应该了解一下咱们在项目中怎么能更好的处理业务，而不是纠结一个返回值是什么，我个人感觉这次面试完全表现失常，还Tm不如前段时间的几个电话面试发挥的好。您可以认为我是技术无法展现的不甘心，我倒是认为这是面试人员的一种。。。。怎么说呢，我觉得是一种傲慢。\n其他我也编不出来了 菜，菜，菜，菜菜子的菜，可能就是我太菜，只因为我太菜，哈哈哈。\n谈一谈我想要的面试 借着自己的这个小天地，我说说我想要什么样子的面试吧。\n其实，面试不是考试，评判一个人是否适合公司业务线，或者是是否适合自己的团队，完全可以去引导面试对象，发掘出面试对象的优势。如果答不出来，完全可以走别的逻辑啊，引导到面试官的擅长方向，让面试对象去多说自己的优势，然后再去综合考量是否合适自己的团队。这才是我想要的面试，也是我正在努力的方向。我觉得今天那个面试官就挺xx的，估计一开始也就没认真看，或者就没想诚意招人。\n大家都是平等的，真的，您不用高高在上的，觉得自己似乎在一个公司当一个领导是一个很xx的事儿，我也面试过别人，别人来，至少我都是笑着欢迎的，笑着送走的，人家答不出来，至少我还会给出我自己解答然后听他说，我自己是做到这一点的，所以我敢这么说，我面试几个大厂，人家也是这么对我的。\n因为这是礼貌问题，也代表我的家庭教养，您这个态度吧，算了算了，对了，你要是看到了，对号入座了，那就很对不起了啊。\n我也不知道说什么，就当结尾 面试这种东西，本来就是双向的。有些人说，人家可能就是为了完成kpi，或者人家要的不是我这种人，所以你过去不就是自取其辱嘛，不过我不这么想\n其实我认为这次倒是给我敲响了一个警钟，第一让我明白了自己的水平是个什么样子，第二让我明白了面试官的水平都是良莠不齐的，你可能可以遇到很好的，或者有点耐心的，你可也能遇到那种话都不说的，无所谓了。\n其实说无所谓，心里还是有些不爽，不过这也是自己的一个警示，做事还是要。。以后投简历还是要好好看看，这公司到底需不需要我的技术栈，这次面试全程我和面试官无交流，所以，大家都不要浪费彼此时间了，如果有笔试，请您告诉我，我好好准备，如果没有笔试，咱们好好聊项目，就这样吧。\nend，所以我，最近要努力啦！\n",
+  "wordCount" : "1810",
+  "inLanguage": "zh-cn",
+  "datePublished": "2020-08-24T16:22:14Z",
+  "dateModified": "2020-08-24T16:22:14Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/%E4%BC%BC%E4%B9%8E%E8%A6%81%E6%B2%89%E4%B8%8B%E5%BF%83%E6%9D%A5%E5%A4%84%E7%90%86%E4%B8%80%E4%BA%9B%E4%BA%8B/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            似乎要沉下心来处理一些事
+        </h1>
+        <div class="post-meta"><span title='2020-08-24 16:22:14 +0000 UTC'>August 24, 2020</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1810 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e5%89%8d%e8%a8%80" aria-label="前言">前言</a></li>
+            <li>
+                <a href="#%e5%8f%8d%e6%80%9d" aria-label="反思">反思</a><ul>
+                    
+            <li>
+                <a href="#%e5%9f%ba%e7%a1%80%e6%8a%80%e6%9c%af%e8%be%83%e5%b7%ae" aria-label="基础技术较差">基础技术较差</a></li>
+            <li>
+                <a href="#%e5%85%b6%e4%bb%96%e6%88%91%e4%b9%9f%e7%bc%96%e4%b8%8d%e5%87%ba%e6%9d%a5%e4%ba%86" aria-label="其他我也编不出来了">其他我也编不出来了</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e8%b0%88%e4%b8%80%e8%b0%88%e6%88%91%e6%83%b3%e8%a6%81%e7%9a%84%e9%9d%a2%e8%af%95" aria-label="谈一谈我想要的面试">谈一谈我想要的面试</a></li>
+            <li>
+                <a href="#%e6%88%91%e4%b9%9f%e4%b8%8d%e7%9f%a5%e9%81%93%e8%af%b4%e4%bb%80%e4%b9%88%e5%b0%b1%e5%bd%93%e7%bb%93%e5%b0%be" aria-label="我也不知道说什么，就当结尾">我也不知道说什么，就当结尾</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="前言">前言<a hidden class="anchor" aria-hidden="true" href="#前言">#</a></h2>
+<p>今天面试感觉不是特别好</p>
+<p>其实我一直都觉得自己的技术似乎还行，我估摸着&quot;还行&quot;这个定义真的稍微模糊了一点，更多可能就是我什么都懂一些，其实内部什么也不懂</p>
+<p>面试的经过真的就算了，毕竟都没到问我核心的那一步。拿了个笔试题让我做，我看了一下基本都是基础，类似校招题那种，返回什么具体值，该怎么返回，xx是干嘛的之类的，这种我就答的很差，错很多，然后华丽GG。</p>
+<p>主要是我平常干活基本都是多语言开发混用，有时候还写写自动化测试，写写前端（毕竟全栈。。。），对这种基础我觉得是真的8行，人家面试官也挺给力，判完卷子，直接就说了解了，就这样吧（你可以走了）。</p>
+<p>行，那就这样吧，这么多东西你也不问，做了什么你也不问，我做的东西您也不问，算法您也没考，真的不知道怎么说，菜是原罪，我菜我认。</p>
+<h2 id="反思">反思<a hidden class="anchor" aria-hidden="true" href="#反思">#</a></h2>
+<p>具体问题总归是要具体分析，不能像歪嘴赘婿一样，动不动就土味打脸，出一时之气，喊一句“莫欺技术不好，将来让我面试你”就完事儿了，但是讲真，今天还是有点那啥，不甘心
+<img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E4%BC%BC%E4%B9%8E%E9%9C%80%E8%A6%81%E6%B2%89%E4%B8%8B%E5%BF%83%E5%81%9A%E4%BA%8B/1.jpg"></p>
+<p>这次面试我发现了我几个很严重的问题</p>
+<h3 id="基础技术较差">基础技术较差<a hidden class="anchor" aria-hidden="true" href="#基础技术较差">#</a></h3>
+<p>其实很多东西，IDE都帮咱补全了，特别是JB家的IDE，谁用谁知道，设计流程就完事儿了，这次的面试题基本偏向于具体值返回/某个包是干嘛的，其实这种题真的意义不大，真的要考完全可以请出电脑，咱们现场编码，但是我寻思，如果失去IDE，是不是我就是两眼一抹黑？但是IDE存在的意义不就是解放双手？呸，跑题了，回到基础差的主题。</p>
+<p>其实有些题我真的知道一个大概，但是就是不知道怎么说，讲真，我觉得我可以和那个面试官好好聊一些别的东西，例如系统设计架构，或者是系统处理，业务高效处理之类的。而不是坐在这里聊一些什么值应该返回什么结果的问题，所以我觉得那个面试官，真的，您似乎不怎么了解我，不过您应该也不care我的想法，同理，我也不care你的。</p>
+<p>基础的技术包含了基础的语法，基础的技术思想，或者是一些语法特性，语法糖之类的，如果你是新手，了解这个还是很有必要了，我现在就是复习and查漏补缺，慢慢写手册慢慢复习，对吧。</p>
+<p>不知道谁会看到博客，不过我也不在意你们怎么看我，我真的认为啊，像我们这种工作了3年+的人，在每个项目中都扛了很多事儿，更应该了解一下咱们在项目中怎么能更好的处理业务，而不是纠结一个返回值是什么，我个人感觉这次面试完全表现失常，还Tm不如前段时间的几个电话面试发挥的好。您可以认为我是技术无法展现的不甘心，我倒是认为这是面试人员的一种。。。。怎么说呢，我觉得是一种傲慢。</p>
+<h3 id="其他我也编不出来了">其他我也编不出来了<a hidden class="anchor" aria-hidden="true" href="#其他我也编不出来了">#</a></h3>
+<p>菜，菜，菜，菜菜子的菜，可能就是我太菜，只因为我太菜，哈哈哈。</p>
+<h2 id="谈一谈我想要的面试">谈一谈我想要的面试<a hidden class="anchor" aria-hidden="true" href="#谈一谈我想要的面试">#</a></h2>
+<p>借着自己的这个小天地，我说说我想要什么样子的面试吧。</p>
+<p>其实，面试不是考试，评判一个人是否适合公司业务线，或者是是否适合自己的团队，完全可以去引导面试对象，发掘出面试对象的优势。如果答不出来，完全可以走别的逻辑啊，引导到面试官的擅长方向，让面试对象去多说自己的优势，然后再去综合考量是否合适自己的团队。这才是我想要的面试，也是我正在努力的方向。我觉得今天那个面试官就挺xx的，估计一开始也就没认真看，或者就没想诚意招人。</p>
+<p>大家都是平等的，真的，您不用高高在上的，觉得自己似乎在一个公司当一个领导是一个很xx的事儿，我也面试过别人，别人来，至少我都是笑着欢迎的，笑着送走的，人家答不出来，至少我还会给出我自己解答然后听他说，我自己是做到这一点的，所以我敢这么说，我面试几个大厂，人家也是这么对我的。</p>
+<p>因为这是礼貌问题，也代表我的家庭教养，您这个态度吧，算了算了，对了，你要是看到了，对号入座了，那就很对不起了啊。</p>
+<h2 id="我也不知道说什么就当结尾">我也不知道说什么，就当结尾<a hidden class="anchor" aria-hidden="true" href="#我也不知道说什么就当结尾">#</a></h2>
+<p>面试这种东西，本来就是双向的。有些人说，人家可能就是为了完成kpi，或者人家要的不是我这种人，所以你过去不就是自取其辱嘛，不过我不这么想</p>
+<p>其实我认为这次倒是给我敲响了一个警钟，第一让我明白了自己的水平是个什么样子，第二让我明白了面试官的水平都是良莠不齐的，你可能可以遇到很好的，或者有点耐心的，你可也能遇到那种话都不说的，无所谓了。</p>
+<p>其实说无所谓，心里还是有些不爽，不过这也是自己的一个警示，做事还是要。。以后投简历还是要好好看看，这公司到底需不需要我的技术栈，这次面试全程我和面试官无交流，所以，大家都不要浪费彼此时间了，如果有笔试，请您告诉我，我好好准备，如果没有笔试，咱们好好聊项目，就这样吧。</p>
+<p>end，所以我，最近要努力啦！</p>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/golang%E8%AF%AD%E8%A8%80%E7%9A%84%E4%B8%80%E4%BA%9B%E5%9F%BA%E7%A1%80-%E9%92%88%E5%AF%B9%E9%9D%A2%E5%90%91%E5%9F%BA%E7%A1%80%E7%9A%84%E7%AC%94-%E9%9D%A2%E8%AF%95/">
+    <span class="title">« </span>
+    <span>Golang语言的一些基础(针对面向基础的笔/面试)</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/">
+    <span class="title"> »</span>
+    <span>中文分词的算法分析</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

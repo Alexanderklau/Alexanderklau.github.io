@@ -1,0 +1,339 @@
+---
+title: Golang的并发机制探究
+date: 2020-11-27 10:19:02
+tags: ["前后端"]
+---
+
+## 前言
+虽然上两篇文章讲了几个并发示例和Goroutine的使用，但是我仔细看了一下，还是不够清楚，这次这篇文章将会是一篇纯理论的文章，主要讲一下Go的并发机制的原理还有Goroutine还有channel。
+
+至于为啥要写呢。。。。。
+
+```
+朋友们好啊，我是Go开发人员Yk，刚才有个朋友问我，
+
+Y老师，发生甚么事了，我说怎么回事，给我发了一篇我的博客截图，我一看，嗷！
+
+原来是前一阵，我写了两篇Go的文章，一个Go并发，一个Go例子，
+
+他们说，唉，Y老师你这并发讲的不清楚，哎，能不能重新写一个说明白，
+
+我说行，我说你在kindle上看死书，不好用。他不服气。我说小赤佬，
+
+你一篇文章来怼我两篇，你搞不动我。他说你这没用，
+
+我说我这个有用，这是Golang精华，隔壁200多页大PDF我都看了。
+
+他非要和我试试，我说可以，我一说他就“啪”就把键盘拿起来了，很快嗷！
+
+年轻人，我劝你耗子为汁，来偷袭我20多岁的老同志，这好吗？这不好。
+
+我说你不讲码德阿，我们Golang开发人员要以和为贵，不要搞窝里斗，谢谢朋友们！
+```
+
+![](https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/4.png)
+
+![](https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/5.png)
+
+还是要感谢这么几本书，《Go并发编程实战》，《Go语言圣经》，《Go高级编程》，感谢这几本书的作者和译者！感谢你们！
+
+## Go的线程模型
+Go的并发机制是个什么，主要就是Go有一个特有的线程模型，这个线程模型里面，有个特有的线程，叫做Goroutine，这个东西可以理解为一个可执行可并发的代码块，通过channel管道去进行状态同步或者消息传递。
+
+首先来看一下那个线程模型，术语叫做"两级线程模型"，名字其实没啥狗屁用，就听听就得了。
+
+Go的线程模型，有三个核心元素
+
+1. M：machine，代表工作线程，你想成僵尸母体就行了
+2. P：processor，上下文环境，意思就是执行Go代码的所需要的资源，或者是存储要执行的goroutine，你想成僵尸传播渠道就行了
+3. G：goroutine，Go代码片段，你要执行并发的那一块儿程序。你想象成被感染的小僵尸就行了
+
+他们的大致关系如下
+
+![](https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/2.png)
+
+这三个元素是互相依赖，互相依存的关系，我用僵尸传播理论来说明一下他们的关系吧。
+
+首先，G需要P和M的支持，也就是说，一个G的出现，是先有了M（僵尸母体），然后通过渠道（P），感染其他的小僵尸（G）。一个M对应一个P，P对应多个G，G也对应多个P，因为感染人数不只是一个人，所以，他们的关系就像这样
+
+如图所示
+
+![](https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/1.jpg)
+
+这么理解一波，M是内核线程，按照一般的逻辑，一个内核线程一般运行一个任务，但是，GOlang比较牛逼，通过调度器，使得M可以运行多个用户线程G，其中，P的作用是，当遇到内核线程阻塞的时候，M可以放弃P，这样，其他的G就可以被调度到其他M上，持续接力执行。
+
+类似这样
+
+![](https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/3.png)
+
+
+所以，同样配置的机器，Golang的效率就会成倍增长，并且可以迅速切换goroutine。所以这就是Go为什么比其他语言快的原因，这也是Go最核心的东西，说真的，Go这个玩意儿，比Python那套好使多了，不过不同任务不可同日而语，继续一波。
+
+## Go的调度器
+上面我讲到了调度器，什么是调度器？
+
+顾名思义，就是调度用的，相当于交通警察，看哪儿阻塞了就给你安排到不赌的路上去，这么想是不是就整明白了，但是Go里面的调度器没那么简单，它的功能相对来说复杂一点。例如空闲的M列表，空闲的P列表，需要运行的G列表等等，都属于调度器的管理部分。
+
+那么调度器是怎么把上面说的G，M，P串联起来的呢？这个翻了一大堆资料，总算弄明白了一点东西，在这里大概讲一下吧。
+
+首先，调度器调度的主要对象就是M，P，G的实例，每个M在运行的时候都会执行调度任务，看过黑社会吗，调度器就是选老大时候的邓伯那帮人，选阿乐还是选大D都是他们协调说了算的。
+
+调度器调度了个什么？寂寞吗，看看图，大概就是这样
+
+![](https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/6.png)
+
+调度器是有自己的数据结构的
+
+```golang
+type schedt struct {
+    goidgen  uint64
+    lastpoll uint64
+
+    lock mutex
+    midle        muintptr // idle m's waiting for work
+    nmidle       int32    // 当前等待工作的空闲 m 计数
+    nmidlelocked int32    // 当前等待工作的被 lock 的 m 计数
+    mnext        int64    // 当前预缴创建的 m 数，并且该值会作为下一个创建的 m 的 ID
+    maxmcount    int32    // 允许创建的最大的 m 数量
+
+    ...
+
+    pidle      puintptr // 空闲 p's
+
+    ...
+
+    // 全局的可运行 g 队列
+    runqhead guintptr
+    runqtail guintptr
+    runqsize int32
+
+    // dead G 的全局缓存
+    gflock       mutex
+    gfreeStack   *g
+    gfreeNoStack *g
+    ngfree       int32
+
+    // sudog 结构的集中缓存
+    sudoglock  mutex
+    sudogcache *sudog
+
+    // 不同大小的可用的 defer struct 的集中缓存池
+    deferlock mutex
+    deferpool [5]*_defer
+
+    ...忽略一些没啥必要的参数
+
+    gcwaiting  uint32 // 是否要因为任务停止调度
+    stopwait   int32  //需要停止但仍未停止的数量
+    stopnote   note   //停止的通知机制
+    sysmonwait uint32  //停止调度期间任务是否还在等待
+    sysmonnote note   //sysmonnotewait 的通知机制
+
+    procresizetime int64 // 上次修改 gomaxprocs 的纳秒时间
+
+    ...
+}
+```
+
+下面说一下调度具体干了什么
+
+### 调度的具体步骤
+
+调度器结构体里面有几个重要参数，我先在这里整出来，后面你们方便看
+
+![](https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/8.jpg)
+
+
+调度器的具体流程这里整了一个图，大家凑合着看一下吧。图的来源是https://www.infoq.cn/article/r6wzs7bvq2er9kuelbqb，很感谢他！
+
+![](https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/7.jpg)
+
+看一下逻辑，首先将其分为四个阶段，**绑定，创建，执行，释放**。调度在其中的作用体现在了这里
+
+首先第一个步骤绑定开始，这里也是M启动的过程，首先从空闲的P列表里面拿取一个P，然后绑定在M上，P里面有两个列表去管理G，一个runq是存放当前P中可运行G的一个队列，另外一个gfee是存放空闲G的一个队列，启动M之后，则会等待拿取可执行的G
+
+第二个步骤，创建G，首先创建完之后，扔一个G到当前绑定P的runq队列当中
+
+第三个步骤，执行G，M从绑定的P那里的runq队列中拿取一个G进行执行
+
+第四个步骤，释放G，执行完G之后，将执行完毕的G放入gfee队列，当再次创建G的时候，从gfee列表中获取，这里是一个复用的逻辑，避免频繁创建G占用系统内存。
+
+所以这里是类似一个自循环的逻辑，执行完G1之后持续执行，当M1繁忙时，自动开启新的M来执行
+
+### 多线程下的调度机制（偷取G机制）
+
+前阵子我在开发的时候，有一种场景是下载大文件，一般这种情况就是划块下载，但是下载时间是不可控的，也是未知的，很可能有的下的快，有的下的慢，就会出现有的下载队列已经空了，但是有的依旧还很满这种情况。
+
+其实在Go里面，调度器在这一步就会寻找可执行的G，这里是它们的具体流程
+
+如图
+
+![](https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/10.jpg)
+
+这里用流程图表示就是
+
+![](https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/9.png)
+
+我将这里的大概步骤编写如下
+
+
+1. 从本地P的可运行G队列（p.runq）中获取G. 调度器首先会尝试从此处获取G，并且返回一个结果
+
+
+2. 从调度器的可运行G（sched.runq）队列获取G。调度器首先会尝试从此处获取G，并且返回一个结果
+
+3. 从其他P中可运行的G队列中获取G。 在某些条件下，调度器会使用伪随机算法在全局P列表中选取一个P，并且尝试从他们的可运行G队列中盗取（转移）一半的G到本地的P可运行队列中，这里会重复多次盗取动作，成功之后就把盗取的一个G作为结果进行返回。
+
+
+这里就完成了盗取机制。
+
+那么偷取部分是怎么实现的呢？
+
+偷取部分的源码如下
+
+```golang
+// runtime/proc.go
+
+// 从其它地方获取G
+func findrunnable() (gp *g, inheritTime bool) {
+  ......
+  
+  // 尝试4次从别的P偷
+  for i := 0; i < 4; i++ {
+    for enum := stealOrder.start(fastrand()); !enum.done(); enum.next() {
+      if sched.gcwaiting != 0 {
+        goto top
+      }
+      stealRunNextG := i > 2 // first look for ready queues with more than 1 g
+      // 在这里开始针对P进行偷取操作
+      if gp := runqsteal(_p_, allp[enum.position()], stealRunNextG); gp != nil {
+        return gp, false
+      }
+    }
+  }
+}
+
+```
+
+转移部分的代码如下
+
+```golang
+// runtime/proc.go
+
+// 偷取P2一半到本地运行队列，失败则返回nil
+func runqsteal(_p_, p2 *p, stealRunNextG bool) *g {
+  t := _p_.runqtail
+  n := runqgrab(p2, &_p_.runq, t, stealRunNextG)
+  if n == 0 {
+    return nil
+  }
+  n--
+  // 返回尾部的一个G
+  gp := _p_.runq[(t+n)%uint32(len(_p_.runq))].ptr()
+  if n == 0 {
+    return gp
+  }
+  h := atomic.Load(&_p_.runqhead) // load-acquire, synchronize with consumers
+  if t-h+n >= uint32(len(_p_.runq)) {
+    throw("runqsteal: runq overflow")
+  }
+  atomic.Store(&_p_.runqtail, t+n) // store-release, makes the item available for consumption
+  return gp
+}
+
+// 从P里获取一半的G,放到batch里
+func runqgrab(_p_ *p, batch *[256]guintptr, batchHead uint32, stealRunNextG bool) uint32 {
+  for {
+    // 计算一半的数量
+    h := atomic.Load(&_p_.runqhead) // load-acquire, synchronize with other consumers
+    t := atomic.Load(&_p_.runqtail) // load-acquire, synchronize with the producer
+    n := t - h
+    n = n - n/2
+    
+    ......
+    
+    // 将偷到的任务转移到本地P队列里
+    for i := uint32(0); i < n; i++ {
+      g := _p_.runq[(h+i)%uint32(len(_p_.runq))]
+      batch[(batchHead+i)%uint32(len(batch))] = g
+    }
+    if atomic.Cas(&_p_.runqhead, h, h+n) { // cas-release, commits consume
+      return n
+    }
+  }
+}
+
+```
+
+第三步，我说到"满足一个条件，才可以偷取"，这个条件其实定义的稍微复杂一些，分为两种
+
+```golang
+1. 除了本地的P外，其他有不为空的P
+2. M一直没有找到G来运行，也就是前两步一直没有找到G，这里的术语被称为“自旋状态”
+```
+
+
+当满足上述条件的时候，才可以开启偷取机制。
+
+总之，调度器会权力查找可执行的G，它会调用多方资源来满足当前M，也就是我刚描述的，下载任务有快慢，会占用多余资源，但是调度器解决了闲置的问题，充分发挥了资源优势，这，相当牛逼了。
+
+
+## GC机制
+
+在Golang里面，垃圾回收是基于CMS算法的，CMS算法我在这里简单描述一下吧
+
+洋文叫：Concurrent Low Pause Collector，jvm也是这套算法，玩java的一眼就明白吧。
+
+要说这套算法，Golang也用它，说明人家是经过考验的
+
+Golang这套CMS算法分为三种执行模式
+
+1. gcbackgroundMode 并发垃圾收集/清理
+2. gcforceMode 串行垃圾收集，并发垃圾清理
+3. gcforceBlockMode 串行垃圾收集，串行垃圾清理
+
+一般涉及到并发，调度器部分会自动GC，都是采用了gcbackgroundMode模式，首先会检查Go 程序的内存用量，检测增量过大的时候才会来一发GC。
+
+一般在Golang当中，我们可以通过环境变量**GODEBUG**控制GC，一般修改
+
+```golang
+// 转为gcforceMode 串行垃圾收集，并发垃圾清理
+gcstoptheworld=1
+// 转为gcforceBlockMode 串行垃圾收集，串行垃圾清理
+gcstoptheworld=2
+```
+
+一般GC的触发，是在Go程序分配的内存翻倍增长时被触发的。如果想要手动GC，可以调用
+
+```golang
+runtime.GC()
+```
+
+进行一次手动GC
+
+串行的GC触发方式为
+
+```golang
+runtime.freeOsMemory()
+```
+如果手动调用GC，将不会检测原有Go程序的内存使用量，是为强制GC。
+
+## 隐藏的特殊成员-g0
+
+在启动Go程序的时候，有一个特殊的隐藏G，叫做g0。
+
+这里的G，不是Go程序代码里面的那个G，是一开始，初始化流程中自动分配给M的g，这个g0和上面那个GC对应起来了，它负责的就是监控内存，垃圾回收，执行调度。
+
+一般由Go代码生成的G，称为用户G，而g0，则被称为系统G，一个系统一个用户，谁权限大是不是显而易见了。
+
+每个M都会生成一个g0，Go运行的时候会进行切换，g0是不会被阻塞的，也不会被垃圾回收监控扫描。
+
+所以g0，想象成一个守护神，伴随M，和M同生公死，相当于皇帝身边的大太监一样。
+
+
+
+## 结尾
+
+这篇文章写完，我是真的彻底搞懂了调度器原理和Golang并发核心机制，其实学习最好的方法就是写博客，记笔记，边写边记。其实慢慢来，都会有好的结果，已经到了年底了，今年大家都过的好嘛？或许今年过的很苦，但今天我们可乐。
+
+end。

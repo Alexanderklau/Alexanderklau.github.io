@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>技术 on yemilice</title>
+    <link>http://localhost:1313/categories/%E6%8A%80%E6%9C%AF/</link>
+    <description>Recent content in 技术 on yemilice</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Mon, 08 Nov 2021 09:43:19 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/%E6%8A%80%E6%9C%AF/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Golang协程调度探究</title>
+      <link>http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E8%B0%83%E5%BA%A6%E6%8E%A2%E7%A9%B6/</link>
+      <pubDate>Mon, 08 Nov 2021 09:43:19 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E8%B0%83%E5%BA%A6%E6%8E%A2%E7%A9%B6/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;这几天攻关了一下go协程的调度，然后写了这篇文章&lt;/p&gt;
+&lt;p&gt;这篇文章的工作量真挺大的，我看的也很累，找资料也很累&lt;/p&gt;
+&lt;p&gt;这篇文章，需要感谢《Go语言底层原理剖析》这本书的作者，这本书给了我很大启发&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang协程基础探究</title>
+      <link>http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/</link>
+      <pubDate>Wed, 27 Oct 2021 11:39:17 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;最近我把Go重新过了一遍，特别是Go的协程这一块，我感觉任何事都是从简单到复杂&lt;/p&gt;
+&lt;p&gt;包括现在，所以我重新开始学习基础，后序我会出一个系列&lt;/p&gt;
+&lt;p&gt;分别为&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Golang协程基础 （已经完成！）&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;Golang协程调度&lt;/li&gt;
+&lt;li&gt;Golang协程控制&lt;/li&gt;
+&lt;li&gt;Golang协程通信&lt;/li&gt;
+&lt;li&gt;Golang垃圾回收机制&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;所以我会持续更新，大家请期待吧，爱你们！&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>设计高可用的ElasicSearch索引</title>
+      <link>http://localhost:1313/posts/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84elasicsaerch%E7%B4%A2%E5%BC%95/</link>
+      <pubDate>Thu, 09 Sep 2021 15:36:23 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84elasicsaerch%E7%B4%A2%E5%BC%95/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;最近又是学习的爆发期，我戒除了上班划水和看知乎故事会，也戒除了游戏和小说&lt;/p&gt;
+&lt;p&gt;也戒除了频繁参加外面的无用活动，也逐渐修复了寂寞侵蚀内心的恐惧&lt;/p&gt;
+&lt;p&gt;将心思逐渐稳定下来，所以，我本月开始到年底，将会爆发式更新blog和歌曲&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ElasticSearch-新老选主算法对比</title>
+      <link>http://localhost:1313/posts/elasticsearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/</link>
+      <pubDate>Wed, 16 Jun 2021 15:17:06 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;首先，ElasticSearch 7，也就是Es 7， 变动还是有点儿大，改了很多东西，例如取消了type，修改了选主算法之类的操作&lt;/p&gt;
+&lt;p&gt;正好几天在钻研一些选主算法一类的东西，看了ETCD，rabbitmq，kafka之类的一些选主算法，想起来似乎对于Es，我还没有细致研究&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ElasticSearch检索的核心-倒排索引解读</title>
+      <link>http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/</link>
+      <pubDate>Fri, 14 May 2021 15:09:41 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;ElasticSearch为什么适合做检索服务器？&lt;/p&gt;
+&lt;p&gt;因为快啊，大佬！&lt;/p&gt;
+&lt;p&gt;为什么快啊？&lt;/p&gt;
+&lt;p&gt;因为&lt;strong&gt;倒排索引&lt;/strong&gt;啊！&lt;/p&gt;
+&lt;p&gt;什么是&lt;strong&gt;倒排索引&lt;/strong&gt;？&lt;/p&gt;
+&lt;p&gt;这个，就要细细分析一下了，这篇文章可能写的不是那么全，但是我也会尽量总结所有重点！希望能帮到大家，爱你们！&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ElasticSearch高级用法(Golang实现)</title>
+      <link>http://localhost:1313/posts/elasticsearch%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95golang%E5%AE%9E%E7%8E%B0/</link>
+      <pubDate>Wed, 02 Dec 2020 14:38:21 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95golang%E5%AE%9E%E7%8E%B0/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;前阵子开发了一个检索服务器，用了一些Es的高阶功能，网上随便看了一圈，基本没有人公开这些功能的中文版，我寻思咱们不能只满足了自己，不满足其他老哥吧，所以，我将开发中用到的Es高阶功能总结输出.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Elasticsearch大数据量下的优化方法</title>
+      <link>http://localhost:1313/posts/elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/</link>
+      <pubDate>Fri, 09 Oct 2020 09:10:22 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;十一在家待着玩了两天COD，突然想起来似乎放假前有一个Elasticsearch的问题需要处理，的确，现在距离开工也只剩下四天了，哎，假期的日子过的飞快，又到时候说拜拜，又要开始社畜的生活啦，想到心里就万分悲痛。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Python的协程知识</title>
+      <link>http://localhost:1313/posts/python%E7%9A%84%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/</link>
+      <pubDate>Tue, 01 Sep 2020 10:20:47 +0000</pubDate>
+      <guid>http://localhost:1313/posts/python%E7%9A%84%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;最近心情一直不是太好，写出来的东西感觉也没有灵感，有些时候做了很多事，但是回想起来感觉自己还是什么都没有做。这是9月份第一次更新blog，也更新一篇相对高级一些的技术吧，有一阵没看Python了，想想还是不要落下了，剧透一下，下一篇文章还是针对Elasticsearch或者是前端框架React的，学习还是不能停下来，最近写歌也有问题，感觉自己什么也写不出来，仿佛失去了灵感，是生活还是时间消磨了我的灵气呢？我不愿意这么想，我会努力的，状态会调整过来的。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>中文分词的算法分析</title>
+      <link>http://localhost:1313/posts/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/</link>
+      <pubDate>Fri, 21 Aug 2020 09:57:46 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;起因是一次电话面试，面一个技术比较好的公司，我认为自己玩Elasticsearch还是比较久了，还是能交锋几个回合吧，结果人家一问，中文分词的算法，你有了解吗？&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Python写一个自动点餐程序</title>
+      <link>http://localhost:1313/posts/python%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%8A%A8%E7%82%B9%E9%A4%90%E7%A8%8B%E5%BA%8F/</link>
+      <pubDate>Tue, 02 Jun 2020 10:17:12 +0000</pubDate>
+      <guid>http://localhost:1313/posts/python%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%8A%A8%E7%82%B9%E9%A4%90%E7%A8%8B%E5%BA%8F/</guid>
+      <description>&lt;h1 id=&#34;python写一个自动点餐程序&#34;&gt;Python写一个自动点餐程序&lt;/h1&gt;
+&lt;h2 id=&#34;为什么要写这个&#34;&gt;为什么要写这个&lt;/h2&gt;
+&lt;p&gt;公司现在用meican作为点餐渠道，每天规定的时间是早7：00-9：40点餐，有时候我经常容易忘记，或者是在地铁/公交上没办法点餐，所以总是没饭吃，只有去楼下711买点饭团之类的玩意儿，所以这是促使我写点餐小程序的原因。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang中Context使用的一点随想</title>
+      <link>http://localhost:1313/posts/golang%E4%B8%ADcontext%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Mon, 01 Jun 2020 10:18:36 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E4%B8%ADcontext%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h1 id=&#34;golang中context使用的一点随想&#34;&gt;Golang中Context使用的一点随想&lt;/h1&gt;
+&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;这一篇是三巨头最后一篇了，前两篇介绍了channel，waitgroup，今天这篇来介绍一下context，相比于其他两种，我倒是更推荐context（上下文）这种控制goroutine的方法，为什呢，下面我就来详细的说一说吧。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang中WaitGroup使用的一点随想</title>
+      <link>http://localhost:1313/posts/golang%E4%B8%ADwaitgroup%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Tue, 26 May 2020 13:29:11 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E4%B8%ADwaitgroup%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h1 id=&#34;golang中waitgroup使用的一点随想&#34;&gt;Golang中WaitGroup使用的一点随想&lt;/h1&gt;
+&lt;h2 id=&#34;前言为什么又要写一篇随想文&#34;&gt;前言（为什么又要写一篇随想文）&lt;/h2&gt;
+&lt;p&gt;上次我写了一个channel的文章，我寻思，这Golang控制三大巨头，channel，waitgroup，context，我得尽快都安排上，最近工作太忙，压力过大，但是Update Blog还是不能够停下来，所以继续补上，学习还是不能停，那么来吧。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang中Channel使用的一点随想</title>
+      <link>http://localhost:1313/posts/golang%E4%B8%ADchannel%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Mon, 25 May 2020 18:25:38 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang%E4%B8%ADchannel%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h1 id=&#34;golang中channel使用的一点随想&#34;&gt;Golang中Channel使用的一点随想&lt;/h1&gt;
+&lt;h2 id=&#34;前言为什么要写这篇文章&#34;&gt;前言（为什么要写这篇文章）&lt;/h2&gt;
+&lt;p&gt;在Golang中，搞同步/并发控制的方法有很多，有channel(管道)，WaitGroup(等待线程结束)，context(上下文管理)，我一直想深入研究一下它们，因为这次开发我遇到了很多比较棘手的问题，我认为万变不离其宗，所以我看了一下他们的源码，然后简单的写了几个Demo，结合了我自己的开发经验，写成此文，做记录的同时，希望可以帮到其他兄弟，未来我还会出context随想，waitgroup随想，一点一点来吧。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>开发中常用的Golang高级用法</title>
+      <link>http://localhost:1313/posts/%E5%BC%80%E5%8F%91%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84golang%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/</link>
+      <pubDate>Fri, 22 May 2020 14:37:09 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%BC%80%E5%8F%91%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84golang%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/</guid>
+      <description>&lt;h1 id=&#34;开发中常用的golang高级用法&#34;&gt;开发中常用的Golang高级用法&lt;/h1&gt;
+&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;忙碌了两个月，这次开发终于要结束了，今天下午公司在重组集群机器，也没办法干活儿了，就写一些东西，相当于，留住一些东西，来纪念这辛苦的两个月吧。做一个纪念，也是为了方便以后自己去查看。在这次开发中，学习了不少Golang的高级特性，并且付诸于实现，也踩了不少坑，留下这篇文字，也是方便其他人能够查看，或者借鉴，如果帮到你，那么我也会很开心你。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang 完成一个 Crontab定时器（2）</title>
+      <link>http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A82/</link>
+      <pubDate>Mon, 23 Mar 2020 09:14:40 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A82/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;上篇文章，大概讲了一下robfig/cron 包的使用，怎么开始一个定时任务，那个东西比较简单，也就是调用函数而已，人家都给你把包都封装好了。鉴于上一章我没提到cron相关，这一章专门我写个cron相关，讲讲怎么cron语法，然后再实现一个自动生成cron语句的逻辑。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang 完成一个 Crontab定时器（1）</title>
+      <link>http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A81/</link>
+      <pubDate>Mon, 23 Mar 2020 09:12:36 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A81/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;Linux的Crontab定时器似乎已经足够强大，但是我认为还是没有办法满足我们所有的需求，例如定时器某一瞬间需要动态添加／删除任务的功能，例如定时器只能在指定的节点上启动（主节点），其他节点不需要定时服务，这种情况Linux自带的Crontab就不能够满足我们的需求了，所以这次要徒手定义一个Crontab定时器，作为自己的备用。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>算法笔记-入门-数据结构篇</title>
+      <link>http://localhost:1313/posts/%E7%AE%97%E6%B3%95%E7%AC%94%E8%AE%B0-%E5%85%A5%E9%97%A8-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%AF%87/</link>
+      <pubDate>Wed, 13 Nov 2019 11:26:18 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E7%AE%97%E6%B3%95%E7%AC%94%E8%AE%B0-%E5%85%A5%E9%97%A8-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%AF%87/</guid>
+      <description>&lt;p&gt;算法笔记-入门-数据结构篇
+从大学毕业之后就没研究过算法，都快忘光了，现在开个新坑，从头学起算法，哈哈，希望自己能够坚持住，不过我一定可以坚持住的，我就像易筋洗髓一样，将自己全身打断，重塑自己的一切，回归初心，以一个听者的名义对待一切，因为我做的都是我自己喜欢的事儿。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang 调用 aws-sdk 操作 S3对象存储</title>
+      <link>http://localhost:1313/posts/golang-%E8%B0%83%E7%94%A8-aws-sdk-%E6%93%8D%E4%BD%9C-s3%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8/</link>
+      <pubDate>Fri, 25 Oct 2019 09:55:52 +0000</pubDate>
+      <guid>http://localhost:1313/posts/golang-%E8%B0%83%E7%94%A8-aws-sdk-%E6%93%8D%E4%BD%9C-s3%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8/</guid>
+      <description>&lt;h1 id=&#34;golang-调用-aws-sdk-操作-s3对象存储&#34;&gt;Golang 调用 aws-sdk 操作 S3对象存储&lt;/h1&gt;
+&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;因为业务问题，要写一个S3对象存储管理代码，由于一直写Go，所以这次采用了Go，Go嘛，快，自带多线程，这种好处就不用多说了吧。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

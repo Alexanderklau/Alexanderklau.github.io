@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Golang协程基础探究 | yemilice</title>
+<meta name="keywords" content="前后端">
+<meta name="description" content="前言
+最近我把Go重新过了一遍，特别是Go的协程这一块，我感觉任何事都是从简单到复杂
+包括现在，所以我重新开始学习基础，后序我会出一个系列
+分别为
+
+Golang协程基础 （已经完成！）
+Golang协程调度
+Golang协程控制
+Golang协程通信
+Golang垃圾回收机制
+
+所以我会持续更新，大家请期待吧，爱你们！">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="Golang协程基础探究">
+  <meta property="og:description" content="前言 最近我把Go重新过了一遍，特别是Go的协程这一块，我感觉任何事都是从简单到复杂
+包括现在，所以我重新开始学习基础，后序我会出一个系列
+分别为
+Golang协程基础 （已经完成！） Golang协程调度 Golang协程控制 Golang协程通信 Golang垃圾回收机制 所以我会持续更新，大家请期待吧，爱你们！">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2021-10-27T11:39:17+00:00">
+    <meta property="article:modified_time" content="2021-10-27T11:39:17+00:00">
+    <meta property="article:tag" content="前后端">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Golang协程基础探究">
+  <meta name="twitter:description" content="前言 最近我把Go重新过了一遍，特别是Go的协程这一块，我感觉任何事都是从简单到复杂
+包括现在，所以我重新开始学习基础，后序我会出一个系列
+分别为
+Golang协程基础 （已经完成！） Golang协程调度 Golang协程控制 Golang协程通信 Golang垃圾回收机制 所以我会持续更新，大家请期待吧，爱你们！">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Golang协程基础探究",
+      "item": "http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Golang协程基础探究",
+  "name": "Golang协程基础探究",
+  "description": "前言 最近我把Go重新过了一遍，特别是Go的协程这一块，我感觉任何事都是从简单到复杂\n包括现在，所以我重新开始学习基础，后序我会出一个系列\n分别为\nGolang协程基础 （已经完成！） Golang协程调度 Golang协程控制 Golang协程通信 Golang垃圾回收机制 所以我会持续更新，大家请期待吧，爱你们！\n",
+  "keywords": [
+    "前后端"
+  ],
+  "articleBody": "前言 最近我把Go重新过了一遍，特别是Go的协程这一块，我感觉任何事都是从简单到复杂\n包括现在，所以我重新开始学习基础，后序我会出一个系列\n分别为\nGolang协程基础 （已经完成！） Golang协程调度 Golang协程控制 Golang协程通信 Golang垃圾回收机制 所以我会持续更新，大家请期待吧，爱你们！\nGo里的协程是什么 写Go这么长时间了，在开发项目当中，感觉Golang的好处还是很多的\nGolang为什么被推崇，核心就是在并发和协程方面有很大的优势\n协程这个概念其实不陌生，我在大学看Python的时候就看过这方面的资料\n就是轻量级的线程\n但是Go的协程其实和Python又不太一样了，这里我还是认真讲一下协程是个什么玩意儿吧\n进程和线程 协程是轻量级的线程，但是线程又和进程有不能说的PY交易\n所以我首先来过一遍进程和线程的基础概念\n首先直接说概念，这个是核心，记住就完事\n线程是进程的组成部分 一个线程只能有一个进程 但是一个进程可以有多个线程 进程死了，线程一起死 进程之间相互独立 进程开销比线程大 可以这么理解，线程是进程的崽，进程是独立个体，可以随意下崽（创建线程）\n操作系统里面，调度到CPU中执行的最小单位就是线程\n有多核处理器的计算机，线程可以分布在多个CPU上，实现真正的并行逻辑。\n看图，这就是多核处理器和单核处理器的差别（Python就是上面那个。。。GIL让他永远用不了多核\n线程的切换和调度 这里还是分析线程，是为后序分析协程逻辑打好基础，要是大家伙不想看，直接跳过即可\n线程好用，但是不能一下开无数个，也不能全开，也不能不返回就持续等待\n所以，为了最大化利用CPU资源，操作系统需要通过定时器，IO设备，上下文切换等动作去控制线程\n一般的切换逻辑是\n当A线程发生切换的时候，会从用户态转移到内核中，记录寄存器值，进程状态之类的信息到操作系统线程的控制块当中\n然后进行切换，切换到下一个执行线程B，加载刚刚保存那得那些寄存器值，然后从内核转移到用户态中\n如果线程A和线程B不属于同一个线程，切换的时候将会更新额外的状态信息和内存地址，然后导入页表到内存里面。\n可以看见一点，就是线程切换需要记录一大堆东西\n这就是线程切换的一点点知识。\n线程和协程的关系 协程，轻量级线程，相当于线程PLUS\n但是它和线程不同的一点，人家切换或者是做别的操作\n不依赖操作系统内核，而依赖自身（Go）的调度器\n其实就是内部执行的一串代码\n协程其实是线程的从属\n下面分析下他们的具体区别还有联系\nGMP模型-线程和协程的核心关系 首先看个图\n这个图就是GMP模型的核心图，这个图其实说的挺明白了\n首先\nG就是协程\nP就是Go的调度器\nM就是线程\n可以看见，Go的协程依托线程\n一个P可能包含了多个协程，一个P在任何时候只能有一个M\n这就说明了线程和协程的关系应该是 m:n\n相关的知识我也在其他的文章里说过\ngolang的并发机制探究\n但是我后续还是会细化一下GMP模型\n协程的调度方式 首先看个图\n协程和线程的关系为M：N，为多对多关系\n调度器P可以将多个协程调度到一个线程中，也可以切换一个协程到多个线程中运行\n协程的切换 协程为什么叫轻量级线程，因为它的切换速度比线程快，根据上面我讲的线程切换\n线程切换需要操作系统用户态和内核态，并且需要存储寄存器的变量值，保留额外的一些变量值（上面有说\n协程切换只需要保留极少的状态值和寄存器变量值，并且一切都有Go调度器去操作，免去用户态和操作系统态交互的麻烦逻辑\n线程切换的速度大概是 1-2微秒\n协程切换的速度为 0.2 微秒\n协程的调度策略 这里后面我的Blog也会讲，在这我就简单描述一下吧\n线程的调度大部分都是抢占式的，为了平衡资源，操作系统的调度器会定时发出中断信号，来进行线程切换\n协程的调度是协作式的，当一个协程处理完任务的时候，可以将执行权限交还给其他协程，不会被轻易抢占，并且协程切换也是有一定的方法，比如抢占队列，偷窃任务等等，这个我后面会另开一篇好好讲述\n协程栈的大小 线程栈大小，一般是创建时指定的，为了避免溢出，默认一个栈会比较大（2MB）\n这样就大大限制了线程栈的数量，如果1000个线程就需要占用2GB虚拟内存\n但是协程栈大小默认为2KB，这样就可以创建一大堆协程，并且协程可以动态扩容栈大小\n而线程只能固定一个栈大小\n协程栈扩容的算法我后面会说（自己老开坑。。。\n并发和并行 并发，并行是老生常态的话题了\n我这简单说下\n并发：谁先执行任务我不管，但是，某个时间段内，所有的任务都能执行完毕\n并行：一起执行任务，大家一起出发\n在我开发的生涯里面，这种情况不只是单纯的并发并行，一般都是一起用的\n除开Python（有GIL锁）\n基本都是多核并行处理多个线程任务，但是单核里面也在负责多个线程任务\n所以这样的关系类似\n转回Go部分，Go的调度器，会把协程分给多个线程，这些线程又很可能被分发给了不同的进程，这样的关系就类似\n这样也说明，在多核的环境下，Go的并发，并行是同时存在且不冲突的。\n写一个协程实例 这个我相信大家玩Go的人都会写，其实Go的协程非常简单\ngo test() 那么现在咱们要实现一个并发协程，首先实现一个线性流程\npackage main import \"fmt\" func FmtSmg(name string) { fmt.Println(name) } func main() { z := []string{\"yemilice\", \"fuck\", \"day\"} for _, i := range z { FmtSmg(i) } } 这边输出\nyemilice fuck day 现在我们改写成协程模式\npackage main import ( \"fmt\" \"time\" ) func FmtSmg(name string) { fmt.Println(name) } func main() { z := []string{\"yemilice\", \"fuck\", \"day\"} for _, i := range z { go FmtSmg(i) } time.Sleep(time.Second * 2) } 得到输出\nday yemilice fuck 这就是一个简单的协程，这部分我用了time.sleep做通信等待，这个比较low，我后续会在协程通信的blog里面更详细的描述介绍\n例如channel，waitgroup等\nGo的并发模型 上一节我们实现了一个Go的协程实例，但是似乎我们并不了解为什么Go要这么设计\n这一节我将告诉你什么是Go的并发模型，也就是Go执行的流程，这一节也是为下次的文章做好基础，比较重要\n其实Go遵循的是fork-join的一种并发模型\nfork可以指程序中任何地方，这里将子协程和主协程分开执行\njoin指的是某个时候，子协程和主协程执行分支合并在一起\n看个图\n这就是fork-join的并发模型\n举个简单的例子\nfunc work() { fmt.Println(\"work\") } func main() { go work() } 这里我们去执行，但是什么都没有返回\n这里如果用fork-join表示，画图如下\n可见我们需要连接点\n将代码改写\nfunc work() { fmt.Println(\"work\") } func main() { var wg sync.WaitGroup wg.Add(1) go func() { defer wg.Done() work() }() // 这是连接点 wg.Wait() } 这里有了连接点，用fork-join表示一下就是\n这里的代码不用深究，这里属于协程控制，这里后面我会单开博客讲\n这里只是为了让大家直观看到fork-join这种并发模型，这是Go预言需要遵循的并发哲学\n总结 这次主要是把协程的基础概念讲了一下\n讲了协程和线程的关系 讲了协程是怎么来的，怎么实现一个协程 讲了Go的并发模型 下集预告 下一节我将深入到Go协程之间的调度当中\n整明白Go协程的调度原理 整明白Go协程的调度策略 整明白Go协程的几种状态 ",
+  "wordCount" : "2739",
+  "inLanguage": "zh-cn",
+  "datePublished": "2021-10-27T11:39:17Z",
+  "dateModified": "2021-10-27T11:39:17Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            Golang协程基础探究
+        </h1>
+        <div class="post-meta"><span title='2021-10-27 11:39:17 +0000 UTC'>October 27, 2021</span>&nbsp;·&nbsp;<span>6 min</span>&nbsp;·&nbsp;<span>2739 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e5%89%8d%e8%a8%80" aria-label="前言">前言</a></li>
+            <li>
+                <a href="#go%e9%87%8c%e7%9a%84%e5%8d%8f%e7%a8%8b%e6%98%af%e4%bb%80%e4%b9%88" aria-label="Go里的协程是什么">Go里的协程是什么</a></li>
+            <li>
+                <a href="#%e8%bf%9b%e7%a8%8b%e5%92%8c%e7%ba%bf%e7%a8%8b" aria-label="进程和线程">进程和线程</a><ul>
+                    
+            <li>
+                <a href="#%e7%ba%bf%e7%a8%8b%e7%9a%84%e5%88%87%e6%8d%a2%e5%92%8c%e8%b0%83%e5%ba%a6" aria-label="线程的切换和调度">线程的切换和调度</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e7%ba%bf%e7%a8%8b%e5%92%8c%e5%8d%8f%e7%a8%8b%e7%9a%84%e5%85%b3%e7%b3%bb" aria-label="线程和协程的关系">线程和协程的关系</a><ul>
+                    
+            <li>
+                <a href="#gmp%e6%a8%a1%e5%9e%8b-%e7%ba%bf%e7%a8%8b%e5%92%8c%e5%8d%8f%e7%a8%8b%e7%9a%84%e6%a0%b8%e5%bf%83%e5%85%b3%e7%b3%bb" aria-label="GMP模型-线程和协程的核心关系">GMP模型-线程和协程的核心关系</a></li>
+            <li>
+                <a href="#%e5%8d%8f%e7%a8%8b%e7%9a%84%e8%b0%83%e5%ba%a6%e6%96%b9%e5%bc%8f" aria-label="协程的调度方式">协程的调度方式</a></li>
+            <li>
+                <a href="#%e5%8d%8f%e7%a8%8b%e7%9a%84%e5%88%87%e6%8d%a2" aria-label="协程的切换">协程的切换</a></li>
+            <li>
+                <a href="#%e5%8d%8f%e7%a8%8b%e7%9a%84%e8%b0%83%e5%ba%a6%e7%ad%96%e7%95%a5" aria-label="协程的调度策略">协程的调度策略</a></li>
+            <li>
+                <a href="#%e5%8d%8f%e7%a8%8b%e6%a0%88%e7%9a%84%e5%a4%a7%e5%b0%8f" aria-label="协程栈的大小">协程栈的大小</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e5%b9%b6%e5%8f%91%e5%92%8c%e5%b9%b6%e8%a1%8c" aria-label="并发和并行">并发和并行</a></li>
+            <li>
+                <a href="#%e5%86%99%e4%b8%80%e4%b8%aa%e5%8d%8f%e7%a8%8b%e5%ae%9e%e4%be%8b" aria-label="写一个协程实例">写一个协程实例</a></li>
+            <li>
+                <a href="#go%e7%9a%84%e5%b9%b6%e5%8f%91%e6%a8%a1%e5%9e%8b" aria-label="Go的并发模型">Go的并发模型</a></li>
+            <li>
+                <a href="#%e6%80%bb%e7%bb%93" aria-label="总结">总结</a></li>
+            <li>
+                <a href="#%e4%b8%8b%e9%9b%86%e9%a2%84%e5%91%8a" aria-label="下集预告">下集预告</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="前言">前言<a hidden class="anchor" aria-hidden="true" href="#前言">#</a></h2>
+<p>最近我把Go重新过了一遍，特别是Go的协程这一块，我感觉任何事都是从简单到复杂</p>
+<p>包括现在，所以我重新开始学习基础，后序我会出一个系列</p>
+<p>分别为</p>
+<ol>
+<li><strong>Golang协程基础 （已经完成！）</strong></li>
+<li>Golang协程调度</li>
+<li>Golang协程控制</li>
+<li>Golang协程通信</li>
+<li>Golang垃圾回收机制</li>
+</ol>
+<p>所以我会持续更新，大家请期待吧，爱你们！</p>
+<h2 id="go里的协程是什么">Go里的协程是什么<a hidden class="anchor" aria-hidden="true" href="#go里的协程是什么">#</a></h2>
+<p>写Go这么长时间了，在开发项目当中，感觉Golang的好处还是很多的</p>
+<p>Golang为什么被推崇，核心就是在并发和协程方面有很大的优势</p>
+<p>协程这个概念其实不陌生，我在大学看Python的时候就看过这方面的资料</p>
+<p>就是<strong>轻量级的线程</strong></p>
+<p>但是Go的协程其实和Python又不太一样了，这里我还是认真讲一下协程是个什么玩意儿吧</p>
+<h2 id="进程和线程">进程和线程<a hidden class="anchor" aria-hidden="true" href="#进程和线程">#</a></h2>
+<p>协程是轻量级的线程，但是线程又和进程有不能说的PY交易</p>
+<p>所以我首先来过一遍进程和线程的基础概念</p>
+<p>首先直接说概念，这个是核心，记住就完事</p>
+<ol>
+<li>线程是进程的组成部分</li>
+<li>一个线程只能有一个进程</li>
+<li>但是一个进程可以有多个线程</li>
+<li>进程死了，线程一起死</li>
+<li>进程之间相互独立</li>
+<li>进程开销比线程大</li>
+</ol>
+<p>可以这么理解，线程是进程的崽，进程是独立个体，可以随意下崽（创建线程）</p>
+<p>操作系统里面，调度到CPU中执行的最小单位就是线程</p>
+<p>有多核处理器的计算机，线程可以分布在多个CPU上，实现真正的并行逻辑。</p>
+<p>看图，这就是多核处理器和单核处理器的差别（Python就是上面那个。。。GIL让他永远用不了多核</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B1/1.png"></p>
+<h3 id="线程的切换和调度">线程的切换和调度<a hidden class="anchor" aria-hidden="true" href="#线程的切换和调度">#</a></h3>
+<p>这里还是分析线程，是为后序分析协程逻辑打好基础，要是大家伙不想看，直接跳过即可</p>
+<p>线程好用，但是不能一下开无数个，也不能全开，也不能不返回就持续等待</p>
+<p>所以，为了最大化利用CPU资源，操作系统需要通过定时器，IO设备，上下文切换等动作去控制线程</p>
+<p>一般的切换逻辑是</p>
+<p>当A线程发生切换的时候，会从用户态转移到内核中，记录寄存器值，进程状态之类的信息到操作系统线程的控制块当中</p>
+<p>然后进行切换，切换到下一个执行线程B，加载刚刚保存那得那些寄存器值，然后从内核转移到用户态中</p>
+<p>如果线程A和线程B不属于同一个线程，切换的时候将会更新额外的状态信息和内存地址，然后导入页表到内存里面。</p>
+<p>可以看见一点，就是线程切换需要记录一大堆东西</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B1/6.png"></p>
+<p>这就是线程切换的一点点知识。</p>
+<h2 id="线程和协程的关系">线程和协程的关系<a hidden class="anchor" aria-hidden="true" href="#线程和协程的关系">#</a></h2>
+<p>协程，轻量级线程，相当于线程PLUS</p>
+<p>但是它和线程不同的一点，人家切换或者是做别的操作</p>
+<p>不依赖操作系统内核，而依赖自身（Go）的调度器</p>
+<p>其实就是内部执行的一串代码</p>
+<p>协程其实是线程的从属</p>
+<p>下面分析下他们的具体区别还有联系</p>
+<h3 id="gmp模型-线程和协程的核心关系">GMP模型-线程和协程的核心关系<a hidden class="anchor" aria-hidden="true" href="#gmp模型-线程和协程的核心关系">#</a></h3>
+<p>首先看个图</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B1/7.png"></p>
+<p>这个图就是GMP模型的核心图，这个图其实说的挺明白了</p>
+<p>首先</p>
+<ol>
+<li>
+<p>G就是协程</p>
+</li>
+<li>
+<p>P就是Go的调度器</p>
+</li>
+<li>
+<p>M就是线程</p>
+</li>
+</ol>
+<p>可以看见，Go的协程依托线程</p>
+<p>一个P可能包含了多个协程，一个P在任何时候只能有一个M</p>
+<p>这就说明了线程和协程的关系应该是 m:n</p>
+<p>相关的知识我也在其他的文章里说过</p>
+<p><a href="https://yemilice.com/2020/11/27/golang%E7%9A%84%E5%B9%B6%E5%8F%91%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/">golang的并发机制探究</a></p>
+<p>但是我后续还是会细化一下GMP模型</p>
+<h3 id="协程的调度方式">协程的调度方式<a hidden class="anchor" aria-hidden="true" href="#协程的调度方式">#</a></h3>
+<p>首先看个图</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/1.jpg"></p>
+<p>协程和线程的关系为M：N，为多对多关系</p>
+<p>调度器P可以将多个协程调度到一个线程中，也可以切换一个协程到多个线程中运行</p>
+<h3 id="协程的切换">协程的切换<a hidden class="anchor" aria-hidden="true" href="#协程的切换">#</a></h3>
+<p>协程为什么叫轻量级线程，因为它的切换速度比线程快，根据上面我讲的线程切换</p>
+<p>线程切换需要操作系统用户态和内核态，并且需要存储寄存器的变量值，保留额外的一些变量值（上面有说</p>
+<p>协程切换只需要保留极少的状态值和寄存器变量值，并且一切都有Go调度器去操作，免去用户态和操作系统态交互的麻烦逻辑</p>
+<p>线程切换的速度大概是 1-2微秒</p>
+<p>协程切换的速度为 0.2 微秒</p>
+<h3 id="协程的调度策略">协程的调度策略<a hidden class="anchor" aria-hidden="true" href="#协程的调度策略">#</a></h3>
+<p>这里后面我的Blog也会讲，在这我就简单描述一下吧</p>
+<p>线程的调度大部分都是抢占式的，为了平衡资源，操作系统的调度器会定时发出中断信号，来进行线程切换</p>
+<p>协程的调度是协作式的，当一个协程处理完任务的时候，可以将执行权限交还给其他协程，不会被轻易抢占，并且协程切换也是有一定的方法，比如抢占队列，偷窃任务等等，这个我后面会另开一篇好好讲述</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B1/2.png"></p>
+<h3 id="协程栈的大小">协程栈的大小<a hidden class="anchor" aria-hidden="true" href="#协程栈的大小">#</a></h3>
+<p>线程栈大小，一般是创建时指定的，为了避免溢出，默认一个栈会比较大（2MB）</p>
+<p>这样就大大限制了线程栈的数量，如果1000个线程就需要占用2GB虚拟内存</p>
+<p>但是协程栈大小默认为2KB，这样就可以创建一大堆协程，并且协程可以动态扩容栈大小</p>
+<p>而线程只能固定一个栈大小</p>
+<p>协程栈扩容的算法我后面会说（自己老开坑。。。</p>
+<h2 id="并发和并行">并发和并行<a hidden class="anchor" aria-hidden="true" href="#并发和并行">#</a></h2>
+<p>并发，并行是老生常态的话题了</p>
+<p>我这简单说下</p>
+<p>并发：谁先执行任务我不管，但是，某个时间段内，所有的任务都能执行完毕</p>
+<p>并行：一起执行任务，大家一起出发</p>
+<p>在我开发的生涯里面，这种情况不只是单纯的并发并行，一般都是一起用的</p>
+<p>除开Python（有GIL锁）</p>
+<p>基本都是多核并行处理多个线程任务，但是单核里面也在负责多个线程任务</p>
+<p>所以这样的关系类似</p>
+<p>转回Go部分，Go的调度器，会把协程分给多个线程，这些线程又很可能被分发给了不同的进程，这样的关系就类似</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B1/5.png"></p>
+<p>这样也说明，在多核的环境下，Go的并发，并行是同时存在且不冲突的。</p>
+<h2 id="写一个协程实例">写一个协程实例<a hidden class="anchor" aria-hidden="true" href="#写一个协程实例">#</a></h2>
+<p>这个我相信大家玩Go的人都会写，其实Go的协程非常简单</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">go</span> <span style="color:#a6e22e">test</span>()
+</span></span></code></pre></div><p>那么现在咱们要实现一个并发协程，首先实现一个线性流程</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> <span style="color:#e6db74">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">FmtSmg</span>(<span style="color:#a6e22e">name</span> <span style="color:#66d9ef">string</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">name</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">z</span> <span style="color:#f92672">:=</span> []<span style="color:#66d9ef">string</span>{<span style="color:#e6db74">&#34;yemilice&#34;</span>, <span style="color:#e6db74">&#34;fuck&#34;</span>, <span style="color:#e6db74">&#34;day&#34;</span>}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">z</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">FmtSmg</span>(<span style="color:#a6e22e">i</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这边输出</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>yemilice
+</span></span><span style="display:flex;"><span>fuck
+</span></span><span style="display:flex;"><span>day
+</span></span></code></pre></div><p>现在我们改写成协程模式</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;time&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">FmtSmg</span>(<span style="color:#a6e22e">name</span> <span style="color:#66d9ef">string</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">name</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">z</span> <span style="color:#f92672">:=</span> []<span style="color:#66d9ef">string</span>{<span style="color:#e6db74">&#34;yemilice&#34;</span>, <span style="color:#e6db74">&#34;fuck&#34;</span>, <span style="color:#e6db74">&#34;day&#34;</span>}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">z</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">go</span> <span style="color:#a6e22e">FmtSmg</span>(<span style="color:#a6e22e">i</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>得到输出</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>day
+</span></span><span style="display:flex;"><span>yemilice
+</span></span><span style="display:flex;"><span>fuck
+</span></span></code></pre></div><p>这就是一个简单的协程，这部分我用了time.sleep做通信等待，这个比较low，我后续会在协程通信的blog里面更详细的描述介绍</p>
+<p>例如channel，waitgroup等</p>
+<h2 id="go的并发模型">Go的并发模型<a hidden class="anchor" aria-hidden="true" href="#go的并发模型">#</a></h2>
+<p>上一节我们实现了一个Go的协程实例，但是似乎我们并不了解为什么Go要这么设计</p>
+<p>这一节我将告诉你什么是Go的并发模型，也就是Go执行的流程，这一节也是为下次的文章做好基础，比较重要</p>
+<p>其实Go遵循的是<strong>fork-join</strong>的一种并发模型</p>
+<p>fork可以指程序中任何地方，这里将子协程和主协程分开执行</p>
+<p>join指的是某个时候，子协程和主协程执行分支合并在一起</p>
+<p>看个图</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E5%8D%8F%E7%A8%8B1/3.png"></p>
+<p>这就是<strong>fork-join</strong>的并发模型</p>
+<p>举个简单的例子</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">work</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;work&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#a6e22e">work</span>()
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这里我们去执行，但是什么都没有返回</p>
+<p>这里如果用<strong>fork-join</strong>表示，画图如下</p>
+<p>可见我们需要连接点</p>
+<p>将代码改写</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">work</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;work&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">wg</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">WaitGroup</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Add</span>(<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Done</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">work</span>()
+</span></span><span style="display:flex;"><span>	}()
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 这是连接点</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Wait</span>()
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这里有了连接点，用<strong>fork-join</strong>表示一下就是</p>
+<p>这里的代码不用深究，这里属于协程控制，这里后面我会单开博客讲</p>
+<p>这里只是为了让大家直观看到<strong>fork-join</strong>这种并发模型，这是Go预言需要遵循的并发哲学</p>
+<h2 id="总结">总结<a hidden class="anchor" aria-hidden="true" href="#总结">#</a></h2>
+<p>这次主要是把协程的基础概念讲了一下</p>
+<ol>
+<li>讲了协程和线程的关系</li>
+<li>讲了协程是怎么来的，怎么实现一个协程</li>
+<li>讲了Go的并发模型</li>
+</ol>
+<h2 id="下集预告">下集预告<a hidden class="anchor" aria-hidden="true" href="#下集预告">#</a></h2>
+<p>下一节我将深入到Go协程之间的调度当中</p>
+<ol>
+<li>整明白Go协程的调度原理</li>
+<li>整明白Go协程的调度策略</li>
+<li>整明白Go协程的几种状态</li>
+</ol>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E8%B0%83%E5%BA%A6%E6%8E%A2%E7%A9%B6/">
+    <span class="title">« </span>
+    <span>Golang协程调度探究</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84elasicsaerch%E7%B4%A2%E5%BC%95/">
+    <span class="title"> »</span>
+    <span>设计高可用的ElasicSearch索引</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

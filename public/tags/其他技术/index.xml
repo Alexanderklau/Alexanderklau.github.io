@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>其他技术 on yemilice</title>
+    <link>http://localhost:1313/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/</link>
+    <description>Recent content in 其他技术 on yemilice</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Mon, 21 Apr 2025 09:40:45 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>COD(使命召唤)-排位赛匹配机制详解</title>
+      <link>http://localhost:1313/posts/cod%E4%BD%BF%E5%91%BD%E5%8F%AC%E5%94%A4-%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/</link>
+      <pubDate>Mon, 21 Apr 2025 09:40:45 +0000</pubDate>
+      <guid>http://localhost:1313/posts/cod%E4%BD%BF%E5%91%BD%E5%8F%AC%E5%94%A4-%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;当使奴太久了，从cod8 - cod21，前几天卖了PS5，打算彻底脱坑，再也不玩了&lt;/p&gt;
+&lt;p&gt;&lt;img alt=&#34;alt text&#34; loading=&#34;lazy&#34; src=&#34;https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/image-7.png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;之前被折磨的太多了，现在真的不想玩了，动视的匹配机制真的是个迷&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>多人游戏网络技术基础</title>
+      <link>http://localhost:1313/posts/%E5%A4%9A%E4%BA%BA%E6%B8%B8%E6%88%8F%E6%8A%80%E6%9C%AF%E5%9F%BA%E7%A1%80/</link>
+      <pubDate>Sun, 14 Apr 2024 09:06:47 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%A4%9A%E4%BA%BA%E6%B8%B8%E6%88%8F%E6%8A%80%E6%9C%AF%E5%9F%BA%E7%A1%80/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;很久不更新Blog了，是自己懈怠了很多，所以在思考了一下之后明白，我需要继续加强学习&lt;/p&gt;
+&lt;p&gt;加入ubisoft之后其实也没做什么值得称道的事儿&lt;/p&gt;
+&lt;p&gt;只是一个基础的开发人员，不过工作当中有一些可以被记录和梳理的地方&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>架构设计和项目管理心得-写于第三个独立开发项目之后</title>
+      <link>http://localhost:1313/posts/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%92%8C%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86-%E5%86%99%E4%BA%8E%E7%AC%AC%E4%B8%89%E4%B8%AA%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91%E9%A1%B9%E7%9B%AE%E4%B9%8B%E5%90%8E/</link>
+      <pubDate>Tue, 20 Oct 2020 10:15:51 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%92%8C%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86-%E5%86%99%E4%BA%8E%E7%AC%AC%E4%B8%89%E4%B8%AA%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91%E9%A1%B9%E7%9B%AE%E4%B9%8B%E5%90%8E/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;本月20号，我完成了我第三个独立开发项目，并且通过测试顺利交付了。&lt;/p&gt;
+&lt;p&gt;首先先总结一下我这半年都干了什么吧。&lt;/p&gt;
+&lt;p&gt;回想一下，从去年开始，我就被安排独立开发，从无到有，从惶恐到上手，从不知所措到游刃有余，其实还是度过了一个比较漫长的阶段，还好挺过来了。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>读Python的协程库asyncio源码随想</title>
+      <link>http://localhost:1313/posts/%E8%AF%BBpython%E7%9A%84%E5%8D%8F%E7%A8%8B%E5%BA%93asyncio%E6%BA%90%E7%A0%81%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Thu, 27 Aug 2020 14:39:33 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E8%AF%BBpython%E7%9A%84%E5%8D%8F%E7%A8%8B%E5%BA%93asyncio%E6%BA%90%E7%A0%81%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;其实想了一下，Python有一阵没好好看了，这样不好。刚好前阵子看了一下Golang的协程，我寻思看了那么多协程逻辑，也该看看Python的。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>中文分词的算法分析</title>
+      <link>http://localhost:1313/posts/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/</link>
+      <pubDate>Fri, 21 Aug 2020 09:57:46 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;起因是一次电话面试，面一个技术比较好的公司，我认为自己玩Elasticsearch还是比较久了，还是能交锋几个回合吧，结果人家一问，中文分词的算法，你有了解吗？&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Elasticsearch检索PDF和Office文档的方案测评</title>
+      <link>http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2pdf%E5%92%8Coffice%E6%96%87%E6%A1%A3%E7%9A%84%E6%96%B9%E6%A1%88%E6%B5%8B%E8%AF%84/</link>
+      <pubDate>Wed, 29 Jul 2020 14:02:32 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2pdf%E5%92%8Coffice%E6%96%87%E6%A1%A3%E7%9A%84%E6%96%B9%E6%A1%88%E6%B5%8B%E8%AF%84/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;这段时间主要攻关了一下Elasticsearch的一些特性，发觉Elasticsearch还是个挺牛逼的玩意儿，我以前经常用它存日志，还没想着拿来存别的东西，一般不都SQL嘛，但是我看了一下现在流行的检索方案，基本都是elasticsearch做检索引擎，说明这个东西经历了时间的考研，用了的人都说好。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>使用Golang的gRPC框架的一点随想</title>
+      <link>http://localhost:1313/posts/%E4%BD%BF%E7%94%A8golang%E7%9A%84grpc%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Tue, 07 Jul 2020 13:32:21 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E4%BD%BF%E7%94%A8golang%E7%9A%84grpc%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h2 id=&#34;前言写文章的原因&#34;&gt;前言（写文章的原因）&lt;/h2&gt;
+&lt;p&gt;最近开发项目太重了，我有些感觉自己状态不太对，想要去换一个地方生活，但是说到要做的事就一定要做，学习是不能停下来的。&lt;/p&gt;
+&lt;p&gt;最近开发使用了一下gRPC，不同于以前我自己写的Python 的 RPC，gRPC相对来说用起来更简单，写起来更容易，可能一开始有点不好使，其实熟悉了也还是不错的，那么，这篇文章主要就写一下，gRPC的基础使用和在我项目中的实际应用吧。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>分布式数据库如何选择，几种分布式数据库优缺点一览</title>
+      <link>http://localhost:1313/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/</link>
+      <pubDate>Fri, 22 May 2020 16:16:20 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/</guid>
+      <description>&lt;h1 id=&#34;分布式数据库如何选择几种分布式数据库优缺点一览&#34;&gt;分布式数据库如何选择？几种分布式数据库优缺点一览&lt;/h1&gt;
+&lt;h2 id=&#34;为什么选择分布式数据库&#34;&gt;为什么选择分布式数据库？&lt;/h2&gt;
+&lt;p&gt;优点如下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;具有灵活的体系结构&lt;/li&gt;
+&lt;li&gt;适应分布式的管理和控制机构&lt;/li&gt;
+&lt;li&gt;经济性能优越&lt;/li&gt;
+&lt;li&gt;系统的可靠性高、可用性好&lt;/li&gt;
+&lt;li&gt;局部应用的响应速度快&lt;/li&gt;
+&lt;li&gt;可扩展性好，易于集成现有系统。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;相关的技术概念介绍&#34;&gt;相关的技术概念介绍&lt;/h2&gt;
+&lt;h3 id=&#34;什么是分布式数据库&#34;&gt;什么是分布式数据库？&lt;/h3&gt;
+&lt;p&gt;常见的分布式系统分为，&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>算法笔记-入门-数据结构篇</title>
+      <link>http://localhost:1313/posts/%E7%AE%97%E6%B3%95%E7%AC%94%E8%AE%B0-%E5%85%A5%E9%97%A8-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%AF%87/</link>
+      <pubDate>Wed, 13 Nov 2019 11:26:18 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E7%AE%97%E6%B3%95%E7%AC%94%E8%AE%B0-%E5%85%A5%E9%97%A8-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%AF%87/</guid>
+      <description>&lt;p&gt;算法笔记-入门-数据结构篇
+从大学毕业之后就没研究过算法，都快忘光了，现在开个新坑，从头学起算法，哈哈，希望自己能够坚持住，不过我一定可以坚持住的，我就像易筋洗髓一样，将自己全身打断，重塑自己的一切，回归初心，以一个听者的名义对待一切，因为我做的都是我自己喜欢的事儿。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Python高效率遍历文件夹寻找重复文件</title>
+      <link>http://localhost:1313/posts/python%E9%AB%98%E6%95%88%E7%8E%87%E9%81%8D%E5%8E%86%E6%96%87%E4%BB%B6%E5%A4%B9%E5%AF%BB%E6%89%BE%E9%87%8D%E5%A4%8D%E6%96%87%E4%BB%B6/</link>
+      <pubDate>Mon, 28 Oct 2019 12:31:15 +0000</pubDate>
+      <guid>http://localhost:1313/posts/python%E9%AB%98%E6%95%88%E7%8E%87%E9%81%8D%E5%8E%86%E6%96%87%E4%BB%B6%E5%A4%B9%E5%AF%BB%E6%89%BE%E9%87%8D%E5%A4%8D%E6%96%87%E4%BB%B6/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;为什么要写这篇文章呢。。。主要还是业务中有个需求，遍历一个将近200w数据的文件夹，大部分还都是视频文件那种，但是这玩意用的次数还不多，做文件夹index也不是很ok，所以写了一个脚本来处理这个问题，从而发现了自己的一些薄弱点，将其记录下来，方便自己，也方便未来其他的兄弟使用&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>程序员如何锻炼自己的产品思维</title>
+      <link>http://localhost:1313/posts/%E7%A8%8B%E5%BA%8F%E5%91%98%E5%A6%82%E4%BD%95%E9%94%BB%E7%82%BC%E8%87%AA%E5%B7%B1%E7%9A%84%E4%BA%A7%E5%93%81%E6%80%9D%E7%BB%B4/</link>
+      <pubDate>Fri, 25 Oct 2019 09:46:55 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E7%A8%8B%E5%BA%8F%E5%91%98%E5%A6%82%E4%BD%95%E9%94%BB%E7%82%BC%E8%87%AA%E5%B7%B1%E7%9A%84%E4%BA%A7%E5%93%81%E6%80%9D%E7%BB%B4/</guid>
+      <description>&lt;h1 id=&#34;程序员如何锻炼自己的产品思维&#34;&gt;程序员如何锻炼自己的产品思维&lt;/h1&gt;
+&lt;h2 id=&#34;写作目的&#34;&gt;写作目的&lt;/h2&gt;
+&lt;p&gt;源于一次需求会议被怼，大老板总是说我以技术思维决定一切。&lt;br&gt;
+后来我一思考，卧槽，果然是这样，每次我都是非常纠结于技术实现和技术细节，总是纠缠在业务实现里面，所以渐渐就养成了那个习惯。思考了一下，有些地方也的确是应该做出一点点改变了，老话说，种一棵树，最早是十年前，其次就是现在，那么我们就开始种树吧。趁着放假读几本产品思维的书，有一点点感悟，所以将此文写下，方便自己，也方便急于转型的各位程序员老哥。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>新旧博客迁移的一点感悟</title>
+      <link>http://localhost:1313/posts/%E6%96%B0%E6%97%A7%E5%8D%9A%E5%AE%A2%E8%BF%81%E7%A7%BB%E7%9A%84%E4%B8%80%E7%82%B9%E6%84%9F%E6%82%9F/</link>
+      <pubDate>Thu, 24 Oct 2019 17:50:37 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E6%96%B0%E6%97%A7%E5%8D%9A%E5%AE%A2%E8%BF%81%E7%A7%BB%E7%9A%84%E4%B8%80%E7%82%B9%E6%84%9F%E6%82%9F/</guid>
+      <description>&lt;h2 id=&#34;算是日记吧&#34;&gt;算是日记吧&lt;/h2&gt;
+&lt;p&gt;其实自己一直在cnblog上更新自己的博客，从16年3月入行到现在，已经过去了三个春秋，发觉自己的技术还是个渣渣，最近生活真的忙成一团，工作也很忙，生活也很忙，有时候饭都不容易吃上，感觉自己学习真的学不动了，不知道自己是不是懈怠了，运动，音乐什么的，也停下来了，感觉真的缺少了一点点乐趣。&lt;br&gt;
+不过说真的，自己也真的该动起来了，因为时间不等人啊，已经入行这么久，跌跌撞撞像个摇摆人，所以未来我还是要多学习，多更新我的博客，将自己的技术或者是一些感悟，哪怕是一些灵光一闪的理想，都记录下来，哈哈，这样会不会好一些呢？会不会明天就是更好的那一天呢？&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

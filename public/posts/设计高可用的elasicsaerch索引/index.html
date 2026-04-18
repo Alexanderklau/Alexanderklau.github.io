@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>设计高可用的ElasicSearch索引 | yemilice</title>
+<meta name="keywords" content="前后端">
+<meta name="description" content="前言
+最近又是学习的爆发期，我戒除了上班划水和看知乎故事会，也戒除了游戏和小说
+也戒除了频繁参加外面的无用活动，也逐渐修复了寂寞侵蚀内心的恐惧
+将心思逐渐稳定下来，所以，我本月开始到年底，将会爆发式更新blog和歌曲">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84elasicsaerch%E7%B4%A2%E5%BC%95/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84elasicsaerch%E7%B4%A2%E5%BC%95/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84elasicsaerch%E7%B4%A2%E5%BC%95/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="设计高可用的ElasicSearch索引">
+  <meta property="og:description" content="前言 最近又是学习的爆发期，我戒除了上班划水和看知乎故事会，也戒除了游戏和小说
+也戒除了频繁参加外面的无用活动，也逐渐修复了寂寞侵蚀内心的恐惧
+将心思逐渐稳定下来，所以，我本月开始到年底，将会爆发式更新blog和歌曲">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2021-09-09T15:36:23+00:00">
+    <meta property="article:modified_time" content="2021-09-09T15:36:23+00:00">
+    <meta property="article:tag" content="前后端">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="设计高可用的ElasicSearch索引">
+  <meta name="twitter:description" content="前言 最近又是学习的爆发期，我戒除了上班划水和看知乎故事会，也戒除了游戏和小说
+也戒除了频繁参加外面的无用活动，也逐渐修复了寂寞侵蚀内心的恐惧
+将心思逐渐稳定下来，所以，我本月开始到年底，将会爆发式更新blog和歌曲">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "设计高可用的ElasicSearch索引",
+      "item": "http://localhost:1313/posts/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84elasicsaerch%E7%B4%A2%E5%BC%95/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "设计高可用的ElasicSearch索引",
+  "name": "设计高可用的ElasicSearch索引",
+  "description": "前言 最近又是学习的爆发期，我戒除了上班划水和看知乎故事会，也戒除了游戏和小说\n也戒除了频繁参加外面的无用活动，也逐渐修复了寂寞侵蚀内心的恐惧\n将心思逐渐稳定下来，所以，我本月开始到年底，将会爆发式更新blog和歌曲\n",
+  "keywords": [
+    "前后端"
+  ],
+  "articleBody": "前言 最近又是学习的爆发期，我戒除了上班划水和看知乎故事会，也戒除了游戏和小说\n也戒除了频繁参加外面的无用活动，也逐渐修复了寂寞侵蚀内心的恐惧\n将心思逐渐稳定下来，所以，我本月开始到年底，将会爆发式更新blog和歌曲\n请大家和我一起学习吧！对了，如果有机会，请不要忘记帮我看看是否有合适的工作\n我最近在换工作，走过路过，也别忘记我找份工作。\n开始！\n从不去关心他人的定位 对我喜欢讨厌或者是敬畏 始终在不停的韬光养晦 为我喜欢的事鞠躬尽瘁 妈妈问我每天是否疲惫 生活似好似坏前路隐晦 希望的濒危物种不令人敬佩 只想和路过的你说声幸会 当我们在说Es索引设计时，我们在说什么？ 在我的开发生涯中，我使用过Mysql，Etcd，Mongodb之类的数据库\n当我拿到一个数据库要进行开发任务的时候，我的第一件事往往就是查看数据结构，或者是查看表结构\n如果是Mysql一类的数据库，数据表中，表的字段类型是否合适，表设计是否合理，涉及到联合查询的机制是否完全？这往往就是数据库表设计的核心。\n嵌套到es当中，es的索引，你也可以理解为表\n当我们要设计索引的时候，我们就是设计表\n当我们说要设计高可用的的索引时，往往就是指索引\n可支撑大数据量 性能影响小 结合业务场景，全维度考虑增，删，改，查 ElasticSearch索引的基础知识 索引，这个东西在数据库里面就是帮助加快检索速度的\n它是一种数据结构，这个我原来提过一点点\n具体的地址，请参看\nElasticSearch检索的核心-倒排索引解读\n今天我们的主题并不是原理，而是如何设计索引\n如何设计索引才能让我们的ES更加健壮，避免后期存入数据过多后还要更改结构\n这个才是这篇文章的核心。\n所以基础知识这里，我将不会表述太多，请大家见谅。\n默认你已经会用Es，就这样，Over。\nMapping的设计 Mapping是什么? Mapping在Es里面，相当于表结构，我举个例子\n\"mappings\": { \"doc\": { \"properties\": { \"name\": { \"ignore_above\": 256, \"type\": \"keyword\" }, \"id\": { \"type\": \"keyword\" }, \"size\": { \"type\": \"long\" }, \"last_mod_time\": { \"format\": \"yyyy-MM-dd HH:mm:ss\", \"type\": \"date\" } } } } 我们定义的mapping里面有若干个字段，name，id… 类型不同，有long，keyword，date Mapping在索引设计中是非常重要部分，就和表设计一样的，你需要定义字段\n一个好的字段能让我们的检索速度飞快，一个差的字段会让我们浪费很多平白无故的存储空间\n首先Mapping的基础知识可以参看这篇文章\n一文搞懂 Elasticsearch 之 Mapping\n这篇文章的大佬把Mapping说的很清楚了\nMapping 分为两种，静态Mapping和动态Mapping\n下面我分别说下静态和动态的几个优缺点\n静态Mapping 事先定义好字段，也就是定义好基础的Mapping格式，就像章节最开始我举的例子。\n静态Mapping，就相当于我们创建Mysql表，事先建表，规定好所有的字段和类型\n静态Mapping的优点如下\n可选可控 节约存储空间 静态Mapping的缺点如下\n设计要求高，后期无法进行更改 将数据格式全部规定死，不够动态 动态Mapping 我们不创表，直接传入数据，Es会根据你传入的数据自动匹配合适的类型，也就是自动识别数据\n说白了，就是你，传个json过来，Es根据你的json自动匹配类型，然后创建Mapping\n动态Mapping这东西，其实我是不推荐用的，因为相当于，你把数据类型的判断逻辑交给了Es，这是很不可取的，因为Es，很傻，说下原因\n当你不想检索一些字段的时候，你可以通过设置mapping事先指定，但是动态的不行 动态Mapping可控性没那么高，你往里导数据，要保证数据的一致性 高可用Mapping设计的流程 查了一些资料，其实大家可以看一下铭毅天下这个老哥的公众号\n他的公众号给了我很大启发！\n铭毅天下-死磕Elasticsearch方法论\n首先，设计Mapping，需要预先考虑如下几点\n是否需要进行全文检索 是否需要排序 数据类型的多重选择 首先，先将Mapping里的几个参数及其基础设置梳理\n参数 具体说明 传入参数 enabled 设置是否需要检索 True/False index 设置是否构建倒排索引 True/False index_option 设置存储倒排索引的哪些信息 True/False doc_values 是否开启聚合分析 True/False dynamic 动态更新mapping True/False data_detection 自动识别日期类型 True/False 进行Mapping设计时，首先要考虑我们到底有多少字段，这些字段的属性是什么\n这里非常重要，因为，当你创建完Index的时候，Es是不许更新表结构，也就是Mapping的，\n如果要选择更新，则需要重建Index，当数据量很大的时候，这种方案肯定是不可以的。\n所以，我这里定义的流程如下\n第一步：确定存储的数据类型 先细分析一波，先根据我们的需求，确定建立好我们的数据类型\n一般的数据类型如下\n根据我们的需求去梳理数据类型\n这里提几点选择策略\n如果你有很多文字，不需要分词，选text，需要分词，选keyword 如果你未来不确定你到底有多少数据，将类型设置为long是比较合适的 keyword检索比较短的字符会更快，如果字符很大，那么会增加存储和检索成本 第二步：确定哪些字段需要检索 如果我们存储的一个json十分巨大，例如content是一篇文章，或者我们的Mapping字段非常的多，那么如果全部默认检索，那我们会搜出一大堆无用的东西\n这样既增加了存储成本，又减弱了检索效率，所以下一步，我们就要根据需求，确定哪些字段需要检索\n一些固定参数，或者不想给用户展示的参数也就没有检索价值\n例如ID一类的参数\n这里如果我们不想ID被检索，那么需要设置\n\"id\":{ \"type\": \"text\", \"index\": false } 第三步：检索的方式 这里一般指的是分词的设置，这里需要指定分词器\n分词器我以前的blog里面也讲过\n定义自己的分词器\n这里相当于是，给指定的字段，添加分词\n假如我们现在有一个字段，名字叫name，我们需要指定中文分词器IK\n\"name\":{ \"type\": \"text\", \"analyzer\": \"ik_smart } 第四步：指定mapping的特殊设置 这里的设置，不针对某个字段，而是针对整个mapping的setting设置\n这里有如下几个常用设置\n{ \"settings\": { // 分片数量 \"number_of_shards\": 5, // 副本 \"number_of_replicas\": 1, // 最好压缩 \"codec\": \"best_compression\", // 最大展示条数 \"max_result_window\": \"100000000\", // 刷新时间 \"refresh_interval\":\"30s\" } 一般都是这么几个设置\n甭管那么多，直接上，不要怂\n这张图是铭毅天下那里找来的！爱你！\n这个流程，非常清楚了\nMapping的模版 这里给出我自己开发时候的一个模版，这个模版扛住了千万数据量，直接上，不要怕\n大家拿过来改改字段就行\n{ \"settings\": { \"number_of_shards\": 5, \"number_of_replicas\": 1, \"codec\": \"best_compression\", \"max_result_window\": \"100000000\", \"refresh_interval\":\"30s\" }, \"mappings\": { \"doc\": { \"properties\": { \"name\": { \"type\": \"keyword\" }, \"id\": { \"type\": \"keyword\" }, \"data\": { \"type\": \"nested\", \"properties\": { \"value\": { \"type\": \"text\", \"fields\": { \"keyword\": { \"ignore_above\": 256, \"type\": \"keyword\" } } }, \"key\": { \"type\": \"text\", \"fields\": { \"keyword\": { \"ignore_above\": 256, \"type\": \"keyword\" } } } } }, \"size\": { \"type\": \"long\" }, \"last_mod_time\": { \"format\": \"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd || epoch_millis\", \"type\": \"date\" }, \"user\": { \"type\": \"keyword\" }, \"content\": { \"analyzer\": \"ik_smart\", \"term_vector\": \"with_positions_offsets\", \"type\": \"text\" } } } } } 大数据下索引的切分 当我通过filebeat或者logstash倒入数据到Es中的时候\n传输到Es中，创建的index是可以自己控制的\n一般的划分方法是：\n年 月 日 自定义 举例来说\n假如我们的log索引，名字叫\"log-2021-09\"\n那么每天的数据量都有千万，那么这个索引就会越来越大，越来越大\n你做检索的时候，就会在一个非常大的索引中进行\n这样检索的时候，卡，慢就出现了\n万一这索引坏了，那。。。丢数据吧\n所以，如何进行切分，或者优化索引，势在必行\n下面我这里将给出一些我自己实战的手法，给大家一些建议。\n动态创建索引 首先，上一节我们讲了Mapping模版，这里我就不再多说\n我们需要结合模版去动态创建索引\n方法如下\nrollver滚动创建索引 现在开始设定 log-2021-09 这个索引\n这步的意思是创一个索引，名字叫做log-2021-09-00001，别名为logs_write\ncurl -XPUT 'localhost:9200/log-2021-09-00001 ?pretty' -d' { \"aliases\": { \"logs_write\": {} } }' 现在开始设置动态索引创建\n这步的意思是，设定logs_write，当天数大于7天，或者文档数量大于100000，或者大小大于5gb，创建一个新的log-2021-09-00002 索引\nPOST /logs_write/_rollover { \"conditions\": { \"max_age\": \"7d\", \"max_docs\": 100000, \"max_size\": \"5gb\" } } 定时清理过期数据 Curator索引管理工具 这个工具，可以进行索引管理\n安装的方法，网上找RPM包直接安就得了\nhttps://www.elastic.co/guide/en/elasticsearch/client/curator/current/yum-repository.html\n它的功能有\n关闭索引 创建快照 创建索引 打开索引 ….. 这里，我们可以通过Curator来进行索引创建，定时配置删除等等\n例如我们要动态删除7天前的索引\n# Remember, leave a key empty if there is no value. None will be a string, # not a Python \"NoneType\" # # Also remember that all examples have 'disable_action' set to True. If you # want to use this action as a template, be sure to set this to False after # copying it. actions: 1: action: delete_indices　# 这里执行操作类型为删除索引 description: \u003e- Delete metric indices older than 3 days (based on index name), for zou_data-2018-05-01 prefixed indices. Ignore the error if the filter does not result in an actionable list of indices (ignore_empty_list) and exit cleanly. options: ignore_empty_list: True filters: - filtertype: pattern kind: prefix value: logs-　# 这里是指匹配前缀为 “order_” 的索引，还可以支持正则匹配等，详见官方文档 - filtertype: age　# 这里匹配时间 source: name　# 这里根据索引name来匹配，还可以根据字段等，详见官方文档 direction: older timestring: '%Y-%m-%d'　# 用于匹配和提取索引或快照名称中的时间戳 unit: days　# 这里定义的是days，还有weeks,months等，总时间为unit * unit_count unit_count: 7 以上命令删除了7天前，以log-*开头的索引\n可以看下这篇文章\nElasticSearch——Curator索引管理\n结尾 这些大概就是我实战遇到的一些问题，结合网上的一些资料\n我输出了这篇blog\n最近我开始疯狂学习，希望未来会有突破吧\n狗公司不发年终，淦，还是赶紧找机会跑路，才是最重要的。\n大家加油吧！写算法Ing！\n加油！\n",
+  "wordCount" : "3639",
+  "inLanguage": "zh-cn",
+  "datePublished": "2021-09-09T15:36:23Z",
+  "dateModified": "2021-09-09T15:36:23Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84elasicsaerch%E7%B4%A2%E5%BC%95/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            设计高可用的ElasicSearch索引
+        </h1>
+        <div class="post-meta"><span title='2021-09-09 15:36:23 +0000 UTC'>September 9, 2021</span>&nbsp;·&nbsp;<span>8 min</span>&nbsp;·&nbsp;<span>3639 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e5%89%8d%e8%a8%80" aria-label="前言">前言</a></li>
+            <li>
+                <a href="#%e5%bd%93%e6%88%91%e4%bb%ac%e5%9c%a8%e8%af%b4es%e7%b4%a2%e5%bc%95%e8%ae%be%e8%ae%a1%e6%97%b6%e6%88%91%e4%bb%ac%e5%9c%a8%e8%af%b4%e4%bb%80%e4%b9%88" aria-label="当我们在说Es索引设计时，我们在说什么？">当我们在说Es索引设计时，我们在说什么？</a></li>
+            <li>
+                <a href="#elasticsearch%e7%b4%a2%e5%bc%95%e7%9a%84%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86" aria-label="ElasticSearch索引的基础知识">ElasticSearch索引的基础知识</a></li>
+            <li>
+                <a href="#mapping%e7%9a%84%e8%ae%be%e8%ae%a1" aria-label="Mapping的设计">Mapping的设计</a><ul>
+                    
+            <li>
+                <a href="#mapping%e6%98%af%e4%bb%80%e4%b9%88" aria-label="Mapping是什么?">Mapping是什么?</a></li>
+            <li>
+                <a href="#%e9%9d%99%e6%80%81mapping" aria-label="静态Mapping">静态Mapping</a></li>
+            <li>
+                <a href="#%e5%8a%a8%e6%80%81mapping" aria-label="动态Mapping">动态Mapping</a></li>
+            <li>
+                <a href="#%e9%ab%98%e5%8f%af%e7%94%a8mapping%e8%ae%be%e8%ae%a1%e7%9a%84%e6%b5%81%e7%a8%8b" aria-label="高可用Mapping设计的流程">高可用Mapping设计的流程</a><ul>
+                    
+            <li>
+                <a href="#%e7%ac%ac%e4%b8%80%e6%ad%a5%e7%a1%ae%e5%ae%9a%e5%ad%98%e5%82%a8%e7%9a%84%e6%95%b0%e6%8d%ae%e7%b1%bb%e5%9e%8b" aria-label="第一步：确定存储的数据类型">第一步：确定存储的数据类型</a></li>
+            <li>
+                <a href="#%e7%ac%ac%e4%ba%8c%e6%ad%a5%e7%a1%ae%e5%ae%9a%e5%93%aa%e4%ba%9b%e5%ad%97%e6%ae%b5%e9%9c%80%e8%a6%81%e6%a3%80%e7%b4%a2" aria-label="第二步：确定哪些字段需要检索">第二步：确定哪些字段需要检索</a></li>
+            <li>
+                <a href="#%e7%ac%ac%e4%b8%89%e6%ad%a5%e6%a3%80%e7%b4%a2%e7%9a%84%e6%96%b9%e5%bc%8f" aria-label="第三步：检索的方式">第三步：检索的方式</a></li>
+            <li>
+                <a href="#%e7%ac%ac%e5%9b%9b%e6%ad%a5%e6%8c%87%e5%ae%9amapping%e7%9a%84%e7%89%b9%e6%ae%8a%e8%ae%be%e7%bd%ae" aria-label="第四步：指定mapping的特殊设置">第四步：指定mapping的特殊设置</a></li></ul>
+            </li>
+            <li>
+                <a href="#mapping%e7%9a%84%e6%a8%a1%e7%89%88" aria-label="Mapping的模版">Mapping的模版</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e5%a4%a7%e6%95%b0%e6%8d%ae%e4%b8%8b%e7%b4%a2%e5%bc%95%e7%9a%84%e5%88%87%e5%88%86" aria-label="大数据下索引的切分">大数据下索引的切分</a><ul>
+                    
+            <li>
+                <a href="#%e5%8a%a8%e6%80%81%e5%88%9b%e5%bb%ba%e7%b4%a2%e5%bc%95" aria-label="动态创建索引">动态创建索引</a><ul>
+                    
+            <li>
+                <a href="#rollver%e6%bb%9a%e5%8a%a8%e5%88%9b%e5%bb%ba%e7%b4%a2%e5%bc%95" aria-label="rollver滚动创建索引">rollver滚动创建索引</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e5%ae%9a%e6%97%b6%e6%b8%85%e7%90%86%e8%bf%87%e6%9c%9f%e6%95%b0%e6%8d%ae" aria-label="定时清理过期数据">定时清理过期数据</a><ul>
+                    
+            <li>
+                <a href="#curator%e7%b4%a2%e5%bc%95%e7%ae%a1%e7%90%86%e5%b7%a5%e5%85%b7" aria-label="Curator索引管理工具">Curator索引管理工具</a></li></ul>
+            </li></ul>
+            </li>
+            <li>
+                <a href="#%e7%bb%93%e5%b0%be" aria-label="结尾">结尾</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="前言">前言<a hidden class="anchor" aria-hidden="true" href="#前言">#</a></h2>
+<p>最近又是学习的爆发期，我戒除了上班划水和看知乎故事会，也戒除了游戏和小说</p>
+<p>也戒除了频繁参加外面的无用活动，也逐渐修复了寂寞侵蚀内心的恐惧</p>
+<p>将心思逐渐稳定下来，所以，我本月开始到年底，将会爆发式更新blog和歌曲</p>
+<p>请大家和我一起学习吧！对了，如果有机会，请不要忘记帮我看看是否有合适的工作</p>
+<p>我最近在换工作，走过路过，也别忘记我找份工作。</p>
+<p>开始！</p>
+<pre tabindex="0"><code>从不去关心他人的定位
+
+对我喜欢讨厌或者是敬畏
+
+始终在不停的韬光养晦
+
+为我喜欢的事鞠躬尽瘁
+
+妈妈问我每天是否疲惫
+
+生活似好似坏前路隐晦
+
+希望的濒危物种不令人敬佩
+
+只想和路过的你说声幸会
+</code></pre><h2 id="当我们在说es索引设计时我们在说什么">当我们在说Es索引设计时，我们在说什么？<a hidden class="anchor" aria-hidden="true" href="#当我们在说es索引设计时我们在说什么">#</a></h2>
+<p>在我的开发生涯中，我使用过Mysql，Etcd，Mongodb之类的数据库</p>
+<p>当我拿到一个数据库要进行开发任务的时候，我的第一件事往往就是查看数据结构，或者是查看表结构</p>
+<p>如果是Mysql一类的数据库，数据表中，表的字段类型是否合适，表设计是否合理，涉及到联合查询的机制是否完全？这往往就是数据库表设计的核心。</p>
+<p>嵌套到es当中，es的索引，你也可以理解为表</p>
+<p>当我们要设计索引的时候，我们就是设计表</p>
+<p>当我们说要设计高可用的的索引时，往往就是指索引</p>
+<ol>
+<li>可支撑大数据量</li>
+<li>性能影响小</li>
+<li>结合业务场景，全维度考虑增，删，改，查</li>
+</ol>
+<h2 id="elasticsearch索引的基础知识">ElasticSearch索引的基础知识<a hidden class="anchor" aria-hidden="true" href="#elasticsearch索引的基础知识">#</a></h2>
+<p>索引，这个东西在数据库里面就是帮助加快检索速度的</p>
+<p>它是一种数据结构，这个我原来提过一点点</p>
+<p>具体的地址，请参看</p>
+<p><a href="https://yemilice.com/2021/05/14/elasticsearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/">ElasticSearch检索的核心-倒排索引解读</a></p>
+<p>今天我们的主题并不是原理，而是如何设计索引</p>
+<p>如何设计索引才能让我们的ES更加健壮，避免后期存入数据过多后还要更改结构</p>
+<p>这个才是这篇文章的核心。</p>
+<p>所以基础知识这里，我将不会表述太多，请大家见谅。</p>
+<p>默认你已经会用Es，就这样，Over。</p>
+<h2 id="mapping的设计">Mapping的设计<a hidden class="anchor" aria-hidden="true" href="#mapping的设计">#</a></h2>
+<h3 id="mapping是什么">Mapping是什么?<a hidden class="anchor" aria-hidden="true" href="#mapping是什么">#</a></h3>
+<p>Mapping在Es里面，相当于表结构，我举个例子</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;mappings&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">&#34;doc&#34;</span>: {
+</span></span><span style="display:flex;"><span>		<span style="color:#f92672">&#34;properties&#34;</span>: {
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;name&#34;</span>: {
+</span></span><span style="display:flex;"><span>				<span style="color:#f92672">&#34;ignore_above&#34;</span>: <span style="color:#ae81ff">256</span>,
+</span></span><span style="display:flex;"><span>				<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;keyword&#34;</span>
+</span></span><span style="display:flex;"><span>			},
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;id&#34;</span>: {
+</span></span><span style="display:flex;"><span>				<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;keyword&#34;</span>
+</span></span><span style="display:flex;"><span>			},
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;size&#34;</span>: {
+</span></span><span style="display:flex;"><span>				<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;long&#34;</span>
+</span></span><span style="display:flex;"><span>			},
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;last_mod_time&#34;</span>: {
+</span></span><span style="display:flex;"><span>				<span style="color:#f92672">&#34;format&#34;</span>: <span style="color:#e6db74">&#34;yyyy-MM-dd HH:mm:ss&#34;</span>,
+</span></span><span style="display:flex;"><span>				<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;date&#34;</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ol>
+<li>我们定义的mapping里面有若干个字段，name，id&hellip;</li>
+<li>类型不同，有long，keyword，date</li>
+</ol>
+<p>Mapping在索引设计中是非常重要部分，就和表设计一样的，你需要定义字段</p>
+<p>一个好的字段能让我们的检索速度飞快，一个差的字段会让我们浪费很多平白无故的存储空间</p>
+<p>首先Mapping的基础知识可以参看这篇文章</p>
+<p><a href="https://www.cnblogs.com/wupeixuan/p/12514843.html#4667500">一文搞懂 Elasticsearch 之 Mapping</a></p>
+<p>这篇文章的大佬把Mapping说的很清楚了</p>
+<p>Mapping 分为两种，静态Mapping和动态Mapping</p>
+<p>下面我分别说下静态和动态的几个优缺点</p>
+<h3 id="静态mapping">静态Mapping<a hidden class="anchor" aria-hidden="true" href="#静态mapping">#</a></h3>
+<p>事先定义好字段，也就是定义好基础的Mapping格式，就像章节最开始我举的例子。</p>
+<p>静态Mapping，就相当于我们创建Mysql表，事先建表，规定好所有的字段和类型</p>
+<p>静态Mapping的优点如下</p>
+<ol>
+<li>可选可控</li>
+<li>节约存储空间</li>
+</ol>
+<p>静态Mapping的缺点如下</p>
+<ol>
+<li>设计要求高，后期无法进行更改</li>
+<li>将数据格式全部规定死，不够动态</li>
+</ol>
+<h3 id="动态mapping">动态Mapping<a hidden class="anchor" aria-hidden="true" href="#动态mapping">#</a></h3>
+<p>我们不创表，直接传入数据，Es会根据你传入的数据自动匹配合适的类型，也就是自动识别数据</p>
+<p>说白了，就是你，传个json过来，Es根据你的json自动匹配类型，然后创建Mapping</p>
+<p>动态Mapping这东西，其实我是不推荐用的，因为相当于，你把数据类型的判断逻辑交给了Es，这是很不可取的，因为Es，很傻，说下原因</p>
+<ol>
+<li>当你不想检索一些字段的时候，你可以通过设置mapping事先指定，但是动态的不行</li>
+<li>动态Mapping可控性没那么高，你往里导数据，要保证数据的一致性</li>
+</ol>
+<h3 id="高可用mapping设计的流程">高可用Mapping设计的流程<a hidden class="anchor" aria-hidden="true" href="#高可用mapping设计的流程">#</a></h3>
+<p>查了一些资料，其实大家可以看一下铭毅天下这个老哥的公众号</p>
+<p>他的公众号给了我很大启发！</p>
+<p><a href="https://github.com/mingyitianxia/deep_elasticsearch/wiki/%E3%80%8A%E6%AD%BB%E7%A3%95Elasticsearch%E6%96%B9%E6%B3%95%E8%AE%BA%E3%80%8B%E2%80%94%E2%80%94%E9%93%AD%E6%AF%85%E5%A4%A9%E4%B8%8B%E5%87%BA%E5%93%81">铭毅天下-死磕Elasticsearch方法论</a></p>
+<p>首先，设计Mapping，需要预先考虑如下几点</p>
+<ol>
+<li>是否需要进行全文检索</li>
+<li>是否需要排序</li>
+<li>数据类型的多重选择</li>
+</ol>
+<p>首先，先将Mapping里的几个参数及其基础设置梳理</p>
+<table>
+  <thead>
+      <tr>
+          <th>参数</th>
+          <th>具体说明</th>
+          <th>传入参数</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>enabled</td>
+          <td>设置是否需要检索</td>
+          <td>True/False</td>
+      </tr>
+      <tr>
+          <td>index</td>
+          <td>设置是否构建倒排索引</td>
+          <td>True/False</td>
+      </tr>
+      <tr>
+          <td>index_option</td>
+          <td>设置存储倒排索引的哪些信息</td>
+          <td>True/False</td>
+      </tr>
+      <tr>
+          <td>doc_values</td>
+          <td>是否开启聚合分析</td>
+          <td>True/False</td>
+      </tr>
+      <tr>
+          <td>dynamic</td>
+          <td>动态更新mapping</td>
+          <td>True/False</td>
+      </tr>
+      <tr>
+          <td>data_detection</td>
+          <td>自动识别日期类型</td>
+          <td>True/False</td>
+      </tr>
+  </tbody>
+</table>
+<p>进行Mapping设计时，首先要考虑我们到底有多少字段，这些字段的属性是什么</p>
+<p>这里非常重要，因为，当你创建完Index的时候，Es是不许更新表结构，也就是Mapping的，</p>
+<p>如果要选择更新，则需要重建Index，当数据量很大的时候，这种方案肯定是不可以的。</p>
+<p>所以，我这里定义的流程如下</p>
+<h4 id="第一步确定存储的数据类型">第一步：确定存储的数据类型<a hidden class="anchor" aria-hidden="true" href="#第一步确定存储的数据类型">#</a></h4>
+<p>先细分析一波，先根据我们的需求，确定建立好我们的数据类型</p>
+<p>一般的数据类型如下</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/index/1.png"></p>
+<p>根据我们的需求去梳理数据类型</p>
+<p>这里提几点选择策略</p>
+<ol>
+<li>如果你有很多文字，不需要分词，选text，需要分词，选keyword</li>
+<li>如果你未来不确定你到底有多少数据，将类型设置为long是比较合适的</li>
+<li>keyword检索比较短的字符会更快，如果字符很大，那么会增加存储和检索成本</li>
+</ol>
+<h4 id="第二步确定哪些字段需要检索">第二步：确定哪些字段需要检索<a hidden class="anchor" aria-hidden="true" href="#第二步确定哪些字段需要检索">#</a></h4>
+<p>如果我们存储的一个json十分巨大，例如content是一篇文章，或者我们的Mapping字段非常的多，那么如果全部默认检索，那我们会搜出一大堆无用的东西</p>
+<p>这样既增加了存储成本，又减弱了检索效率，所以下一步，我们就要根据需求，确定哪些字段需要检索</p>
+<p>一些固定参数，或者不想给用户展示的参数也就没有检索价值</p>
+<p>例如ID一类的参数</p>
+<p>这里如果我们不想ID被检索，那么需要设置</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span> <span style="color:#e6db74">&#34;id&#34;</span><span style="color:#960050;background-color:#1e0010">:</span>{
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;text&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;index&#34;</span>: <span style="color:#66d9ef">false</span>
+</span></span><span style="display:flex;"><span>      }
+</span></span></code></pre></div><h4 id="第三步检索的方式">第三步：检索的方式<a hidden class="anchor" aria-hidden="true" href="#第三步检索的方式">#</a></h4>
+<p>这里一般指的是分词的设置，这里需要指定分词器</p>
+<p>分词器我以前的blog里面也讲过</p>
+<p><a href="https://yemilice.com/2020/12/08/elasticsearch%E5%AE%9A%E4%B9%89%E8%87%AA%E5%B7%B1%E7%9A%84%E5%88%86%E8%AF%8D%E5%99%A8%E8%AF%8D%E5%85%B8%EF%BC%88%E6%A3%80%E7%B4%A2%E7%94%9F%E5%83%BB%E8%AF%8D%EF%BC%89/">定义自己的分词器</a></p>
+<p>这里相当于是，给指定的字段，添加分词</p>
+<p>假如我们现在有一个字段，名字叫name，我们需要指定中文分词器IK</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span> <span style="color:#e6db74">&#34;name&#34;</span><span style="color:#960050;background-color:#1e0010">:</span>{
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;text&#34;</span>,
+</span></span><span style="display:flex;"><span>		<span style="color:#f92672">&#34;analyzer&#34;</span>: <span style="color:#960050;background-color:#1e0010">&#34;ik_smart</span>
+</span></span><span style="display:flex;"><span>      }
+</span></span></code></pre></div><h4 id="第四步指定mapping的特殊设置">第四步：指定mapping的特殊设置<a hidden class="anchor" aria-hidden="true" href="#第四步指定mapping的特殊设置">#</a></h4>
+<p>这里的设置，不针对某个字段，而是针对整个mapping的setting设置</p>
+<p>这里有如下几个常用设置</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">&#34;settings&#34;</span>: {
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 分片数量
+</span></span></span><span style="display:flex;"><span>	<span style="color:#f92672">&#34;number_of_shards&#34;</span>: <span style="color:#ae81ff">5</span>,
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 副本
+</span></span></span><span style="display:flex;"><span>	<span style="color:#f92672">&#34;number_of_replicas&#34;</span>: <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 最好压缩
+</span></span></span><span style="display:flex;"><span>	<span style="color:#f92672">&#34;codec&#34;</span>: <span style="color:#e6db74">&#34;best_compression&#34;</span>,
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 最大展示条数
+</span></span></span><span style="display:flex;"><span>	<span style="color:#f92672">&#34;max_result_window&#34;</span>: <span style="color:#e6db74">&#34;100000000&#34;</span>,
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 刷新时间
+</span></span></span><span style="display:flex;"><span>	<span style="color:#f92672">&#34;refresh_interval&#34;</span>:<span style="color:#e6db74">&#34;30s&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>一般都是这么几个设置</p>
+<p>甭管那么多，直接上，不要怂</p>
+<p>这张图是铭毅天下那里找来的！爱你！</p>
+<p>这个流程，非常清楚了</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/index/3.jpg"></p>
+<h3 id="mapping的模版">Mapping的模版<a hidden class="anchor" aria-hidden="true" href="#mapping的模版">#</a></h3>
+<p>这里给出我自己开发时候的一个模版，这个模版扛住了千万数据量，直接上，不要怕</p>
+<p>大家拿过来改改字段就行</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">&#34;settings&#34;</span>: {
+</span></span><span style="display:flex;"><span>	  <span style="color:#f92672">&#34;number_of_shards&#34;</span>: <span style="color:#ae81ff">5</span>,
+</span></span><span style="display:flex;"><span>	  <span style="color:#f92672">&#34;number_of_replicas&#34;</span>: <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>	  <span style="color:#f92672">&#34;codec&#34;</span>: <span style="color:#e6db74">&#34;best_compression&#34;</span>,
+</span></span><span style="display:flex;"><span>	  <span style="color:#f92672">&#34;max_result_window&#34;</span>: <span style="color:#e6db74">&#34;100000000&#34;</span>,
+</span></span><span style="display:flex;"><span>	  <span style="color:#f92672">&#34;refresh_interval&#34;</span>:<span style="color:#e6db74">&#34;30s&#34;</span>
+</span></span><span style="display:flex;"><span>	},
+</span></span><span style="display:flex;"><span>	<span style="color:#f92672">&#34;mappings&#34;</span>: {
+</span></span><span style="display:flex;"><span>	  <span style="color:#f92672">&#34;doc&#34;</span>: {
+</span></span><span style="display:flex;"><span>		<span style="color:#f92672">&#34;properties&#34;</span>: {
+</span></span><span style="display:flex;"><span>		  <span style="color:#f92672">&#34;name&#34;</span>: {
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;keyword&#34;</span>
+</span></span><span style="display:flex;"><span>		  },
+</span></span><span style="display:flex;"><span>		  <span style="color:#f92672">&#34;id&#34;</span>: {
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;keyword&#34;</span>
+</span></span><span style="display:flex;"><span>		  },
+</span></span><span style="display:flex;"><span>		  <span style="color:#f92672">&#34;data&#34;</span>: {
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;nested&#34;</span>,
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;properties&#34;</span>: {
+</span></span><span style="display:flex;"><span>			  <span style="color:#f92672">&#34;value&#34;</span>: {
+</span></span><span style="display:flex;"><span>				<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;text&#34;</span>,
+</span></span><span style="display:flex;"><span>				<span style="color:#f92672">&#34;fields&#34;</span>: {
+</span></span><span style="display:flex;"><span>				  <span style="color:#f92672">&#34;keyword&#34;</span>: {
+</span></span><span style="display:flex;"><span>					<span style="color:#f92672">&#34;ignore_above&#34;</span>: <span style="color:#ae81ff">256</span>,
+</span></span><span style="display:flex;"><span>					<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;keyword&#34;</span>
+</span></span><span style="display:flex;"><span>				  }
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>			  },
+</span></span><span style="display:flex;"><span>			  <span style="color:#f92672">&#34;key&#34;</span>: {
+</span></span><span style="display:flex;"><span>				<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;text&#34;</span>,
+</span></span><span style="display:flex;"><span>				<span style="color:#f92672">&#34;fields&#34;</span>: {
+</span></span><span style="display:flex;"><span>				  <span style="color:#f92672">&#34;keyword&#34;</span>: {
+</span></span><span style="display:flex;"><span>					<span style="color:#f92672">&#34;ignore_above&#34;</span>: <span style="color:#ae81ff">256</span>,
+</span></span><span style="display:flex;"><span>					<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;keyword&#34;</span>
+</span></span><span style="display:flex;"><span>				  }
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>			  }
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		  },
+</span></span><span style="display:flex;"><span>		  <span style="color:#f92672">&#34;size&#34;</span>: {
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;long&#34;</span>
+</span></span><span style="display:flex;"><span>		  },
+</span></span><span style="display:flex;"><span>		  <span style="color:#f92672">&#34;last_mod_time&#34;</span>: {
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;format&#34;</span>: <span style="color:#e6db74">&#34;yyyy-MM-dd HH:mm:ss||yyyy-MM-dd || epoch_millis&#34;</span>,
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;date&#34;</span>
+</span></span><span style="display:flex;"><span>		  },
+</span></span><span style="display:flex;"><span>		  <span style="color:#f92672">&#34;user&#34;</span>: {
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;keyword&#34;</span>
+</span></span><span style="display:flex;"><span>		  },
+</span></span><span style="display:flex;"><span>		  <span style="color:#f92672">&#34;content&#34;</span>: {
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;analyzer&#34;</span>: <span style="color:#e6db74">&#34;ik_smart&#34;</span>,
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;term_vector&#34;</span>: <span style="color:#e6db74">&#34;with_positions_offsets&#34;</span>,
+</span></span><span style="display:flex;"><span>			<span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;text&#34;</span>
+</span></span><span style="display:flex;"><span>		  }
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	  }
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="大数据下索引的切分">大数据下索引的切分<a hidden class="anchor" aria-hidden="true" href="#大数据下索引的切分">#</a></h2>
+<p>当我通过filebeat或者logstash倒入数据到Es中的时候</p>
+<p>传输到Es中，创建的index是可以自己控制的</p>
+<p>一般的划分方法是：</p>
+<ol>
+<li>年</li>
+<li>月</li>
+<li>日</li>
+<li>自定义</li>
+</ol>
+<p>举例来说</p>
+<p>假如我们的log索引，名字叫&quot;log-2021-09&quot;</p>
+<p>那么每天的数据量都有千万，那么这个索引就会越来越大，越来越大</p>
+<p>你做检索的时候，就会在一个非常大的索引中进行</p>
+<p>这样检索的时候，卡，慢就出现了</p>
+<p>万一这索引坏了，那。。。丢数据吧</p>
+<p>所以，如何进行切分，或者优化索引，势在必行</p>
+<p>下面我这里将给出一些我自己实战的手法，给大家一些建议。</p>
+<h3 id="动态创建索引">动态创建索引<a hidden class="anchor" aria-hidden="true" href="#动态创建索引">#</a></h3>
+<p>首先，上一节我们讲了Mapping模版，这里我就不再多说</p>
+<p>我们需要结合模版去动态创建索引</p>
+<p>方法如下</p>
+<h4 id="rollver滚动创建索引">rollver滚动创建索引<a hidden class="anchor" aria-hidden="true" href="#rollver滚动创建索引">#</a></h4>
+<p>现在开始设定 log-2021-09 这个索引</p>
+<p>这步的意思是创一个索引，名字叫做log-2021-09-00001，别名为logs_write</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">curl</span> <span style="color:#960050;background-color:#1e0010">-XPUT</span> <span style="color:#960050;background-color:#1e0010">&#39;localhost:</span><span style="color:#ae81ff">9200</span><span style="color:#960050;background-color:#1e0010">/log</span><span style="color:#ae81ff">-2021-09-00001</span> <span style="color:#960050;background-color:#1e0010">?pretty&#39;</span> <span style="color:#960050;background-color:#1e0010">-d&#39;</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;aliases&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;logs_write&#34;</span>: {}
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}<span style="color:#960050;background-color:#1e0010">&#39;</span>
+</span></span></code></pre></div><p>现在开始设置动态索引创建</p>
+<p>这步的意思是，设定logs_write，当天数大于7天，或者文档数量大于100000，或者大小大于5gb，创建一个新的log-2021-09-00002 索引</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">POST</span> <span style="color:#960050;background-color:#1e0010">/logs_write/_rollover</span> 
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;conditions&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;max_age&#34;</span>:   <span style="color:#e6db74">&#34;7d&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;max_docs&#34;</span>:  <span style="color:#ae81ff">100000</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;max_size&#34;</span>:  <span style="color:#e6db74">&#34;5gb&#34;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="定时清理过期数据">定时清理过期数据<a hidden class="anchor" aria-hidden="true" href="#定时清理过期数据">#</a></h3>
+<h4 id="curator索引管理工具">Curator索引管理工具<a hidden class="anchor" aria-hidden="true" href="#curator索引管理工具">#</a></h4>
+<p>这个工具，可以进行索引管理</p>
+<p>安装的方法，网上找RPM包直接安就得了</p>
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/client/curator/current/yum-repository.html">https://www.elastic.co/guide/en/elasticsearch/client/curator/current/yum-repository.html</a></p>
+<p>它的功能有</p>
+<ol>
+<li>关闭索引</li>
+<li>创建快照</li>
+<li>创建索引</li>
+<li>打开索引
+&hellip;..</li>
+</ol>
+<p>这里，我们可以通过Curator来进行索引创建，定时配置删除等等</p>
+<p>例如我们要动态删除7天前的索引</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yml" data-lang="yml"><span style="display:flex;"><span><span style="color:#75715e"># Remember, leave a key empty if there is no value.  None will be a string,</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># not a Python &#34;NoneType&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Also remember that all examples have &#39;disable_action&#39; set to True.  If you</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># want to use this action as a template, be sure to set this to False after</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># copying it.</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">actions</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">1</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">action</span>: <span style="color:#ae81ff">delete_indices　　　　　　　　# 这里执行操作类型为删除索引</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">description</span>: &gt;-<span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      Delete metric indices older than 3 days (based on index name), for zou_data-2018-05-01
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      prefixed indices. Ignore the error if the filter does not result in an
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      actionable list of indices (ignore_empty_list) and exit cleanly.</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">options</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">ignore_empty_list</span>: <span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">filters</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">filtertype</span>: <span style="color:#ae81ff">pattern</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">kind</span>: <span style="color:#ae81ff">prefix</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">value</span>: <span style="color:#ae81ff">logs-　　　　　　　　# 这里是指匹配前缀为 “order_” 的索引，还可以支持正则匹配等，详见官方文档</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">filtertype</span>: <span style="color:#ae81ff">age　　　　　　　　　　　</span> <span style="color:#75715e"># 这里匹配时间</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">source</span>: <span style="color:#ae81ff">name　　　　　　　　　　　　　</span> <span style="color:#75715e"># 这里根据索引name来匹配，还可以根据字段等，详见官方文档</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">direction</span>: <span style="color:#ae81ff">older</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">timestring</span>: <span style="color:#e6db74">&#39;%Y-%m-%d&#39;</span>　　　　　　　 <span style="color:#75715e"># 用于匹配和提取索引或快照名称中的时间戳</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">unit</span>: <span style="color:#ae81ff">days　　　　　　　　　　　　　　　# 这里定义的是days，还有weeks,months等，总时间为unit * unit_count</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">unit_count</span>: <span style="color:#ae81ff">7</span>
+</span></span></code></pre></div><p>以上命令删除了7天前，以log-*开头的索引</p>
+<p>可以看下这篇文章</p>
+<p><a href="https://www.cnblogs.com/caoweixiong/p/11995525.html">ElasticSearch——Curator索引管理</a></p>
+<h2 id="结尾">结尾<a hidden class="anchor" aria-hidden="true" href="#结尾">#</a></h2>
+<p>这些大概就是我实战遇到的一些问题，结合网上的一些资料</p>
+<p>我输出了这篇blog</p>
+<p>最近我开始疯狂学习，希望未来会有突破吧</p>
+<p>狗公司不发年终，淦，还是赶紧找机会跑路，才是最重要的。</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/index/2.jpg"></p>
+<p>大家加油吧！写算法Ing！</p>
+<p>加油！</p>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/">
+    <span class="title">« </span>
+    <span>Golang协程基础探究</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/%E5%86%99%E4%B8%80%E4%B8%AA%E9%AB%98%E5%8F%AF%E7%94%A8rpc%E6%9C%8D%E5%8A%A1%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86%E7%AF%87/">
+    <span class="title"> »</span>
+    <span>写一个高可用Rpc服务（基础知识篇）</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

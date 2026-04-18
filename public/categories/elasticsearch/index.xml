@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Elasticsearch on yemilice</title>
+    <link>http://localhost:1313/categories/elasticsearch/</link>
+    <description>Recent content in Elasticsearch on yemilice</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Thu, 09 Sep 2021 15:36:23 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/elasticsearch/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>设计高可用的ElasicSearch索引</title>
+      <link>http://localhost:1313/posts/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84elasicsaerch%E7%B4%A2%E5%BC%95/</link>
+      <pubDate>Thu, 09 Sep 2021 15:36:23 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E8%AE%BE%E8%AE%A1%E9%AB%98%E5%8F%AF%E7%94%A8%E7%9A%84elasicsaerch%E7%B4%A2%E5%BC%95/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;最近又是学习的爆发期，我戒除了上班划水和看知乎故事会，也戒除了游戏和小说&lt;/p&gt;
+&lt;p&gt;也戒除了频繁参加外面的无用活动，也逐渐修复了寂寞侵蚀内心的恐惧&lt;/p&gt;
+&lt;p&gt;将心思逐渐稳定下来，所以，我本月开始到年底，将会爆发式更新blog和歌曲&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ElasticSearch-新老选主算法对比</title>
+      <link>http://localhost:1313/posts/elasticsearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/</link>
+      <pubDate>Wed, 16 Jun 2021 15:17:06 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch-%E6%96%B0%E8%80%81%E9%80%89%E4%B8%BB%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;首先，ElasticSearch 7，也就是Es 7， 变动还是有点儿大，改了很多东西，例如取消了type，修改了选主算法之类的操作&lt;/p&gt;
+&lt;p&gt;正好几天在钻研一些选主算法一类的东西，看了ETCD，rabbitmq，kafka之类的一些选主算法，想起来似乎对于Es，我还没有细致研究&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ElasticSearch检索的核心-倒排索引解读</title>
+      <link>http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/</link>
+      <pubDate>Fri, 14 May 2021 15:09:41 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch%E6%A3%80%E7%B4%A2%E7%9A%84%E6%A0%B8%E5%BF%83-%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E8%A7%A3%E8%AF%BB/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;ElasticSearch为什么适合做检索服务器？&lt;/p&gt;
+&lt;p&gt;因为快啊，大佬！&lt;/p&gt;
+&lt;p&gt;为什么快啊？&lt;/p&gt;
+&lt;p&gt;因为&lt;strong&gt;倒排索引&lt;/strong&gt;啊！&lt;/p&gt;
+&lt;p&gt;什么是&lt;strong&gt;倒排索引&lt;/strong&gt;？&lt;/p&gt;
+&lt;p&gt;这个，就要细细分析一下了，这篇文章可能写的不是那么全，但是我也会尽量总结所有重点！希望能帮到大家，爱你们！&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ElasticSearch高级用法(Golang实现)</title>
+      <link>http://localhost:1313/posts/elasticsearch%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95golang%E5%AE%9E%E7%8E%B0/</link>
+      <pubDate>Wed, 02 Dec 2020 14:38:21 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95golang%E5%AE%9E%E7%8E%B0/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;前阵子开发了一个检索服务器，用了一些Es的高阶功能，网上随便看了一圈，基本没有人公开这些功能的中文版，我寻思咱们不能只满足了自己，不满足其他老哥吧，所以，我将开发中用到的Es高阶功能总结输出.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Elasticsearch大数据量下的优化方法</title>
+      <link>http://localhost:1313/posts/elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/</link>
+      <pubDate>Fri, 09 Oct 2020 09:10:22 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;十一在家待着玩了两天COD，突然想起来似乎放假前有一个Elasticsearch的问题需要处理，的确，现在距离开工也只剩下四天了，哎，假期的日子过的飞快，又到时候说拜拜，又要开始社畜的生活啦，想到心里就万分悲痛。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

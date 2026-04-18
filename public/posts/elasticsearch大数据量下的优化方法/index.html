@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Elasticsearch大数据量下的优化方法 | yemilice</title>
+<meta name="keywords" content="前后端, 杂七杂八">
+<meta name="description" content="前言
+十一在家待着玩了两天COD，突然想起来似乎放假前有一个Elasticsearch的问题需要处理，的确，现在距离开工也只剩下四天了，哎，假期的日子过的飞快，又到时候说拜拜，又要开始社畜的生活啦，想到心里就万分悲痛。">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="Elasticsearch大数据量下的优化方法">
+  <meta property="og:description" content="前言 十一在家待着玩了两天COD，突然想起来似乎放假前有一个Elasticsearch的问题需要处理，的确，现在距离开工也只剩下四天了，哎，假期的日子过的飞快，又到时候说拜拜，又要开始社畜的生活啦，想到心里就万分悲痛。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-10-09T09:10:22+00:00">
+    <meta property="article:modified_time" content="2020-10-09T09:10:22+00:00">
+    <meta property="article:tag" content="前后端">
+    <meta property="article:tag" content="杂七杂八">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Elasticsearch大数据量下的优化方法">
+  <meta name="twitter:description" content="前言 十一在家待着玩了两天COD，突然想起来似乎放假前有一个Elasticsearch的问题需要处理，的确，现在距离开工也只剩下四天了，哎，假期的日子过的飞快，又到时候说拜拜，又要开始社畜的生活啦，想到心里就万分悲痛。">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Elasticsearch大数据量下的优化方法",
+      "item": "http://localhost:1313/posts/elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Elasticsearch大数据量下的优化方法",
+  "name": "Elasticsearch大数据量下的优化方法",
+  "description": "前言 十一在家待着玩了两天COD，突然想起来似乎放假前有一个Elasticsearch的问题需要处理，的确，现在距离开工也只剩下四天了，哎，假期的日子过的飞快，又到时候说拜拜，又要开始社畜的生活啦，想到心里就万分悲痛。\n",
+  "keywords": [
+    "前后端", "杂七杂八"
+  ],
+  "articleBody": "前言 十一在家待着玩了两天COD，突然想起来似乎放假前有一个Elasticsearch的问题需要处理，的确，现在距离开工也只剩下四天了，哎，假期的日子过的飞快，又到时候说拜拜，又要开始社畜的生活啦，想到心里就万分悲痛。\n悲痛完了之后，也的确要想办法去解决问题，所以，今天（10／5），我研究了一下ElasticSearch检索／导入大文件的一些方案，并且输出了一些我个人的建议，这些基本都是实战建议，不会那么偏向理论，所以理论家们，就不要挑我的刺啦，想看理论，咱们回头去写源码解析！多多支持！\n问题描述 现在有个ElasticSearch做为基础的检索服务，里面存储很多文档，这些文档多种多样，有PDF，DOC等等，需要对这些文档进行全文检索，所以将这些文档的内容也导入进ElasticSearch当中，文档的内容可能会很大，导入／查询的时候出现了如下问题\n导入一些比较大的文件的时候ElasticSearch节点直接Down机，出现了内存溢出OOM的问题，如下所示 java.lang.OutOfMemoryError: Java heap space 检索的时候，返回的比较慢，当数据量大于100w条，并且基本都要支持全文检索的时候，翻页／高亮，查询非常慢，经常转很久的菊花出不来，翻页也慢，干嘛都慢。 基础环境分析 首先需要分析下我自己的干活儿环境，对症下药。\nElasticSearch的集群配置\ncluster.name: Es_test node.name: es_node1 node.master: true node.data: true index.number_of_shards: 5 index.number_of_replicas: 1 network.host: 10.0.6.244 http.port: 9200 transport.tcp.port: 9300 discovery.zen.ping.unicast.hosts: [\"10.0.6.244\"] discovery.zen.minimum_master_nodes: 1 http.cors.enabled: true http.cors.allow-origin: \"*\" network.bind_host: \"::\" 然后就没了，算是最基础的ElasticSearch配置了\njvm.options设置为\nxms: 1g xmx: 1g 基础的环境配置就是这样\n优化查询和导入的方法 1. 配置优化 有一句话怎么说的来着，当一切都可以通过加钱来解决的时候，那就不是个问题嘛。\n你看看我那个堆内存配置，只有1个G，而且总共测试的机器内存只有8G，这个根本没办法再加，公司的默认测试机都是8G，除开这个还要跑其他服务，例如存储／web等，我想啊，本来就是拖拉机你还想当跑车开？吃肉的东西你让他吃草能行吗，所以再怎么优化，数据量上来了最终还是要沦落到加钱上好机器的最终结局。\n不过现在只有拼命在这个烂机器的基础上去优化了\n所以，需要修改一波jvm.options配置\nxms: 4g xmx: 4g 这里修改了过后，一般就能解决大部分问题，但如果需要支撑大规模的数据检索和近乎实时的查询任务，这个是非常不靠谱的机器配置，完全是无法支撑业务的，但是领导非要往里面塞这个，还要求优化到极限，我能怎么办。\n言归正传，第一步就是\n调整JVM的配置\n将JVM的配置调整为整个机器内存的一半，比如你的机器是64G内存，你设置xms和xmx就设置成32G，这个是官方推荐的，靠谱！\n2. 减少refresh_interval刷新比率 这个可能抽象一点啊，首先这个refresh_interval是干嘛的呢，这玩意儿说白了就是个刷新器，你每次导入数据到ElasticSearch中不能马上被查到，有个固定刷新间隔，也就是refresh_interval控制的，刷新成功之后，数据才能被马上查到。\nrefresh_interval 如果不设置的话，默认是1s一次，像我们这种导入数据比较频繁的，刷新比率过高，会导致CPU／Memory就像开了氮气加速一样极速前进。。。所以把这东西设置一下，如果不是实时比率要求高的，直接改成30s刷新一次，或者1分钟刷新一次，不要害怕丢数据之类的，当你节点down机，Es自己都保不住了，还管刷新比率？\n修改refresh_interval刷新比率，直接在elasticsearch的配置文件修改\n\"refresh_interval\": \"30s\" 3. 查询缓慢，响应时间长的解决方法 这里我更倾向于问题描述是从ElasticSearch获取数据比较慢，比较慢的愿意可能有哪些呢？\n文档过大，可能某个字段非常长，返回的太慢。 ElasticSearch响应慢，CPU／内存占比过高 网络响应慢 我们针对这些问题一个个去解决，对症下药。\n3.1 文档过大，某个字段大，返回慢 首先看看能不能把过长的字段给拆分出去，拆成另外一张表。如果不可以拆分出去，就在显示的部分想办法。\n首先举个例子，假设我们有个字段叫content，里面存的都是解析出来的PDF，DOC文件的文字，这种一般文字都非常多，但是我们需要进行全文检索并且返回检索到的值，Es查询到值以后就会全部返回，这样就非常慢，我们可以通过一些别的手段解决这个问题。\n例如，我们原本的返回字段是\n{ \"name\": \"xxx\", \"id\": \"xxx\", \"content\": \"............\" } 展示部分，不展示此字段，对此字段，也不进行返回，在ElasticSearch请求返回值的步骤时，强制性不返回Content字段（返回指定字段），减少查询压力，这样就无需等待全部字段返回了，加快查询速度。 { \"_source\":{ \"includes\":[\"name\",\"id\"], \"excludes\":[\"desc\"] } } { \"name\": \"xxx\", \"id\": \"xxx\" } 检索部分，当发现检索关键字的时候，进行全文检索，配置highlight高亮，返回检索结果时只返回highlight结果，只匹配第一个highlight结果，其他结果直接丢弃。加快返回的速度。 这里我感觉我说的更抽象了，其实说白了，我们需要配置ElasticSearch的Highlight返回，指定content字段才可以高亮，当检索到匹配值的时候，Es会返回一个highlight的切片（列表），无论如何，我们只取第一个highlight结果，其他结果全部丢弃，这样可以加快检索，返回给前端的部分也有了，这样岂不是很棒？\n4. 分页部分优化 ElasticSearch的分页机制有两种，第一种是From + Size的机制，这个相对来说比较简单，还可以进行控制，另一种是Scroll机制，这个就复杂一些，我下面说。\nFrom + Size 它的基础逻辑就是，它首先会确定doc的顺序，进行排序，然后再进行返回，逻辑上来说，它也需要取出所有数据，所以当数据量非常大的时候，从ElasticSearch中取出数据会占用大量CPU／内存，如果跳页过大，例如从第1页瞬间跳到第100页，就会取出第1页到第99页的所有数据，然后排序，然后进行切分，然后再展示第100页数据。。。这个又抽象了，说白了就是，这个分页比较适合一页页往后翻，你要闲的没事儿天天跳来跳去，人家谁Hold住.\nScroll的基础逻辑就是，首先，Scroll会维护一个游标，记录你当前读取的doc位置，而不是取出来做除法切分，这个更适合一次性拿一大堆数据出来，它其实类似一个快照，每次你查询的时候，都会记录你上次查询的位置，下次访问就直接从这个位置／快照开始，免去了拿取所有数据的步骤，有更好的检索效率，CPU／内存使用也不会那么大。\n4.1 限定分页的数量 首先无论如何，我们先限定死，分页的数量，最大1000页，多了不让翻。这是为了保证From + Size机制使用时，跳页数量过大，导致CPU／内存飙升导致服务OOM或者是挂掉，这个可以让前端同学强制限制一波。\n4.2 根据数据量大小，逐步替换From + Size 翻页逻辑 如果数量过大，前面我也说了，你整From + Size肯定是不行，而且你把客户想象成熊孩子，没事儿干就乱点，乱跳页，动不动就CPU／内存暴增，那不就拉垮了嘛。所以快速切换 From + Size 为 Scroll就得了。\n5. 建表（索引）时候的优化 在创建表的时候，需要指定一些字段属性，这样会减少查询和检索的内存消耗或者是，这里给出几个我总结的字段优化方法\n全文检索的时候，指定的字段类型一定得是 text 其他检索的时候，需要检索字段完整值，需要使用 keyword，如果想做模糊匹配，需要使用wildcard或者*检索 时间字段可以使用date，可以自己定义数据格式 不确定数据长度，需要用long进行设置，避免以后长度超出。 建表的时候，需要设置索引的压缩功能，减少存储空间占用，设置的方法就像这样，“codec”: “best_compression”。 避免自定义Doc的ID，尽量用人家Es自己生成的，你自己整ID一般都是UUID时间戳，还容易重复也慢。 定义分词器没必要所有字段都用，指定几个需要的字段就行了。 确定不会修改的doc需要设置dynamic，禁止更新。 6. ElasticSearch存储位置的转移 安装好ElasticSearch之后，默认的位置是在系统盘。\n我估摸着数据量一大，没多久你就给系统盘整崩溃了，所以，改换系统盘位置，做好数据迁移是非常有必要的。\n修改配置文件，手动切换存储位置, 这里举个简单例子\npath.data: /media/data/elasticsearch 迁移数据文件,修改文件夹权限\nmv /var/lib/elasticsearch/nodes /media/data/elasticsearch chown -R elasticsearch:elasticsearch * 7. ElasticSearch写入性能优化 7.1 推荐使用bulk批量写入 其实按照我现在的使用场景，发现PDF／DOC有更新／上传到文件系统，就传入到ElasticSearch当中，其实ElasticSearch的批量写入bulk的效率比一条条写效率高多了，这里建议批量写入数据，而不是一条条传入。\n7.2 多线程写入ElasticSearch 多线程并发写可以利用集群的资源，我这里用Golang做了后端，直接走了一波协程 + 线程，这样可以减底层fsync开销，可以减少单个Es节点压力。\n7.3 Translog事务日志的优化 translog是用来恢复数据的。Es用“后写”的套路来加快写入速度 — 写入的索引并没有实时落盘到索引文件，而是先双写到内存和translog文件，\nes存储数据时，先把输出存储在内存中，等到refresh(该时间可以在设置mapping时的setting中设置intavel_refresh=xxx)时间后，才把数据存储到lucene中的segment中，清空内存缓冲区，往磁盘里写入commit point信息，文件系统的page cache(segments) fsync到磁盘，之后把translog旧日志删除掉。\n按照逻辑来说，如果降低translog可以提高效率，但是会降低容灾能力。\n修改配置，不需要每次都刷新。\nindex.translog.durability: async index.translog.sync_interval: 3600s 结尾 这次我主要开发了一个ElasticSearch的检索服务器，主要就是用apache tika去读取对象存储中的PDF／DOC等文件，解析文字，传入ElasticSearch当中，主要是全文检索，这个真的费了点功夫，因为我的服务器，实在是太烂了，只有他娘的8个G，还要跑Ceph存储等等等等，优化起来那个麻烦啊，这就相当于你开拖拉机，要我改车给你改成法拉利的速度，你这不是扯嘛。\n预告一下下一篇blog，TIKA提取对象存储中的PDF／DOC中的文字，有点儿绕是吧，绕就对了！哈哈哈，走你，下次见！\n",
+  "wordCount" : "4161",
+  "inLanguage": "zh-cn",
+  "datePublished": "2020-10-09T09:10:22Z",
+  "dateModified": "2020-10-09T09:10:22Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            Elasticsearch大数据量下的优化方法
+        </h1>
+        <div class="post-meta"><span title='2020-10-09 09:10:22 +0000 UTC'>October 9, 2020</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4161 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e5%89%8d%e8%a8%80" aria-label="前言">前言</a></li>
+            <li>
+                <a href="#%e9%97%ae%e9%a2%98%e6%8f%8f%e8%bf%b0" aria-label="问题描述">问题描述</a></li>
+            <li>
+                <a href="#%e5%9f%ba%e7%a1%80%e7%8e%af%e5%a2%83%e5%88%86%e6%9e%90" aria-label="基础环境分析">基础环境分析</a></li>
+            <li>
+                <a href="#%e4%bc%98%e5%8c%96%e6%9f%a5%e8%af%a2%e5%92%8c%e5%af%bc%e5%85%a5%e7%9a%84%e6%96%b9%e6%b3%95" aria-label="优化查询和导入的方法">优化查询和导入的方法</a><ul>
+                    
+            <li>
+                <a href="#1-%e9%85%8d%e7%bd%ae%e4%bc%98%e5%8c%96" aria-label="1. 配置优化">1. 配置优化</a></li>
+            <li>
+                <a href="#2-%e5%87%8f%e5%b0%91refresh_interval%e5%88%b7%e6%96%b0%e6%af%94%e7%8e%87" aria-label="2. 减少refresh_interval刷新比率">2. 减少refresh_interval刷新比率</a></li>
+            <li>
+                <a href="#3-%e6%9f%a5%e8%af%a2%e7%bc%93%e6%85%a2%e5%93%8d%e5%ba%94%e6%97%b6%e9%97%b4%e9%95%bf%e7%9a%84%e8%a7%a3%e5%86%b3%e6%96%b9%e6%b3%95" aria-label="3. 查询缓慢，响应时间长的解决方法">3. 查询缓慢，响应时间长的解决方法</a><ul>
+                    
+            <li>
+                <a href="#31-%e6%96%87%e6%a1%a3%e8%bf%87%e5%a4%a7%e6%9f%90%e4%b8%aa%e5%ad%97%e6%ae%b5%e5%a4%a7%e8%bf%94%e5%9b%9e%e6%85%a2" aria-label="3.1 文档过大，某个字段大，返回慢">3.1 文档过大，某个字段大，返回慢</a></li></ul>
+            </li>
+            <li>
+                <a href="#4-%e5%88%86%e9%a1%b5%e9%83%a8%e5%88%86%e4%bc%98%e5%8c%96" aria-label="4. 分页部分优化">4. 分页部分优化</a><ul>
+                    
+            <li>
+                <a href="#41-%e9%99%90%e5%ae%9a%e5%88%86%e9%a1%b5%e7%9a%84%e6%95%b0%e9%87%8f" aria-label="4.1 限定分页的数量">4.1 限定分页的数量</a></li>
+            <li>
+                <a href="#42-%e6%a0%b9%e6%8d%ae%e6%95%b0%e6%8d%ae%e9%87%8f%e5%a4%a7%e5%b0%8f%e9%80%90%e6%ad%a5%e6%9b%bf%e6%8d%a2from--size-%e7%bf%bb%e9%a1%b5%e9%80%bb%e8%be%91" aria-label="4.2 根据数据量大小，逐步替换From &#43; Size 翻页逻辑">4.2 根据数据量大小，逐步替换From + Size 翻页逻辑</a></li></ul>
+            </li>
+            <li>
+                <a href="#5-%e5%bb%ba%e8%a1%a8%e7%b4%a2%e5%bc%95%e6%97%b6%e5%80%99%e7%9a%84%e4%bc%98%e5%8c%96" aria-label="5. 建表（索引）时候的优化">5. 建表（索引）时候的优化</a></li>
+            <li>
+                <a href="#6-elasticsearch%e5%ad%98%e5%82%a8%e4%bd%8d%e7%bd%ae%e7%9a%84%e8%bd%ac%e7%a7%bb" aria-label="6. ElasticSearch存储位置的转移">6. ElasticSearch存储位置的转移</a></li>
+            <li>
+                <a href="#7-elasticsearch%e5%86%99%e5%85%a5%e6%80%a7%e8%83%bd%e4%bc%98%e5%8c%96" aria-label="7. ElasticSearch写入性能优化">7. ElasticSearch写入性能优化</a><ul>
+                    
+            <li>
+                <a href="#71-%e6%8e%a8%e8%8d%90%e4%bd%bf%e7%94%a8bulk%e6%89%b9%e9%87%8f%e5%86%99%e5%85%a5" aria-label="7.1 推荐使用bulk批量写入">7.1 推荐使用bulk批量写入</a></li>
+            <li>
+                <a href="#72-%e5%a4%9a%e7%ba%bf%e7%a8%8b%e5%86%99%e5%85%a5elasticsearch" aria-label="7.2 多线程写入ElasticSearch">7.2 多线程写入ElasticSearch</a></li>
+            <li>
+                <a href="#73-translog%e4%ba%8b%e5%8a%a1%e6%97%a5%e5%bf%97%e7%9a%84%e4%bc%98%e5%8c%96" aria-label="7.3 Translog事务日志的优化">7.3 Translog事务日志的优化</a></li></ul>
+            </li></ul>
+            </li>
+            <li>
+                <a href="#%e7%bb%93%e5%b0%be" aria-label="结尾">结尾</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="前言">前言<a hidden class="anchor" aria-hidden="true" href="#前言">#</a></h2>
+<p>十一在家待着玩了两天COD，突然想起来似乎放假前有一个Elasticsearch的问题需要处理，的确，现在距离开工也只剩下四天了，哎，假期的日子过的飞快，又到时候说拜拜，又要开始社畜的生活啦，想到心里就万分悲痛。</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/Elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/1.jpg"></p>
+<p>悲痛完了之后，也的确要想办法去解决问题，所以，今天（10／5），我研究了一下ElasticSearch检索／导入大文件的一些方案，并且输出了一些我个人的建议，这些基本都是实战建议，不会那么偏向理论，所以理论家们，就不要挑我的刺啦，想看理论，咱们回头去写源码解析！多多支持！</p>
+<h2 id="问题描述">问题描述<a hidden class="anchor" aria-hidden="true" href="#问题描述">#</a></h2>
+<p>现在有个ElasticSearch做为基础的检索服务，里面存储很多文档，这些文档多种多样，有PDF，DOC等等，需要对这些文档进行全文检索，所以将这些文档的内容也导入进ElasticSearch当中，文档的内容可能会很大，导入／查询的时候出现了如下问题</p>
+<ol>
+<li>导入一些比较大的文件的时候ElasticSearch节点直接Down机，出现了内存溢出OOM的问题，如下所示</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>java.lang.OutOfMemoryError: Java heap space
+</span></span></code></pre></div><ol start="2">
+<li>检索的时候，返回的比较慢，当数据量大于100w条，并且基本都要支持全文检索的时候，翻页／高亮，查询非常慢，经常转很久的菊花出不来，翻页也慢，干嘛都慢。</li>
+</ol>
+<h2 id="基础环境分析">基础环境分析<a hidden class="anchor" aria-hidden="true" href="#基础环境分析">#</a></h2>
+<p>首先需要分析下我自己的干活儿环境，对症下药。</p>
+<p>ElasticSearch的集群配置</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">cluster.name</span>: <span style="color:#ae81ff">Es_test</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">node.name</span>: <span style="color:#ae81ff">es_node1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">node.master</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">node.data</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">index.number_of_shards</span>: <span style="color:#ae81ff">5</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">index.number_of_replicas</span>: <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">network.host</span>: <span style="color:#ae81ff">10.0.6.244</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">http.port</span>: <span style="color:#ae81ff">9200</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">transport.tcp.port</span>: <span style="color:#ae81ff">9300</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">discovery.zen.ping.unicast.hosts</span>: [<span style="color:#e6db74">&#34;10.0.6.244&#34;</span>]
+</span></span><span style="display:flex;"><span><span style="color:#f92672">discovery.zen.minimum_master_nodes</span>: <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">http.cors.enabled</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">http.cors.allow-origin</span>: <span style="color:#e6db74">&#34;*&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">network.bind_host</span>: <span style="color:#e6db74">&#34;::&#34;</span>
+</span></span></code></pre></div><p>然后就没了，算是最基础的ElasticSearch配置了</p>
+<p>jvm.options设置为</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">xms</span>: <span style="color:#ae81ff">1g</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">xmx</span>: <span style="color:#ae81ff">1g</span>
+</span></span></code></pre></div><p>基础的环境配置就是这样</p>
+<h2 id="优化查询和导入的方法">优化查询和导入的方法<a hidden class="anchor" aria-hidden="true" href="#优化查询和导入的方法">#</a></h2>
+<h3 id="1-配置优化">1. 配置优化<a hidden class="anchor" aria-hidden="true" href="#1-配置优化">#</a></h3>
+<p>有一句话怎么说的来着，当一切都可以通过加钱来解决的时候，那就不是个问题嘛。</p>
+<p>你看看我那个堆内存配置，只有1个G，而且总共测试的机器内存只有8G，这个根本没办法再加，公司的默认测试机都是8G，除开这个还要跑其他服务，例如存储／web等，我想啊，本来就是拖拉机你还想当跑车开？吃肉的东西你让他吃草能行吗，所以再怎么优化，数据量上来了最终还是要沦落到加钱上好机器的最终结局。</p>
+<p>不过现在只有拼命在这个烂机器的基础上去优化了</p>
+<p>所以，需要修改一波jvm.options配置</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">xms</span>: <span style="color:#ae81ff">4g</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">xmx</span>: <span style="color:#ae81ff">4g</span>
+</span></span></code></pre></div><p>这里修改了过后，一般就能解决大部分问题，但如果需要支撑大规模的数据检索和近乎实时的查询任务，这个是非常不靠谱的机器配置，完全是无法支撑业务的，但是领导非要往里面塞这个，还要求优化到极限，我能怎么办。</p>
+<p>言归正传，第一步就是</p>
+<p><strong>调整JVM的配置</strong></p>
+<p>将JVM的配置调整为整个机器内存的一半，比如你的机器是64G内存，你设置xms和xmx就设置成32G，这个是官方推荐的，靠谱！</p>
+<h3 id="2-减少refresh_interval刷新比率">2. 减少refresh_interval刷新比率<a hidden class="anchor" aria-hidden="true" href="#2-减少refresh_interval刷新比率">#</a></h3>
+<p>这个可能抽象一点啊，首先这个refresh_interval是干嘛的呢，这玩意儿说白了就是个刷新器，你每次导入数据到ElasticSearch中不能马上被查到，有个固定刷新间隔，也就是refresh_interval控制的，刷新成功之后，数据才能被马上查到。</p>
+<p>refresh_interval 如果不设置的话，默认是1s一次，像我们这种导入数据比较频繁的，刷新比率过高，会导致CPU／Memory就像开了氮气加速一样极速前进。。。所以把这东西设置一下，如果不是实时比率要求高的，直接改成30s刷新一次，或者1分钟刷新一次，不要害怕丢数据之类的，当你节点down机，Es自己都保不住了，还管刷新比率？</p>
+<p>修改refresh_interval刷新比率，直接在elasticsearch的配置文件修改</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">&#34;refresh_interval&#34;: </span><span style="color:#e6db74">&#34;30s&#34;</span>
+</span></span></code></pre></div><h3 id="3-查询缓慢响应时间长的解决方法">3. 查询缓慢，响应时间长的解决方法<a hidden class="anchor" aria-hidden="true" href="#3-查询缓慢响应时间长的解决方法">#</a></h3>
+<p>这里我更倾向于问题描述是从ElasticSearch获取数据比较慢，比较慢的愿意可能有哪些呢？</p>
+<ol>
+<li>文档过大，可能某个字段非常长，返回的太慢。</li>
+<li>ElasticSearch响应慢，CPU／内存占比过高</li>
+<li>网络响应慢</li>
+</ol>
+<p>我们针对这些问题一个个去解决，对症下药。</p>
+<h4 id="31-文档过大某个字段大返回慢">3.1 文档过大，某个字段大，返回慢<a hidden class="anchor" aria-hidden="true" href="#31-文档过大某个字段大返回慢">#</a></h4>
+<p>首先看看能不能把过长的字段给拆分出去，拆成另外一张表。如果不可以拆分出去，就在显示的部分想办法。</p>
+<p>首先举个例子，假设我们有个字段叫content，里面存的都是解析出来的PDF，DOC文件的文字，这种一般文字都非常多，但是我们需要进行全文检索并且返回检索到的值，Es查询到值以后就会全部返回，这样就非常慢，我们可以通过一些别的手段解决这个问题。</p>
+<p>例如，我们原本的返回字段是</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;xxx&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;xxx&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;content&#34;</span>: <span style="color:#e6db74">&#34;............&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ol>
+<li>展示部分，不展示此字段，对此字段，也不进行返回，在ElasticSearch请求返回值的步骤时，强制性不返回Content字段（返回指定字段），减少查询压力，这样就无需等待全部字段返回了，加快查询速度。</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;_source&#34;</span>:{
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;includes&#34;</span>:[<span style="color:#e6db74">&#34;name&#34;</span>,<span style="color:#e6db74">&#34;id&#34;</span>],
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;excludes&#34;</span>:[<span style="color:#e6db74">&#34;desc&#34;</span>]
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;xxx&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span>: <span style="color:#e6db74">&#34;xxx&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ol start="2">
+<li>检索部分，当发现检索关键字的时候，进行全文检索，配置highlight高亮，返回检索结果时只返回highlight结果，只匹配第一个highlight结果，其他结果直接丢弃。加快返回的速度。</li>
+</ol>
+<p>这里我感觉我说的更抽象了，其实说白了，我们需要配置ElasticSearch的Highlight返回，指定content字段才可以高亮，当检索到匹配值的时候，Es会返回一个highlight的切片（列表），无论如何，我们只取第一个highlight结果，其他结果全部丢弃，这样可以加快检索，返回给前端的部分也有了，这样岂不是很棒？</p>
+<h3 id="4-分页部分优化">4. 分页部分优化<a hidden class="anchor" aria-hidden="true" href="#4-分页部分优化">#</a></h3>
+<p>ElasticSearch的分页机制有两种，第一种是From + Size的机制，这个相对来说比较简单，还可以进行控制，另一种是Scroll机制，这个就复杂一些，我下面说。</p>
+<ol>
+<li>
+<p>From + Size 它的基础逻辑就是，它首先会确定doc的顺序，进行排序，然后再进行返回，逻辑上来说，它也需要取出所有数据，所以当数据量非常大的时候，从ElasticSearch中取出数据会占用大量CPU／内存，如果跳页过大，例如从第1页瞬间跳到第100页，就会取出第1页到第99页的所有数据，然后排序，然后进行切分，然后再展示第100页数据。。。这个又抽象了，说白了就是，这个分页比较适合一页页往后翻，你要闲的没事儿天天跳来跳去，人家谁Hold住.</p>
+</li>
+<li>
+<p>Scroll的基础逻辑就是，首先，Scroll会维护一个游标，记录你当前读取的doc位置，而不是取出来做除法切分，这个更适合一次性拿一大堆数据出来，它其实类似一个快照，每次你查询的时候，都会记录你上次查询的位置，下次访问就直接从这个位置／快照开始，免去了拿取所有数据的步骤，有更好的检索效率，CPU／内存使用也不会那么大。</p>
+</li>
+</ol>
+<h4 id="41-限定分页的数量">4.1 限定分页的数量<a hidden class="anchor" aria-hidden="true" href="#41-限定分页的数量">#</a></h4>
+<p>首先无论如何，我们先限定死，分页的数量，最大1000页，多了不让翻。这是为了保证From + Size机制使用时，跳页数量过大，导致CPU／内存飙升导致服务OOM或者是挂掉，这个可以让前端同学强制限制一波。</p>
+<h4 id="42-根据数据量大小逐步替换from--size-翻页逻辑">4.2 根据数据量大小，逐步替换From + Size 翻页逻辑<a hidden class="anchor" aria-hidden="true" href="#42-根据数据量大小逐步替换from--size-翻页逻辑">#</a></h4>
+<p>如果数量过大，前面我也说了，你整From + Size肯定是不行，而且你把客户想象成熊孩子，没事儿干就乱点，乱跳页，动不动就CPU／内存暴增，那不就拉垮了嘛。所以快速切换 From + Size 为 Scroll就得了。</p>
+<h3 id="5-建表索引时候的优化">5. 建表（索引）时候的优化<a hidden class="anchor" aria-hidden="true" href="#5-建表索引时候的优化">#</a></h3>
+<p>在创建表的时候，需要指定一些字段属性，这样会减少查询和检索的内存消耗或者是，这里给出几个我总结的字段优化方法</p>
+<ol>
+<li>全文检索的时候，指定的字段类型一定得是 <strong>text</strong></li>
+<li>其他检索的时候，需要检索字段完整值，需要使用 <strong>keyword</strong>，如果想做模糊匹配，需要使用wildcard或者*检索</li>
+<li>时间字段可以使用date，可以自己定义数据格式</li>
+<li>不确定数据长度，需要用long进行设置，避免以后长度超出。</li>
+<li>建表的时候，需要设置索引的压缩功能，减少存储空间占用，设置的方法就像这样，&ldquo;codec&rdquo;: &ldquo;best_compression&rdquo;。</li>
+<li>避免自定义Doc的ID，尽量用人家Es自己生成的，你自己整ID一般都是UUID时间戳，还容易重复也慢。</li>
+<li>定义分词器没必要所有字段都用，指定几个需要的字段就行了。</li>
+<li>确定不会修改的doc需要设置dynamic，禁止更新。</li>
+</ol>
+<h3 id="6-elasticsearch存储位置的转移">6. ElasticSearch存储位置的转移<a hidden class="anchor" aria-hidden="true" href="#6-elasticsearch存储位置的转移">#</a></h3>
+<p>安装好ElasticSearch之后，默认的位置是在系统盘。</p>
+<p>我估摸着数据量一大，没多久你就给系统盘整崩溃了，所以，改换系统盘位置，做好数据迁移是非常有必要的。</p>
+<p>修改配置文件，手动切换存储位置, 这里举个简单例子</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">path.data</span>: <span style="color:#ae81ff">/media/data/elasticsearch</span>
+</span></span></code></pre></div><p>迁移数据文件,修改文件夹权限</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>mv /var/lib/elasticsearch/nodes /media/data/elasticsearch
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>chown -R elasticsearch:elasticsearch *
+</span></span></code></pre></div><h3 id="7-elasticsearch写入性能优化">7. ElasticSearch写入性能优化<a hidden class="anchor" aria-hidden="true" href="#7-elasticsearch写入性能优化">#</a></h3>
+<h4 id="71-推荐使用bulk批量写入">7.1 推荐使用bulk批量写入<a hidden class="anchor" aria-hidden="true" href="#71-推荐使用bulk批量写入">#</a></h4>
+<p>其实按照我现在的使用场景，发现PDF／DOC有更新／上传到文件系统，就传入到ElasticSearch当中，其实ElasticSearch的批量写入bulk的效率比一条条写效率高多了，这里建议批量写入数据，而不是一条条传入。</p>
+<h4 id="72-多线程写入elasticsearch">7.2 多线程写入ElasticSearch<a hidden class="anchor" aria-hidden="true" href="#72-多线程写入elasticsearch">#</a></h4>
+<p>多线程并发写可以利用集群的资源，我这里用Golang做了后端，直接走了一波协程 + 线程，这样可以减底层fsync开销，可以减少单个Es节点压力。</p>
+<h4 id="73-translog事务日志的优化">7.3 Translog事务日志的优化<a hidden class="anchor" aria-hidden="true" href="#73-translog事务日志的优化">#</a></h4>
+<p>translog是用来恢复数据的。Es用“后写”的套路来加快写入速度 — 写入的索引并没有实时落盘到索引文件，而是先双写到内存和translog文件，</p>
+<p>es存储数据时，先把输出存储在内存中，等到refresh(该时间可以在设置mapping时的setting中设置intavel_refresh=xxx)时间后，才把数据存储到lucene中的segment中，清空内存缓冲区，往磁盘里写入commit point信息，文件系统的page cache(segments) fsync到磁盘，之后把translog旧日志删除掉。</p>
+<p>按照逻辑来说，如果降低translog可以提高效率，但是会降低容灾能力。</p>
+<p>修改配置，不需要每次都刷新。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">index.translog.durability</span>: <span style="color:#ae81ff">async</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">index.translog.sync_interval</span>: <span style="color:#ae81ff">3600s</span>
+</span></span></code></pre></div><h2 id="结尾">结尾<a hidden class="anchor" aria-hidden="true" href="#结尾">#</a></h2>
+<p>这次我主要开发了一个ElasticSearch的检索服务器，主要就是用apache tika去读取对象存储中的PDF／DOC等文件，解析文字，传入ElasticSearch当中，主要是全文检索，这个真的费了点功夫，因为我的服务器，实在是太烂了，只有他娘的8个G，还要跑Ceph存储等等等等，优化起来那个麻烦啊，这就相当于你开拖拉机，要我改车给你改成法拉利的速度，你这不是扯嘛。</p>
+<p>预告一下下一篇blog，TIKA提取对象存储中的PDF／DOC中的文字，有点儿绕是吧，绕就对了！哈哈哈，走你，下次见！</p>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a></li>
+            <li><a href="http://localhost:1313/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%92%8C%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86-%E5%86%99%E4%BA%8E%E7%AC%AC%E4%B8%89%E4%B8%AA%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91%E9%A1%B9%E7%9B%AE%E4%B9%8B%E5%90%8E/">
+    <span class="title">« </span>
+    <span>架构设计和项目管理心得-写于第三个独立开发项目之后</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/python%E7%9A%84%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/">
+    <span class="title"> »</span>
+    <span>Python的协程知识</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

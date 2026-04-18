@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Python on yemilice</title>
+    <link>http://localhost:1313/categories/python/</link>
+    <description>Recent content in Python on yemilice</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Tue, 01 Sep 2020 10:20:47 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/python/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Python的协程知识</title>
+      <link>http://localhost:1313/posts/python%E7%9A%84%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/</link>
+      <pubDate>Tue, 01 Sep 2020 10:20:47 +0000</pubDate>
+      <guid>http://localhost:1313/posts/python%E7%9A%84%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;最近心情一直不是太好，写出来的东西感觉也没有灵感，有些时候做了很多事，但是回想起来感觉自己还是什么都没有做。这是9月份第一次更新blog，也更新一篇相对高级一些的技术吧，有一阵没看Python了，想想还是不要落下了，剧透一下，下一篇文章还是针对Elasticsearch或者是前端框架React的，学习还是不能停下来，最近写歌也有问题，感觉自己什么也写不出来，仿佛失去了灵感，是生活还是时间消磨了我的灵气呢？我不愿意这么想，我会努力的，状态会调整过来的。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Python写一个自动点餐程序</title>
+      <link>http://localhost:1313/posts/python%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%8A%A8%E7%82%B9%E9%A4%90%E7%A8%8B%E5%BA%8F/</link>
+      <pubDate>Tue, 02 Jun 2020 10:17:12 +0000</pubDate>
+      <guid>http://localhost:1313/posts/python%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%8A%A8%E7%82%B9%E9%A4%90%E7%A8%8B%E5%BA%8F/</guid>
+      <description>&lt;h1 id=&#34;python写一个自动点餐程序&#34;&gt;Python写一个自动点餐程序&lt;/h1&gt;
+&lt;h2 id=&#34;为什么要写这个&#34;&gt;为什么要写这个&lt;/h2&gt;
+&lt;p&gt;公司现在用meican作为点餐渠道，每天规定的时间是早7：00-9：40点餐，有时候我经常容易忘记，或者是在地铁/公交上没办法点餐，所以总是没饭吃，只有去楼下711买点饭团之类的玩意儿，所以这是促使我写点餐小程序的原因。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>中文分词的算法分析 | yemilice</title>
+<meta name="keywords" content="前后端, 其他技术, 算法">
+<meta name="description" content="前言
+起因是一次电话面试，面一个技术比较好的公司，我认为自己玩Elasticsearch还是比较久了，还是能交锋几个回合吧，结果人家一问，中文分词的算法，你有了解吗？">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="中文分词的算法分析">
+  <meta property="og:description" content="前言 起因是一次电话面试，面一个技术比较好的公司，我认为自己玩Elasticsearch还是比较久了，还是能交锋几个回合吧，结果人家一问，中文分词的算法，你有了解吗？">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-08-21T09:57:46+00:00">
+    <meta property="article:modified_time" content="2020-08-21T09:57:46+00:00">
+    <meta property="article:tag" content="前后端">
+    <meta property="article:tag" content="其他技术">
+    <meta property="article:tag" content="算法">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="中文分词的算法分析">
+  <meta name="twitter:description" content="前言 起因是一次电话面试，面一个技术比较好的公司，我认为自己玩Elasticsearch还是比较久了，还是能交锋几个回合吧，结果人家一问，中文分词的算法，你有了解吗？">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "中文分词的算法分析",
+      "item": "http://localhost:1313/posts/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "中文分词的算法分析",
+  "name": "中文分词的算法分析",
+  "description": "前言 起因是一次电话面试，面一个技术比较好的公司，我认为自己玩Elasticsearch还是比较久了，还是能交锋几个回合吧，结果人家一问，中文分词的算法，你有了解吗？\n",
+  "keywords": [
+    "前后端", "其他技术", "算法"
+  ],
+  "articleBody": "前言 起因是一次电话面试，面一个技术比较好的公司，我认为自己玩Elasticsearch还是比较久了，还是能交锋几个回合吧，结果人家一问，中文分词的算法，你有了解吗？\n纳尼？中文分词，不就是调一下中文分词器做index嘛，我说了调用IK分词器，人家让我说一下中文分词的算法，或者你有没有了解过，我只有老实的说，我没。\n后来当然是有点凉，我觉得我需要去详细看一下这方面的东西。所以这两天除了看房子，我也具体看了一下Elasticsearch和其他的，例如tika，fscrawler之类的分词逻辑，加上网上的一些资料，还是有一些收获，这里做个记录，也是未来的博客文章从基础转向高级的一个转折点吧。\n分词是什么？什么是分词？它能干嘛？ 首先三连，这个我认为比较基础，简单的说，在我们搭建检索引擎或者设计搜索的时候，为了方便能更加简便的搜索出我们想要的东西，首先听一个术语，叫做分词粒度，例如，我们搜索 “我是吴彦祖”，下面是不同的粒度的分析划分。\n我，是，吴彦祖 最细粒度 我是，吴彦祖 正常粒度 我，我是，我是吴，吴彦祖，是吴彦祖 混合粒度 你可以看见，不同的分词效果，带来的分词结果不同，举个例子，我们如果根据正常粒度，搜索 “我”，这时就搜索不出来，但是根据混合粒度，我们搜索 “我”，就能得到 “我是吴彦祖” 的搜索结果，所以，良好的分词，是增加搜索效率和搜索结果的重要因素，同理，分词也是一个搜索引擎的老大部分，这次咱们不说屁股的事儿，咱们光说中文，中文的分词算法组成到底有哪些，您往下看。\n中文分词的几个算法解析 根据我查询的一些资料，和阅读一些技术文档，我总结出了如下几个搜索算法\n词典类分词法 这个大类其实比较好理解，现在大部分的搜索引擎都是根据中文字典作为分词的方法，它首先是基于中文字典，然后根据算法做分词，具体的算法如下\n最大匹配算法（Maximum Matching） 这里分为两种，一种是正向最大匹配，一种是逆向最大匹配，这里我主要说一下正向最大匹配方法，下面我都用MM来代替算法名，后面也都一样。\n正向最大匹配算法 MM正向算法的原理，其实就是将等待分词的文本和字典进行匹配，遵循的是从左往右匹配的原则，如果匹配上了，切分出一个词汇，举个简单的例子\n# 等待分词的列表 wait_seg_word = [\"我\",\"是\",\"吴\",\"彦\",\"祖\"] # 词典 word_dicts ={\"我是\", \"吴彦祖\", \"我\", \"是吴彦祖\", \"彦祖\"} 首先从wait_seg_word开始扫描\nwait_seg_word[0] = “我”\nwait_seg_word[1] = “是”\n这时候发现了 “我是” 已经在word_dicts中了，可以做切分了，但是我们需要做到最大匹配，所以继续切分\nwait_seg_word[2] = “吴”，发觉 “我是吴” 不能够组成词组，继续往下\nwait_seg_word[3] = “彦”, 不能组成任何词组\nwait_seg_word[4] = “祖”, “是吴彦祖” 匹配了词典，所以最大匹配为 “是吴彦祖”\n这就是基础的正向最大匹配算法\n逆向最大匹配算法 MM逆向算法其实就是MM正向算法的逆袭思维，我们简单说一下吧。\n# 等待分词的列表 wait_seg_word = [\"我是吴彦祖\"] # 词典 word_dicts ={\"我是\", \"吴彦祖\", \"我\", \"是吴彦祖\", \"彦祖\"} 定义一个做大分割值为 4，从右往左切分等待分词的列表\n取得到 “是吴彦祖”， 发觉它已经在词典中了\n去掉最左边第一个字，得到 “吴彦祖”\n以此类推，一直到无法被减去为止。\n然后再做一次切分，取得到 “我是吴彦”\n再次切分，对比。重复上述步骤。\n双向最大匹配算法 双向最大匹配法是将正向最大匹配法得到的分词结果和逆向最大匹配法的到的结果进行比较，从而决定正确的分词方法。\n这个做个比较就好了，我简单说下它是干嘛的吧。\n双向切分算法就是使用正向切分一次、逆向切分一次。如果两次切分结果一样的话就好说了，随便选一个结果就可以。\n但是如果切分不一样的话使用那一次的切分结果呢？这就涉及到了结果的选取原则问题。切分词应该遵守以下原则：\n1：最大匹配原则：上面一直在说这个，使用这个原则的原因是词的字数越多，表示的含义越丰富、对于一条语句分出来的词也就越少，相对的，准确性也就会越高。\n2：词库中没有的单字词越少越好。这个原则有点依赖于词库了，至少词库中应该有一些常用的单字成词的字吧，比如：“你”、“我”、“他”、“和”、“的”、“了”等。使用这个原则的原因可以从上面提到的“我是吴彦祖”这个例子看出来：\n正向结果：我是、是、吴彦祖\n逆向结果：我是、我、是吴彦祖\n虽然分出来的结果单字词都是一个，但是，逆向的单字词”和“在词库中存在，所以我们选择返回逆向切分结果。\n其实说白了就是很依赖词库，如果没词库就是一个哑巴教一个不会说话的孩子念绕口令，纯属烧脑。。。。\n统计类分词法 统计分词是什么？其实说白了，通过相邻的字同时出现的次数越多，就越可能构成一个词，也就是出现的频率。同样的词组出现多次，被统计的概率越大，组成合理词组也就越精准，可信。因此字与字相邻出现的概率或频率能较好的反映词的可信度。\n根据我查询的资料和实践所得，具体有这么几种算法\nN-gram模型算法 这个主要运用在tika当中，tika你不会不知道吧？你不知道？后面我写个文章你瞅瞅去吧。。。。\ntika是我做全文检索插件的时候接触的，它的核心分词算法就是N-gram算法，这个比较重要，我会详细的说一下这个算法。\n首先，N-gram是一种基于统计语言模型的算法。它的基本思想是将文本里面的内容按照字节进行大小为N的滑动窗口操作，形成了长度是N的字节片段序列。（这段出自知乎）\n一个N-gram就是一个长度为N的词语组成的序列。\n简单的流程\nN-Gram 算法具体过程：\n过滤掉文本数据中的标点符号和其他特殊字符；\n对所有单词执行小写转换，并删除单词之间的空格、换行符等标志位；\n使用长度为 N 的窗口对文本内容执行字符级滑动取词，将结果存入有序列表。\n这里直接借鉴了别人的代码，看的懂就行\ndef text_filter(text: str) -\u003e str: \"\"\" 文本过滤器：过滤掉文本数据中的标点符号和其他特殊字符 \"\"\" result = str() for t in text: if t.isalnum(): if t.isalpha(): t = t.lower() result += str(t) return result def slide_word(text: str, l: int = 5) -\u003e list: \"\"\" 滑动取词器 Input: text='abcd',l=2 Output: ['ab','bc','cd'] :param text: 过滤后的文本 （只包含小写数字/字母） :param l: 滑动窗口长度，默认为 5 :return: \"\"\" tf = text_filter(text) result = list() if len(tf) \u003c= l: result.append(tf) return result for i in range(len(tf)): word = tf[i:i + l] if len(word) \u003c l: break result.append(word) return result if __name__ == '__main__': banner = 'abcdefghigkLMN*^%$* \\r\\n)021' print(slide_word(banner)) 返回\n['abcde', 'bcdef', 'cdefg', 'defgh', 'efghi', 'fghig', 'ghigk', 'higkl', 'igklm', 'gklmn', 'klmn0', 'lmn02', 'mn021'] 隐马尔科夫模型算法 (HMM) 通过模拟人对句子的理解，达到识别词的效果，基本思想是语义分析，句法分析，利用句法信息和语义信息对文本进行分词。自动推理，并完成对未登录词的补充是其优点。不成熟.\n具体概念:有限状态机\\语法约束矩阵\\特征词库\n以往的分词方法，无论是基于规则的还是基于统计的，一般都依赖于一个事先编制的词表(词典)。\n自动分词过程就是通过词表和相关信息来做出词语切分的决策。\n与此相反，基于字标注的分词方法实际上是构词方法。\n即把分词过程视为字在字串中的标注问题。\n由于每个字在构造一个特定的词语时都占据着一个确定的构词位置(即词位)，假如规定每个字最多只有四个构词位置：即B(词首)，M (词中)，E(词尾)和S(单独成词)，那么下面句子(甲)的分词结果就可以直接表示成如(乙)所示的逐字标注形式：\n(甲)分词结果：／上海／计划／N／本／世纪／末／实现／人均／国内／生产／总值／五千美元／ (乙)字标注形式：上／B海／E计／B划／E N／S 本／s世／B 纪／E 末／S 实／B 现／E 人／B 均／E 国／B 内／E生／B产／E总／B值／E 五／B千／M 美／M 元／E 。／S 首先需要说明，这里说到的“字”不只限于汉字。\n考虑到中文真实文本中不可避免地会包含一定数量的非汉字字符，本文所说的“字”，也包括外文字母、阿拉伯数字和标点符号等字符。所有这些字符都是构词的基本单元。当然，汉字依然是这个单元集合中数量最多的一类字符。\n把分词过程视为字的标注问题的一个重要优势在于，它能够平衡地看待词表词和未登录词的识别问题。\n在这种分词技术中，文本中的词表词和未登录词都是用统一的字标注过程来实现的。\n在学习架构上，既可以不必专门强调词表词信息，也不用专门设计特定的未登录词(如人名、地名、机构名)识别模块。这使得分词系统的设计大大简化。\n在字标注过程中，所有的字根据预定义的特征进行词位特性的学习，获得一个概率模型。然后，在待分字串上，根据字与字之间的结合紧密程度，得到一个词位的标注结果。\n最后，根据词位定义直接获得最终的分词结果。总而言之，在这样一个分词过程中，分词成为字重组的简单过程。然而这一简单处理带来的分词结果却是令人满意的。\n总结 我估摸着我还是要好好把这些算法过一遍，未来还有很长的路要走，算法也太难了。。。\n",
+  "wordCount" : "3723",
+  "inLanguage": "zh-cn",
+  "datePublished": "2020-08-21T09:57:46Z",
+  "dateModified": "2020-08-21T09:57:46Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/%E4%B8%AD%E6%96%87%E5%88%86%E8%AF%8D%E7%9A%84%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            中文分词的算法分析
+        </h1>
+        <div class="post-meta"><span title='2020-08-21 09:57:46 +0000 UTC'>August 21, 2020</span>&nbsp;·&nbsp;<span>8 min</span>&nbsp;·&nbsp;<span>3723 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e5%89%8d%e8%a8%80" aria-label="前言">前言</a></li>
+            <li>
+                <a href="#%e5%88%86%e8%af%8d%e6%98%af%e4%bb%80%e4%b9%88%e4%bb%80%e4%b9%88%e6%98%af%e5%88%86%e8%af%8d%e5%ae%83%e8%83%bd%e5%b9%b2%e5%98%9b" aria-label="分词是什么？什么是分词？它能干嘛？">分词是什么？什么是分词？它能干嘛？</a></li>
+            <li>
+                <a href="#%e4%b8%ad%e6%96%87%e5%88%86%e8%af%8d%e7%9a%84%e5%87%a0%e4%b8%aa%e7%ae%97%e6%b3%95%e8%a7%a3%e6%9e%90" aria-label="中文分词的几个算法解析">中文分词的几个算法解析</a><ul>
+                    
+            <li>
+                <a href="#%e8%af%8d%e5%85%b8%e7%b1%bb%e5%88%86%e8%af%8d%e6%b3%95" aria-label="词典类分词法">词典类分词法</a><ul>
+                    
+            <li>
+                <a href="#%e6%9c%80%e5%a4%a7%e5%8c%b9%e9%85%8d%e7%ae%97%e6%b3%95maximum-matching" aria-label="最大匹配算法（Maximum Matching）">最大匹配算法（Maximum Matching）</a><ul>
+                    
+            <li>
+                <a href="#%e6%ad%a3%e5%90%91%e6%9c%80%e5%a4%a7%e5%8c%b9%e9%85%8d%e7%ae%97%e6%b3%95" aria-label="正向最大匹配算法">正向最大匹配算法</a></li>
+            <li>
+                <a href="#%e9%80%86%e5%90%91%e6%9c%80%e5%a4%a7%e5%8c%b9%e9%85%8d%e7%ae%97%e6%b3%95" aria-label="逆向最大匹配算法">逆向最大匹配算法</a></li>
+            <li>
+                <a href="#%e5%8f%8c%e5%90%91%e6%9c%80%e5%a4%a7%e5%8c%b9%e9%85%8d%e7%ae%97%e6%b3%95" aria-label="双向最大匹配算法">双向最大匹配算法</a></li></ul>
+            </li></ul>
+            </li>
+            <li>
+                <a href="#%e7%bb%9f%e8%ae%a1%e7%b1%bb%e5%88%86%e8%af%8d%e6%b3%95" aria-label="统计类分词法">统计类分词法</a><ul>
+                    
+            <li>
+                <a href="#n-gram%e6%a8%a1%e5%9e%8b%e7%ae%97%e6%b3%95" aria-label="N-gram模型算法">N-gram模型算法</a></li>
+            <li>
+                <a href="#%e9%9a%90%e9%a9%ac%e5%b0%94%e7%a7%91%e5%a4%ab%e6%a8%a1%e5%9e%8b%e7%ae%97%e6%b3%95-hmm" aria-label="隐马尔科夫模型算法 (HMM)">隐马尔科夫模型算法 (HMM)</a></li></ul>
+            </li></ul>
+            </li>
+            <li>
+                <a href="#%e6%80%bb%e7%bb%93" aria-label="总结">总结</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="前言">前言<a hidden class="anchor" aria-hidden="true" href="#前言">#</a></h2>
+<p>起因是一次电话面试，面一个技术比较好的公司，我认为自己玩Elasticsearch还是比较久了，还是能交锋几个回合吧，结果人家一问，中文分词的算法，你有了解吗？</p>
+<p>纳尼？中文分词，不就是调一下中文分词器做index嘛，我说了调用IK分词器，人家让我说一下中文分词的算法，或者你有没有了解过，我只有老实的说，我没。</p>
+<p>后来当然是有点凉，我觉得我需要去详细看一下这方面的东西。所以这两天除了看房子，我也具体看了一下Elasticsearch和其他的，例如tika，fscrawler之类的分词逻辑，加上网上的一些资料，还是有一些收获，这里做个记录，也是未来的博客文章从基础转向高级的一个转折点吧。</p>
+<h2 id="分词是什么什么是分词它能干嘛">分词是什么？什么是分词？它能干嘛？<a hidden class="anchor" aria-hidden="true" href="#分词是什么什么是分词它能干嘛">#</a></h2>
+<p>首先三连，这个我认为比较基础，简单的说，在我们搭建检索引擎或者设计搜索的时候，为了方便能更加简便的搜索出我们想要的东西，首先听一个术语，叫做<strong>分词粒度</strong>，例如，我们搜索 &ldquo;我是吴彦祖&rdquo;，下面是不同的粒度的分析划分。</p>
+<ol>
+<li>我，是，吴彦祖 <strong>最细粒度</strong></li>
+<li>我是，吴彦祖 <strong>正常粒度</strong></li>
+<li>我，我是，我是吴，吴彦祖，是吴彦祖 <strong>混合粒度</strong></li>
+</ol>
+<p>你可以看见，不同的分词效果，带来的分词结果不同，举个例子，我们如果根据正常粒度，搜索 &ldquo;我&rdquo;，这时就搜索不出来，但是根据混合粒度，我们搜索 &ldquo;我&rdquo;，就能得到 &ldquo;我是吴彦祖&rdquo; 的搜索结果，所以，良好的分词，是增加搜索效率和搜索结果的重要因素，同理，分词也是一个搜索引擎的老大部分，这次咱们不说屁股的事儿，咱们光说中文，中文的分词算法组成到底有哪些，您往下看。</p>
+<h2 id="中文分词的几个算法解析">中文分词的几个算法解析<a hidden class="anchor" aria-hidden="true" href="#中文分词的几个算法解析">#</a></h2>
+<p>根据我查询的一些资料，和阅读一些技术文档，我总结出了如下几个搜索算法</p>
+<h3 id="词典类分词法">词典类分词法<a hidden class="anchor" aria-hidden="true" href="#词典类分词法">#</a></h3>
+<p>这个大类其实比较好理解，现在大部分的搜索引擎都是根据中文字典作为分词的方法，它首先是基于中文字典，然后根据算法做分词，具体的算法如下</p>
+<h4 id="最大匹配算法maximum-matching">最大匹配算法（Maximum Matching）<a hidden class="anchor" aria-hidden="true" href="#最大匹配算法maximum-matching">#</a></h4>
+<p>这里分为两种，一种是正向最大匹配，一种是逆向最大匹配，这里我主要说一下正向最大匹配方法，下面我都用MM来代替算法名，后面也都一样。</p>
+<h5 id="正向最大匹配算法">正向最大匹配算法<a hidden class="anchor" aria-hidden="true" href="#正向最大匹配算法">#</a></h5>
+<p>MM正向算法的原理，其实就是将等待分词的文本和字典进行匹配，遵循的是从左往右匹配的原则，如果匹配上了，切分出一个词汇，举个简单的例子</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 等待分词的列表</span>
+</span></span><span style="display:flex;"><span>wait_seg_word <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#34;我&#34;</span>,<span style="color:#e6db74">&#34;是&#34;</span>,<span style="color:#e6db74">&#34;吴&#34;</span>,<span style="color:#e6db74">&#34;彦&#34;</span>,<span style="color:#e6db74">&#34;祖&#34;</span>]
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 词典</span>
+</span></span><span style="display:flex;"><span>word_dicts <span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;我是&#34;</span>, <span style="color:#e6db74">&#34;吴彦祖&#34;</span>, <span style="color:#e6db74">&#34;我&#34;</span>, <span style="color:#e6db74">&#34;是吴彦祖&#34;</span>, <span style="color:#e6db74">&#34;彦祖&#34;</span>}
+</span></span></code></pre></div><p>首先从wait_seg_word开始扫描</p>
+<p>wait_seg_word[0] = &ldquo;我&rdquo;</p>
+<p>wait_seg_word[1] = &ldquo;是&rdquo;</p>
+<p>这时候发现了 &ldquo;我是&rdquo; 已经在word_dicts中了，可以做切分了，但是我们需要做到最大匹配，所以继续切分</p>
+<p>wait_seg_word[2] = &ldquo;吴&rdquo;，发觉 &ldquo;我是吴&rdquo; 不能够组成词组，继续往下</p>
+<p>wait_seg_word[3] = &ldquo;彦&rdquo;, 不能组成任何词组</p>
+<p>wait_seg_word[4] = &ldquo;祖&rdquo;, &ldquo;是吴彦祖&rdquo; 匹配了词典，所以最大匹配为 &ldquo;是吴彦祖&rdquo;</p>
+<p>这就是基础的正向最大匹配算法</p>
+<h5 id="逆向最大匹配算法">逆向最大匹配算法<a hidden class="anchor" aria-hidden="true" href="#逆向最大匹配算法">#</a></h5>
+<p>MM逆向算法其实就是MM正向算法的逆袭思维，我们简单说一下吧。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 等待分词的列表</span>
+</span></span><span style="display:flex;"><span>wait_seg_word <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#34;我是吴彦祖&#34;</span>]
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 词典</span>
+</span></span><span style="display:flex;"><span>word_dicts <span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;我是&#34;</span>, <span style="color:#e6db74">&#34;吴彦祖&#34;</span>, <span style="color:#e6db74">&#34;我&#34;</span>, <span style="color:#e6db74">&#34;是吴彦祖&#34;</span>, <span style="color:#e6db74">&#34;彦祖&#34;</span>}
+</span></span></code></pre></div><p>定义一个做大分割值为 4，从右往左切分等待分词的列表</p>
+<p>取得到 &ldquo;是吴彦祖&rdquo;， 发觉它已经在词典中了</p>
+<p>去掉最左边第一个字，得到 &ldquo;吴彦祖&rdquo;</p>
+<p>以此类推，一直到无法被减去为止。</p>
+<p>然后再做一次切分，取得到 &ldquo;我是吴彦&rdquo;</p>
+<p>再次切分，对比。重复上述步骤。</p>
+<h5 id="双向最大匹配算法">双向最大匹配算法<a hidden class="anchor" aria-hidden="true" href="#双向最大匹配算法">#</a></h5>
+<p>双向最大匹配法是将正向最大匹配法得到的分词结果和逆向最大匹配法的到的结果进行比较，从而决定正确的分词方法。</p>
+<p>这个做个比较就好了，我简单说下它是干嘛的吧。</p>
+<p>双向切分算法就是使用正向切分一次、逆向切分一次。如果两次切分结果一样的话就好说了，随便选一个结果就可以。</p>
+<p>但是如果切分不一样的话使用那一次的切分结果呢？这就涉及到了结果的选取原则问题。切分词应该遵守以下原则：</p>
+<p>1：最大匹配原则：上面一直在说这个，使用这个原则的原因是词的字数越多，表示的含义越丰富、对于一条语句分出来的词也就越少，相对的，准确性也就会越高。</p>
+<p>2：词库中没有的单字词越少越好。这个原则有点依赖于词库了，至少词库中应该有一些常用的单字成词的字吧，比如：“你”、“我”、“他”、“和”、“的”、“了”等。使用这个原则的原因可以从上面提到的“我是吴彦祖”这个例子看出来：</p>
+<p>正向结果：我是、是、吴彦祖</p>
+<p>逆向结果：我是、我、是吴彦祖</p>
+<p>虽然分出来的结果单字词都是一个，但是，逆向的单字词”和“在词库中存在，所以我们选择返回逆向切分结果。</p>
+<p>其实说白了就是很依赖词库，如果没词库就是一个哑巴教一个不会说话的孩子念绕口令，纯属烧脑。。。。</p>
+<h3 id="统计类分词法">统计类分词法<a hidden class="anchor" aria-hidden="true" href="#统计类分词法">#</a></h3>
+<p>统计分词是什么？其实说白了，通过相邻的字同时出现的次数越多，就越可能构成一个词，也就是出现的频率。同样的词组出现多次，被统计的概率越大，组成合理词组也就越精准，可信。因此字与字相邻出现的概率或频率能较好的反映词的可信度。</p>
+<p>根据我查询的资料和实践所得，具体有这么几种算法</p>
+<h4 id="n-gram模型算法">N-gram模型算法<a hidden class="anchor" aria-hidden="true" href="#n-gram模型算法">#</a></h4>
+<p>这个主要运用在tika当中，tika你不会不知道吧？你不知道？后面我写个文章你瞅瞅去吧。。。。</p>
+<p>tika是我做全文检索插件的时候接触的，它的核心分词算法就是N-gram算法，这个比较重要，我会详细的说一下这个算法。</p>
+<p>首先，N-gram是一种基于统计语言模型的算法。它的基本思想是将文本里面的内容按照字节进行大小为N的滑动窗口操作，形成了长度是N的字节片段序列。（这段出自知乎）</p>
+<p>一个N-gram就是一个长度为N的词语组成的序列。</p>
+<p>简单的流程</p>
+<p>N-Gram 算法具体过程：</p>
+<ol>
+<li>
+<p>过滤掉文本数据中的标点符号和其他特殊字符；</p>
+</li>
+<li>
+<p>对所有单词执行小写转换，并删除单词之间的空格、换行符等标志位；</p>
+</li>
+<li>
+<p>使用长度为 N 的窗口对文本内容执行字符级滑动取词，将结果存入有序列表。</p>
+</li>
+</ol>
+<p>这里直接借鉴了别人的代码，看的懂就行</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">text_filter</span>(text: str) <span style="color:#f92672">-&gt;</span> str:
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    文本过滤器：过滤掉文本数据中的标点符号和其他特殊字符
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>    result <span style="color:#f92672">=</span> str()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> t <span style="color:#f92672">in</span> text:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> t<span style="color:#f92672">.</span>isalnum():
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> t<span style="color:#f92672">.</span>isalpha():
+</span></span><span style="display:flex;"><span>                t <span style="color:#f92672">=</span> t<span style="color:#f92672">.</span>lower()
+</span></span><span style="display:flex;"><span>            result <span style="color:#f92672">+=</span> str(t)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> result
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">slide_word</span>(text: str, l: int <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>) <span style="color:#f92672">-&gt;</span> list:
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    滑动取词器
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Input: text=&#39;abcd&#39;,l=2
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Output: [&#39;ab&#39;,&#39;bc&#39;,&#39;cd&#39;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    :param text: 过滤后的文本 （只包含小写数字/字母）
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    :param l: 滑动窗口长度，默认为 5
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    :return:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>    tf <span style="color:#f92672">=</span> text_filter(text)
+</span></span><span style="display:flex;"><span>    result <span style="color:#f92672">=</span> list()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> len(tf) <span style="color:#f92672">&lt;=</span> l:
+</span></span><span style="display:flex;"><span>        result<span style="color:#f92672">.</span>append(tf)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> result
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(tf)):
+</span></span><span style="display:flex;"><span>        word <span style="color:#f92672">=</span> tf[i:i <span style="color:#f92672">+</span> l]
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> len(word) <span style="color:#f92672">&lt;</span> l:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>        result<span style="color:#f92672">.</span>append(word)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> result
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;__main__&#39;</span>:
+</span></span><span style="display:flex;"><span>    banner <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;abcdefghigkLMN*^%$*   </span><span style="color:#ae81ff">\r\n</span><span style="color:#e6db74">)021&#39;</span>
+</span></span><span style="display:flex;"><span>    print(slide_word(banner))
+</span></span></code></pre></div><p>返回</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>[<span style="color:#e6db74">&#39;abcde&#39;</span>, <span style="color:#e6db74">&#39;bcdef&#39;</span>, <span style="color:#e6db74">&#39;cdefg&#39;</span>, <span style="color:#e6db74">&#39;defgh&#39;</span>, <span style="color:#e6db74">&#39;efghi&#39;</span>, <span style="color:#e6db74">&#39;fghig&#39;</span>, <span style="color:#e6db74">&#39;ghigk&#39;</span>, <span style="color:#e6db74">&#39;higkl&#39;</span>, <span style="color:#e6db74">&#39;igklm&#39;</span>, <span style="color:#e6db74">&#39;gklmn&#39;</span>, <span style="color:#e6db74">&#39;klmn0&#39;</span>, <span style="color:#e6db74">&#39;lmn02&#39;</span>, <span style="color:#e6db74">&#39;mn021&#39;</span>]
+</span></span></code></pre></div><h4 id="隐马尔科夫模型算法-hmm">隐马尔科夫模型算法 (HMM)<a hidden class="anchor" aria-hidden="true" href="#隐马尔科夫模型算法-hmm">#</a></h4>
+<p>通过模拟人对句子的理解，达到识别词的效果，基本思想是语义分析，句法分析，利用句法信息和语义信息对文本进行分词。自动推理，并完成对未登录词的补充是其优点。不成熟.</p>
+<p>具体概念:有限状态机\语法约束矩阵\特征词库</p>
+<p>以往的分词方法，无论是基于规则的还是基于统计的，一般都依赖于一个事先编制的词表(词典)。</p>
+<p>自动分词过程就是通过词表和相关信息来做出词语切分的决策。</p>
+<p>与此相反，基于字标注的分词方法实际上是构词方法。</p>
+<p>即把分词过程视为字在字串中的标注问题。</p>
+<p>由于每个字在构造一个特定的词语时都占据着一个确定的构词位置(即词位)，假如规定每个字最多只有四个构词位置：即B(词首)，M (词中)，E(词尾)和S(单独成词)，那么下面句子(甲)的分词结果就可以直接表示成如(乙)所示的逐字标注形式：</p>
+<pre tabindex="0"><code>(甲)分词结果：／上海／计划／N／本／世纪／末／实现／人均／国内／生产／总值／五千美元／
+
+(乙)字标注形式：上／B海／E计／B划／E N／S 本／s世／B 纪／E 末／S 实／B 现／E 人／B 均／E 国／B 内／E生／B产／E总／B值／E 五／B千／M 美／M 元／E 。／S
+</code></pre><p>首先需要说明，这里说到的“字”不只限于汉字。</p>
+<p>考虑到中文真实文本中不可避免地会包含一定数量的非汉字字符，本文所说的“字”，也包括外文字母、阿拉伯数字和标点符号等字符。所有这些字符都是构词的基本单元。当然，汉字依然是这个单元集合中数量最多的一类字符。</p>
+<p>把分词过程视为字的标注问题的一个重要优势在于，它能够平衡地看待词表词和未登录词的识别问题。</p>
+<p>在这种分词技术中，文本中的词表词和未登录词都是用统一的字标注过程来实现的。</p>
+<p>在学习架构上，既可以不必专门强调词表词信息，也不用专门设计特定的未登录词(如人名、地名、机构名)识别模块。这使得分词系统的设计大大简化。</p>
+<p>在字标注过程中，所有的字根据预定义的特征进行词位特性的学习，获得一个概率模型。然后，在待分字串上，根据字与字之间的结合紧密程度，得到一个词位的标注结果。</p>
+<p>最后，根据词位定义直接获得最终的分词结果。总而言之，在这样一个分词过程中，分词成为字重组的简单过程。然而这一简单处理带来的分词结果却是令人满意的。</p>
+<h2 id="总结">总结<a hidden class="anchor" aria-hidden="true" href="#总结">#</a></h2>
+<p>我估摸着我还是要好好把这些算法过一遍，未来还有很长的路要走，算法也太难了。。。</p>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a></li>
+            <li><a href="http://localhost:1313/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a></li>
+            <li><a href="http://localhost:1313/tags/%E7%AE%97%E6%B3%95/">算法</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/%E4%BC%BC%E4%B9%8E%E8%A6%81%E6%B2%89%E4%B8%8B%E5%BF%83%E6%9D%A5%E5%A4%84%E7%90%86%E4%B8%80%E4%BA%9B%E4%BA%8B/">
+    <span class="title">« </span>
+    <span>似乎要沉下心来处理一些事</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/%E4%B8%80%E6%AC%A1golang%E6%9C%8D%E5%8A%A1%E5%8D%A0%E7%94%A8cpu%E8%BF%87%E5%A4%A7%E7%9A%84%E6%8E%92%E6%9F%A5%E7%BB%8F%E8%BF%87/">
+    <span class="title"> »</span>
+    <span>一次Golang服务占用CPU过大的排查经过</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

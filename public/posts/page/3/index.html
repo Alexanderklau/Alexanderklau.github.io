@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Posts | yemilice</title>
+<meta name="keywords" content="">
+<meta name="description" content="Posts - yemilice">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" type="application/rss+xml" href="http://localhost:1313/posts/index.xml" title="rss">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="Posts">
+  <meta property="og:description" content="程序、音乐与生活随笔">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="website">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Posts">
+  <meta name="twitter:description" content="程序、音乐与生活随笔">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }
+  ]
+}
+</script>
+</head>
+<body class="list" id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main"> 
+<header class="page-header"><nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a></nav>
+  <h1>
+    Posts
+    <a href="/posts/index.xml" title="RSS" aria-label="RSS">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" height="23">
+        <path d="M4 11a9 9 0 0 1 9 9" />
+        <path d="M4 4a16 16 0 0 1 16 16" />
+        <circle cx="5" cy="19" r="1" />
+      </svg>
+    </a>
+  </h1>
+</header>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Golang进阶-必须知道的一些事
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 最近感觉自己又陷入了无尽的自我循环和自我否定，不知道自己到底是怎么了
+我，出生于忧患之中，但是告诫自己，不能死于安乐。
+这篇文章是收集的一些Golang进阶的知识，作为我自己更上一层楼的笔记，也希望可以帮助大家
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-03-19 16:46:16 +0000 UTC'>March 19, 2021</span>&nbsp;·&nbsp;<span>7 min</span>&nbsp;·&nbsp;<span>3470 words</span></footer>
+  <a class="entry-link" aria-label="post link to Golang进阶-必须知道的一些事" href="http://localhost:1313/posts/golang%E8%BF%9B%E9%98%B6-%E5%BF%85%E9%A1%BB%E7%9F%A5%E9%81%93%E7%9A%84%E4%B8%80%E4%BA%9B%E4%BA%8B/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">读诗的感悟
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 今年我陷入迷茫
+我不知道我的路是否还在远方？
+到底停下还是持续hold on？
+难道这就是生活给予我的前路渺茫？
+ONE 算命先生说我天赋异禀，功成名就
+20年后，格子间的工蚁是我难辞其咎
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-03-03 13:42:41 +0000 UTC'>March 3, 2021</span>&nbsp;·&nbsp;<span>1 min</span>&nbsp;·&nbsp;<span>286 words</span></footer>
+  <a class="entry-link" aria-label="post link to 读诗的感悟" href="http://localhost:1313/posts/%E8%AF%BB%E8%AF%97%E7%9A%84%E6%84%9F%E6%82%9F/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">弄懂难缠的BFS算法和相关变种(Python实现)
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 这段时间频繁刷题，leetcode真的好难啊！！每次都他娘的做不出来，除了刷题，最近还在复习各种架构，或者是完成公司的开发。这些占据了我过多时间，所以blog其实一直想写，但是实在腾不出时间，今天在针对性刷leetcode的时候，对BFS/DFS有了一点别的感悟，所以就写一篇博客，作为自己的笔记，在记录的同时，也帮助其他兄弟少走弯路，希望，能够帮到大家。
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-02-23 16:22:51 +0000 UTC'>February 23, 2021</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1854 words</span></footer>
+  <a class="entry-link" aria-label="post link to 弄懂难缠的BFS算法和相关变种(Python实现)" href="http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84bfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">2020的回顾和2021的展望
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 现在是2021年1月4日早上的九点十四分
+这是我2021开年第一篇日志，就为2020做一个回顾和2021年做一个展望吧。
+回顾2020 2020其实是一个特殊的年份，想一想似乎大家都在生活当中挣扎。
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2021-01-04 09:13:05 +0000 UTC'>January 4, 2021</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>1116 words</span></footer>
+  <a class="entry-link" aria-label="post link to 2020的回顾和2021的展望" href="http://localhost:1313/posts/2020%E7%9A%84%E5%9B%9E%E9%A1%BE%E5%92%8C2021%E7%9A%84%E5%B1%95%E6%9C%9B/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">ElasticSearch定义自己的分词器词典（检索生僻词）
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 ElasticSearch当中，有许多的分词器供我们调用，中文用的最多的就是IK分词器，一些基本的词汇都包含了。
+但是，一些基本的生僻词就很难检索了，比如一些特定专业词汇，或者一些流行词汇之类的，所以这篇文章，我会讲一下自定义分词器词典的设置和扩展，让我们能够检索的词汇变的更多。如果能帮到你，我也会很开心！
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-12-08 15:20:23 +0000 UTC'>December 8, 2020</span>&nbsp;·&nbsp;<span>5 min</span>&nbsp;·&nbsp;<span>2022 words</span></footer>
+  <a class="entry-link" aria-label="post link to ElasticSearch定义自己的分词器词典（检索生僻词）" href="http://localhost:1313/posts/elasticsearch%E5%AE%9A%E4%B9%89%E8%87%AA%E5%B7%B1%E7%9A%84%E5%88%86%E8%AF%8D%E5%99%A8%E8%AF%8D%E5%85%B8%E6%A3%80%E7%B4%A2%E7%94%9F%E5%83%BB%E8%AF%8D/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">ElasticSearch高级用法(Golang实现)
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 前阵子开发了一个检索服务器，用了一些Es的高阶功能，网上随便看了一圈，基本没有人公开这些功能的中文版，我寻思咱们不能只满足了自己，不满足其他老哥吧，所以，我将开发中用到的Es高阶功能总结输出.
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-12-02 14:38:21 +0000 UTC'>December 2, 2020</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4316 words</span></footer>
+  <a class="entry-link" aria-label="post link to ElasticSearch高级用法(Golang实现)" href="http://localhost:1313/posts/elasticsearch%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95golang%E5%AE%9E%E7%8E%B0/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">完全搞懂Python的线程机制
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 总觉得用了Python那么久，感觉隔一层面纱似的，只是会用而已。
+现在Python更新了3.9，越来越厉害了，多了很多新的语法特性。
+想想自己，也不能总是写一些Golang的东西，Python也要持续跟上，所以打算开一个Python三巨头的坑，把Python的线程，进程，协程都讲明白，这样第一个是让我加深理解，第二个是让我彻底搞懂这三者的机制，我认为这样我才可以走的更远。
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-12-01 13:28:46 +0000 UTC'>December 1, 2020</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4162 words</span></footer>
+  <a class="entry-link" aria-label="post link to 完全搞懂Python的线程机制" href="http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E6%90%9E%E6%87%82python%E7%9A%84%E7%BA%BF%E7%A8%8B%E6%9C%BA%E5%88%B6/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Golang的并发机制探究
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 虽然上两篇文章讲了几个并发示例和Goroutine的使用，但是我仔细看了一下，还是不够清楚，这次这篇文章将会是一篇纯理论的文章，主要讲一下Go的并发机制的原理还有Goroutine还有channel。
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-11-27 10:19:02 +0000 UTC'>November 27, 2020</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4098 words</span></footer>
+  <a class="entry-link" aria-label="post link to Golang的并发机制探究" href="http://localhost:1313/posts/golang%E7%9A%84%E5%B9%B6%E5%8F%91%E6%9C%BA%E5%88%B6%E6%8E%A2%E7%A9%B6/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">完全理解Golang并发模式(2)
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 这几天的攻关都是在Golang并发上面，也算是有了一些收获，把一些基础的并发场景和并发模式都过了一遍，觉得自己又提升了一层楼，其实我发觉，在我的开发生涯中，总是纠结实现，却不是去看最底层的东西，任何东西，都是由简到难，或者就是从底层到核心，无论是Python还是Golang，或者是我正在狂刷算法的Java，我都是去纠结实现，但是不会钻研核心，所以我写代码都是面向搜素引擎编程。所以，也是时候该改变一些东西。
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-11-10 10:46:02 +0000 UTC'>November 10, 2020</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4421 words</span></footer>
+  <a class="entry-link" aria-label="post link to 完全理解Golang并发模式(2)" href="http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-2/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">完全理解Golang并发模式(1)
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 其实我写Golang有段时间了，平常写一些业务代码，也涉及不到什么高端东西，Golang的核心其实就是在于goroutine这套东西，在处理高并发任务的时候非常强势，甩Python一个车位，所以，写下这篇博客，作为笔记，记录Golang核心的并发机制，并且给出一些自己写的代码作为示例，本次博客大部分代码为自己手写，参考了《Golang并发之道》，《Go语言圣经》这两本书，这两本书是我的进阶之路上的灯塔，感谢这两本书的译者，也希望大家去看看这两本书。
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-11-03 18:22:08 +0000 UTC'>November 3, 2020</span>&nbsp;·&nbsp;<span>6 min</span>&nbsp;·&nbsp;<span>2889 words</span></footer>
+  <a class="entry-link" aria-label="post link to 完全理解Golang并发模式(1)" href="http://localhost:1313/posts/%E5%AE%8C%E5%85%A8%E7%90%86%E8%A7%A3golang%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F-1/"></a>
+</article>
+<footer class="page-footer">
+  <nav class="pagination">
+    <a class="prev" href="http://localhost:1313/posts/page/2/">
+      «&nbsp;&nbsp;
+    </a>
+    <a class="next" href="http://localhost:1313/posts/page/4/">&nbsp;&nbsp;»
+    </a>
+  </nav>
+</footer>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

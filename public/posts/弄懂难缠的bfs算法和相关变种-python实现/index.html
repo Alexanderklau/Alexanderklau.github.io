@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>弄懂难缠的BFS算法和相关变种(Python实现) | yemilice</title>
+<meta name="keywords" content="算法">
+<meta name="description" content="前言
+这段时间频繁刷题，leetcode真的好难啊！！每次都他娘的做不出来，除了刷题，最近还在复习各种架构，或者是完成公司的开发。这些占据了我过多时间，所以blog其实一直想写，但是实在腾不出时间，今天在针对性刷leetcode的时候，对BFS/DFS有了一点别的感悟，所以就写一篇博客，作为自己的笔记，在记录的同时，也帮助其他兄弟少走弯路，希望，能够帮到大家。">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84bfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84bfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84bfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="弄懂难缠的BFS算法和相关变种(Python实现)">
+  <meta property="og:description" content="前言 这段时间频繁刷题，leetcode真的好难啊！！每次都他娘的做不出来，除了刷题，最近还在复习各种架构，或者是完成公司的开发。这些占据了我过多时间，所以blog其实一直想写，但是实在腾不出时间，今天在针对性刷leetcode的时候，对BFS/DFS有了一点别的感悟，所以就写一篇博客，作为自己的笔记，在记录的同时，也帮助其他兄弟少走弯路，希望，能够帮到大家。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2021-02-23T16:22:51+00:00">
+    <meta property="article:modified_time" content="2021-02-23T16:22:51+00:00">
+    <meta property="article:tag" content="算法">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="弄懂难缠的BFS算法和相关变种(Python实现)">
+  <meta name="twitter:description" content="前言 这段时间频繁刷题，leetcode真的好难啊！！每次都他娘的做不出来，除了刷题，最近还在复习各种架构，或者是完成公司的开发。这些占据了我过多时间，所以blog其实一直想写，但是实在腾不出时间，今天在针对性刷leetcode的时候，对BFS/DFS有了一点别的感悟，所以就写一篇博客，作为自己的笔记，在记录的同时，也帮助其他兄弟少走弯路，希望，能够帮到大家。">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "弄懂难缠的BFS算法和相关变种(Python实现)",
+      "item": "http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84bfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "弄懂难缠的BFS算法和相关变种(Python实现)",
+  "name": "弄懂难缠的BFS算法和相关变种(Python实现)",
+  "description": "前言 这段时间频繁刷题，leetcode真的好难啊！！每次都他娘的做不出来，除了刷题，最近还在复习各种架构，或者是完成公司的开发。这些占据了我过多时间，所以blog其实一直想写，但是实在腾不出时间，今天在针对性刷leetcode的时候，对BFS/DFS有了一点别的感悟，所以就写一篇博客，作为自己的笔记，在记录的同时，也帮助其他兄弟少走弯路，希望，能够帮到大家。\n",
+  "keywords": [
+    "算法"
+  ],
+  "articleBody": "前言 这段时间频繁刷题，leetcode真的好难啊！！每次都他娘的做不出来，除了刷题，最近还在复习各种架构，或者是完成公司的开发。这些占据了我过多时间，所以blog其实一直想写，但是实在腾不出时间，今天在针对性刷leetcode的时候，对BFS/DFS有了一点别的感悟，所以就写一篇博客，作为自己的笔记，在记录的同时，也帮助其他兄弟少走弯路，希望，能够帮到大家。\n什么是BFS算法？ 这些百度谷歌都搜的到，不过这里还是简单说一下吧\n首先，BFS的全名，叫做广度优先搜索算法\n搜索，顾名思义，是找寻某个东西，所以叫搜索，在写代码的时候，搜索，其实等同遍历，只是这个遍历是有条件的。\n相对于BFS，它的条件是什么呢？\n举个例子，有个迷宫，有两个点，你要从A 移动到 B，中间带X的表示墙壁，无法通行\nA 0 0 0 X 0 0 X 0 X 0 B 现在走出第一步\nA 1 0 0 X 0 0 X 0 X 0 B 走现在走第二步，发现有两个可以走的地方（分岔路）\nA 1 2 0 X 2 0 X 0 X 0 B 走第三步，依旧有个分岔路\nA 1 2 3 X 2 3 X 0 X 0 B 走第四步，只有一条路\nA 1 2 3 X 2 3 X 0 X 4 B 第五步，走到B点\nA 1 2 3 X 2 3 X 0 X 4 B 我们画出可行的步骤\nA-1-2 3 | | X 2-3 X | 0 X 4-B BFS（广度优先）算法，就是记录所有可行的路径。\n当面临选择和岔路的时候，BFS选择我全都要，全都记录下来，然后选择其中一个进入，如果有死路，它选择返回，选另外的岔路，继续重复这样的操作。\n可以看出，BFS是逐步求解的，由近到远。这里找路程的步骤，用动态图来展示如下\n这个图其实就直接说明了BFS算法的特点\n这个图真的很棒！我一看就大概明白BFS算法了。 感谢此图的作者，如果你看到，请联系我，我会加上你的名字作为引用！谢谢！\n是不是很像钢铁雄心4推进部队的样子？\n持续性突进！\n树的BFS算法 前面你可以看到，BFS算法，其实就是将分支逐步列出。\n其实对于树这个结构来说，BFS算法更像是特殊的遍历整个树结构的一种方法。\n举个例子\n假设我们弄一个树\nA / \\ B C / \\ / \\ D E F G 一般的遍历逻辑就是(前序遍历)\nA - B - D - E - C - F - G\n但是，BFS可不是这么玩的，BFS的遍历逻辑就是 A - B - C - D - E - F - G\n这里来个图，你一看就明白！\n这就是树的BFS遍历，其实说起来也没多难吧？\n树的BFS算法模版 根据上面的逻辑，我们可以看出来，树的BFS算法是一层层的层次搜索算法，并且是先进先出的逻辑。\n如图所示\n那么，遍历树的BFS的模版，应该这么写\n首先，定义一个树的结构体\nclass TreeNode: def __init__(self, x): self.val = x self.left = None self.right = None 由于先进先出的结构特点，这里使用队列来进行存储数据，这是因为BFS算法需要保证优先访问顶点的未访问领接点。\ndef BFS(root): if root == None: return # 队列化root queue = deque([root]) result = [] # 遍历root while queue: # 移去并且返回一个元素，queue 最左侧的那一个 node = queue.popleft() # 获取node的详细情况 result.append(node.val) print(node.val) # 访问左树 left = node.left if left != None: queue.append(left) # 访问右树 right = node.right if right != None: queue.append(right) return result 写一个测试的方法，就按着我们刚刚那个A - G的树来一把\nif __name__ == \"__main__\": tree = TreeNode(\"A\") tree.left = TreeNode(\"B\") tree.right = TreeNode(\"C\") tree.left.left = TreeNode(\"D\") tree.right.right = TreeNode(\"E\") tree.right.right.right = TreeNode(\"F\") tree.right.right.right = TreeNode(\"F\") print(BFS(tree)) 打印出来\nA B C D E F ['A', 'B', 'C', 'D', 'E', 'F'] 树的BFS算法变种 从上到下打印二叉树 III leetcode地址：https://leetcode-cn.com/problems/cong-shang-dao-xia-da-yin-er-cha-shu-iii-lcof/\n请实现一个函数按照之字形顺序打印二叉树， 即第一行按照从左到右的顺序打印， 第二层按照从右到左的顺序打印， 第三行再按照从左到右的顺序打印，其他行以此类推。 例如: 给定二叉树: [3,9,20,null,null,15,7], 3 / \\ 9 20 / \\ 15 7 返回其层次遍历结果： [ [3], [20,9], [15,7] ] 分析题目\n这道题，主要就是用BFS去做遍历，然后遍历的同时判断现在遍历到第几层，然后根据层数转换打印的次序，这道题不算太难\n首先先写个BFS模版\nqueue = deque([root]) result = [] while queue: node = queue.popleft() result.append(node.val) print(node.val) left = node.left if left != None: queue.append(left) right = node.right if right != None: queue.append(right) return result 根据需求，首先先解决输出是\n[ [3], [20,9], [15,7] ] 的问题，其实说明内部嵌套多个队列，改写一下，当遍历每一层的时候，添加到新的队列当中\nwhile queue: # 定义一个新的队列 tmp = deque() # 判断队列循环到哪里 for i in range(len(queue)): node = queue.popleft() # tmp 队列 添加 val数据 tmp.append(node.val) left = node.left if left != None: queue.append(left) right = node.right if right != None: queue.append(right) result.append(list(tmp)) return result 接下来就要判断循环的行号是偶数还是计数\n# 如果是偶数 if len(result) % 2: # 添加到队列左端 tmp.appendleft(node.val) else: tmp.append(node.val) 最终的代码是\nfrom collections import deque class TreeNode: def __init__(self, x): self.val = x self.left = None self.right = None def BFS(root): if root == None: return [] queue = deque([root]) result = [] while queue: tmp = deque() for i in range(len(queue)): print(len(result)) node = queue.popleft() if len(result) % 2: tmp.appendleft(node.val) else: tmp.append(node.val) if node.left != None: queue.append(node.left) if node.right != None: queue.append(node.right) result.append(list(tmp)) return result 结尾 我这里只总结了二叉树的几个题目，其实还不是很全，最近实在是太忙啦！后面会补全图算法的BFS和DFS算法，大家多多期待吧！\n",
+  "wordCount" : "1854",
+  "inLanguage": "zh-cn",
+  "datePublished": "2021-02-23T16:22:51Z",
+  "dateModified": "2021-02-23T16:22:51Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/%E5%BC%84%E6%87%82%E9%9A%BE%E7%BC%A0%E7%9A%84bfs%E7%AE%97%E6%B3%95%E5%92%8C%E7%9B%B8%E5%85%B3%E5%8F%98%E7%A7%8D-python%E5%AE%9E%E7%8E%B0/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            弄懂难缠的BFS算法和相关变种(Python实现)
+        </h1>
+        <div class="post-meta"><span title='2021-02-23 16:22:51 +0000 UTC'>February 23, 2021</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1854 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e5%89%8d%e8%a8%80" aria-label="前言">前言</a></li>
+            <li>
+                <a href="#%e4%bb%80%e4%b9%88%e6%98%afbfs%e7%ae%97%e6%b3%95" aria-label="什么是BFS算法？">什么是BFS算法？</a></li>
+            <li>
+                <a href="#%e6%a0%91%e7%9a%84bfs%e7%ae%97%e6%b3%95" aria-label="树的BFS算法">树的BFS算法</a><ul>
+                    
+            <li>
+                <a href="#%e6%a0%91%e7%9a%84bfs%e7%ae%97%e6%b3%95%e6%a8%a1%e7%89%88" aria-label="树的BFS算法模版">树的BFS算法模版</a></li>
+            <li>
+                <a href="#%e6%a0%91%e7%9a%84bfs%e7%ae%97%e6%b3%95%e5%8f%98%e7%a7%8d" aria-label="树的BFS算法变种">树的BFS算法变种</a><ul>
+                    
+            <li>
+                <a href="#%e4%bb%8e%e4%b8%8a%e5%88%b0%e4%b8%8b%e6%89%93%e5%8d%b0%e4%ba%8c%e5%8f%89%e6%a0%91-iii" aria-label="从上到下打印二叉树 III">从上到下打印二叉树 III</a></li></ul>
+            </li></ul>
+            </li>
+            <li>
+                <a href="#%e7%bb%93%e5%b0%be" aria-label="结尾">结尾</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="前言">前言<a hidden class="anchor" aria-hidden="true" href="#前言">#</a></h2>
+<p>这段时间频繁刷题，leetcode真的好难啊！！每次都他娘的做不出来，除了刷题，最近还在复习各种架构，或者是完成公司的开发。这些占据了我过多时间，所以blog其实一直想写，但是实在腾不出时间，今天在针对性刷leetcode的时候，对BFS/DFS有了一点别的感悟，所以就写一篇博客，作为自己的笔记，在记录的同时，也帮助其他兄弟少走弯路，希望，能够帮到大家。</p>
+<h2 id="什么是bfs算法">什么是BFS算法？<a hidden class="anchor" aria-hidden="true" href="#什么是bfs算法">#</a></h2>
+<p>这些百度谷歌都搜的到，不过这里还是简单说一下吧</p>
+<p>首先，BFS的全名，叫做广度优先搜索算法</p>
+<p>搜索，顾名思义，是找寻某个东西，所以叫搜索，在写代码的时候，搜索，其实等同遍历，只是这个遍历是有条件的。</p>
+<p>相对于BFS，它的条件是什么呢？</p>
+<p>举个例子，有个迷宫，有两个点，你要从A 移动到 B，中间带X的表示墙壁，无法通行</p>
+<pre tabindex="0"><code>A 0 0 0 
+
+X 0 0 X
+
+0 X 0 B
+</code></pre><p>现在走出第一步</p>
+<pre tabindex="0"><code>A 1 0 0 
+
+X 0 0 X
+
+0 X 0 B
+</code></pre><p>走现在走第二步，发现有两个可以走的地方（分岔路）</p>
+<pre tabindex="0"><code>A 1 2 0 
+
+X 2 0 X
+
+0 X 0 B
+</code></pre><p>走第三步，依旧有个分岔路</p>
+<pre tabindex="0"><code>A 1 2 3 
+
+X 2 3 X
+
+0 X 0 B
+</code></pre><p>走第四步，只有一条路</p>
+<pre tabindex="0"><code>A 1 2 3 
+
+X 2 3 X
+
+0 X 4 B
+</code></pre><p>第五步，走到B点</p>
+<pre tabindex="0"><code>A 1 2 3 
+
+X 2 3 X
+
+0 X 4 B
+</code></pre><p>我们画出可行的步骤</p>
+<pre tabindex="0"><code>A-1-2 3 
+  | |
+X 2-3 X
+    |
+0 X 4-B
+</code></pre><p>BFS（广度优先）算法，就是记录所有可行的路径。</p>
+<p>当面临选择和岔路的时候，BFS选择<strong>我全都要</strong>，全都记录下来，然后选择其中一个进入，如果有死路，它选择返回，选另外的岔路，继续重复这样的操作。</p>
+<p>可以看出，BFS是逐步求解的，由近到远。这里找路程的步骤，用动态图来展示如下</p>
+<p>这个图其实就直接说明了BFS算法的特点</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/bfs/alogrithm_10_2.gif"></p>
+<p>这个图真的很棒！我一看就大概明白BFS算法了。
+感谢此图的作者，如果你看到，请联系我，我会加上你的名字作为引用！谢谢！</p>
+<p>是不是很像钢铁雄心4推进部队的样子？</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/bfs/hoi4.jpg"></p>
+<p>持续性突进！</p>
+<h2 id="树的bfs算法">树的BFS算法<a hidden class="anchor" aria-hidden="true" href="#树的bfs算法">#</a></h2>
+<p>前面你可以看到，BFS算法，其实就是将分支逐步列出。</p>
+<p>其实对于树这个结构来说，BFS算法更像是<strong>特殊的</strong>遍历整个树结构的一种方法。</p>
+<p>举个例子</p>
+<p>假设我们弄一个树</p>
+<pre tabindex="0"><code>      A
+    /   \
+   B     C
+  / \   / \
+ D   E F   G
+</code></pre><p>一般的遍历逻辑就是(前序遍历)</p>
+<p>A - B - D - E - C - F - G</p>
+<p>但是，BFS可不是这么玩的，BFS的遍历逻辑就是
+A - B - C - D - E - F - G</p>
+<p>这里来个图，你一看就明白！</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/bfs/e129246930f743eea7807c93b2ca1739.gif"></p>
+<p>这就是树的BFS遍历，其实说起来也没多难吧？</p>
+<h3 id="树的bfs算法模版">树的BFS算法模版<a hidden class="anchor" aria-hidden="true" href="#树的bfs算法模版">#</a></h3>
+<p>根据上面的逻辑，我们可以看出来，树的BFS算法是一层层的层次搜索算法，并且是先进先出的逻辑。</p>
+<p>如图所示</p>
+<p><img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/bfs/f799f2d3440f4cddb47d0b1e28d8198d.gif"></p>
+<p>那么，遍历树的BFS的模版，应该这么写</p>
+<p>首先，定义一个树的结构体</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TreeNode</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, x):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>val <span style="color:#f92672">=</span> x
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>left <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>right <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+</span></span></code></pre></div><p>由于<strong>先进先出</strong>的结构特点，这里使用<strong>队列</strong>来进行存储数据，这是因为BFS算法需要保证优先访问顶点的未访问领接点。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">BFS</span>(root):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> root <span style="color:#f92672">==</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 队列化root</span>
+</span></span><span style="display:flex;"><span>    queue <span style="color:#f92672">=</span> deque([root])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    result <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 遍历root</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span> queue:
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 移去并且返回一个元素，queue 最左侧的那一个</span>
+</span></span><span style="display:flex;"><span>        node <span style="color:#f92672">=</span> queue<span style="color:#f92672">.</span>popleft()
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 获取node的详细情况</span>
+</span></span><span style="display:flex;"><span>        result<span style="color:#f92672">.</span>append(node<span style="color:#f92672">.</span>val)
+</span></span><span style="display:flex;"><span>        print(node<span style="color:#f92672">.</span>val)
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 访问左树</span>
+</span></span><span style="display:flex;"><span>        left <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>left
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> left <span style="color:#f92672">!=</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>            queue<span style="color:#f92672">.</span>append(left)
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 访问右树</span>
+</span></span><span style="display:flex;"><span>        right <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>right
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> right <span style="color:#f92672">!=</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>            queue<span style="color:#f92672">.</span>append(right)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> result
+</span></span></code></pre></div><p>写一个测试的方法，就按着我们刚刚那个A - G的树来一把</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;__main__&#34;</span>:
+</span></span><span style="display:flex;"><span>    tree <span style="color:#f92672">=</span> TreeNode(<span style="color:#e6db74">&#34;A&#34;</span>)
+</span></span><span style="display:flex;"><span>    tree<span style="color:#f92672">.</span>left <span style="color:#f92672">=</span> TreeNode(<span style="color:#e6db74">&#34;B&#34;</span>)
+</span></span><span style="display:flex;"><span>    tree<span style="color:#f92672">.</span>right <span style="color:#f92672">=</span> TreeNode(<span style="color:#e6db74">&#34;C&#34;</span>)
+</span></span><span style="display:flex;"><span>    tree<span style="color:#f92672">.</span>left<span style="color:#f92672">.</span>left <span style="color:#f92672">=</span> TreeNode(<span style="color:#e6db74">&#34;D&#34;</span>)
+</span></span><span style="display:flex;"><span>    tree<span style="color:#f92672">.</span>right<span style="color:#f92672">.</span>right <span style="color:#f92672">=</span> TreeNode(<span style="color:#e6db74">&#34;E&#34;</span>)
+</span></span><span style="display:flex;"><span>    tree<span style="color:#f92672">.</span>right<span style="color:#f92672">.</span>right<span style="color:#f92672">.</span>right <span style="color:#f92672">=</span> TreeNode(<span style="color:#e6db74">&#34;F&#34;</span>)
+</span></span><span style="display:flex;"><span>    tree<span style="color:#f92672">.</span>right<span style="color:#f92672">.</span>right<span style="color:#f92672">.</span>right <span style="color:#f92672">=</span> TreeNode(<span style="color:#e6db74">&#34;F&#34;</span>)
+</span></span><span style="display:flex;"><span>    print(BFS(tree))
+</span></span></code></pre></div><p>打印出来</p>
+<pre tabindex="0"><code>A
+B
+C
+D
+E
+F
+[&#39;A&#39;, &#39;B&#39;, &#39;C&#39;, &#39;D&#39;, &#39;E&#39;, &#39;F&#39;]
+</code></pre><h3 id="树的bfs算法变种">树的BFS算法变种<a hidden class="anchor" aria-hidden="true" href="#树的bfs算法变种">#</a></h3>
+<h4 id="从上到下打印二叉树-iii">从上到下打印二叉树 III<a hidden class="anchor" aria-hidden="true" href="#从上到下打印二叉树-iii">#</a></h4>
+<p>leetcode地址：https://leetcode-cn.com/problems/cong-shang-dao-xia-da-yin-er-cha-shu-iii-lcof/</p>
+<pre tabindex="0"><code>请实现一个函数按照之字形顺序打印二叉树，
+
+即第一行按照从左到右的顺序打印，
+
+第二层按照从右到左的顺序打印，
+
+第三行再按照从左到右的顺序打印，其他行以此类推。
+
+ 
+
+例如:
+给定二叉树: 
+
+[3,9,20,null,null,15,7],
+
+    3
+   / \
+  9  20
+    /  \
+   15   7
+返回其层次遍历结果：
+
+[
+  [3],
+  [20,9],
+  [15,7]
+]
+</code></pre><p><strong>分析题目</strong></p>
+<p>这道题，主要就是用BFS去做遍历，然后遍历的同时判断现在遍历到第几层，然后根据层数转换打印的次序，这道题不算太难</p>
+<p>首先先写个BFS模版</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>queue <span style="color:#f92672">=</span> deque([root])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>result <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">while</span> queue:
+</span></span><span style="display:flex;"><span>    node <span style="color:#f92672">=</span> queue<span style="color:#f92672">.</span>popleft()
+</span></span><span style="display:flex;"><span>    result<span style="color:#f92672">.</span>append(node<span style="color:#f92672">.</span>val)
+</span></span><span style="display:flex;"><span>    print(node<span style="color:#f92672">.</span>val)
+</span></span><span style="display:flex;"><span>    left <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>left
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> left <span style="color:#f92672">!=</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>        queue<span style="color:#f92672">.</span>append(left)
+</span></span><span style="display:flex;"><span>    right <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>right
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> right <span style="color:#f92672">!=</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>        queue<span style="color:#f92672">.</span>append(right)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">return</span> result
+</span></span></code></pre></div><p>根据需求，首先先解决输出是</p>
+<pre tabindex="0"><code>[
+  [3],
+  [20,9],
+  [15,7]
+]
+</code></pre><p>的问题，其实说明内部嵌套多个队列，改写一下，当遍历每一层的时候，添加到新的队列当中</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">while</span> queue:
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 定义一个新的队列</span>
+</span></span><span style="display:flex;"><span>    tmp <span style="color:#f92672">=</span> deque()
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 判断队列循环到哪里</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(queue)):
+</span></span><span style="display:flex;"><span>        node <span style="color:#f92672">=</span> queue<span style="color:#f92672">.</span>popleft()
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># tmp 队列 添加 val数据</span>
+</span></span><span style="display:flex;"><span>        tmp<span style="color:#f92672">.</span>append(node<span style="color:#f92672">.</span>val)
+</span></span><span style="display:flex;"><span>        left <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>left
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> left <span style="color:#f92672">!=</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>            queue<span style="color:#f92672">.</span>append(left)
+</span></span><span style="display:flex;"><span>        right <span style="color:#f92672">=</span> node<span style="color:#f92672">.</span>right
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> right <span style="color:#f92672">!=</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>            queue<span style="color:#f92672">.</span>append(right)
+</span></span><span style="display:flex;"><span>    result<span style="color:#f92672">.</span>append(list(tmp))
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">return</span> result
+</span></span></code></pre></div><p>接下来就要判断循环的行号是偶数还是计数</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 如果是偶数</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> len(result) <span style="color:#f92672">%</span> <span style="color:#ae81ff">2</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 添加到队列左端</span>
+</span></span><span style="display:flex;"><span>    tmp<span style="color:#f92672">.</span>appendleft(node<span style="color:#f92672">.</span>val)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>    tmp<span style="color:#f92672">.</span>append(node<span style="color:#f92672">.</span>val)
+</span></span></code></pre></div><p>最终的代码是</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> deque
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TreeNode</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, x):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>val <span style="color:#f92672">=</span> x
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>left <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>right <span style="color:#f92672">=</span> <span style="color:#66d9ef">None</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">BFS</span>(root):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> root <span style="color:#f92672">==</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> []
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    queue <span style="color:#f92672">=</span> deque([root])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    result <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span> queue:
+</span></span><span style="display:flex;"><span>        tmp <span style="color:#f92672">=</span> deque()
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(queue)):
+</span></span><span style="display:flex;"><span>            print(len(result))
+</span></span><span style="display:flex;"><span>            node <span style="color:#f92672">=</span> queue<span style="color:#f92672">.</span>popleft()
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> len(result) <span style="color:#f92672">%</span> <span style="color:#ae81ff">2</span>:
+</span></span><span style="display:flex;"><span>                tmp<span style="color:#f92672">.</span>appendleft(node<span style="color:#f92672">.</span>val)
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span>:
+</span></span><span style="display:flex;"><span>                tmp<span style="color:#f92672">.</span>append(node<span style="color:#f92672">.</span>val)
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> node<span style="color:#f92672">.</span>left <span style="color:#f92672">!=</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>                queue<span style="color:#f92672">.</span>append(node<span style="color:#f92672">.</span>left)
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> node<span style="color:#f92672">.</span>right <span style="color:#f92672">!=</span> <span style="color:#66d9ef">None</span>:
+</span></span><span style="display:flex;"><span>                queue<span style="color:#f92672">.</span>append(node<span style="color:#f92672">.</span>right)
+</span></span><span style="display:flex;"><span>        result<span style="color:#f92672">.</span>append(list(tmp))
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> result
+</span></span></code></pre></div><h2 id="结尾">结尾<a hidden class="anchor" aria-hidden="true" href="#结尾">#</a></h2>
+<p>我这里只总结了二叉树的几个题目，其实还不是很全，最近实在是太忙啦！后面会补全图算法的BFS和DFS算法，大家多多期待吧！</p>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E7%AE%97%E6%B3%95/">算法</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/%E8%AF%BB%E8%AF%97%E7%9A%84%E6%84%9F%E6%82%9F/">
+    <span class="title">« </span>
+    <span>读诗的感悟</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/2020%E7%9A%84%E5%9B%9E%E9%A1%BE%E5%92%8C2021%E7%9A%84%E5%B1%95%E6%9C%9B/">
+    <span class="title"> »</span>
+    <span>2020的回顾和2021的展望</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

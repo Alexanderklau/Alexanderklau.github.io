@@ -1,0 +1,112 @@
+baseURL: "https://yemilice.com/"
+title: "yemilice"
+theme: "PaperMod"
+defaultContentLanguage: "zh-cn"
+languageCode: "zh-cn"
+hasCJKLanguage: true
+
+pagination:
+  pagerSize: 10
+
+enableRobotsTXT: true
+buildDrafts: false
+buildFuture: false
+buildExpired: false
+
+outputs:
+  home:
+    - HTML
+    - RSS
+    - JSON
+
+params:
+  env: production
+  title: "yemilice"
+  description: "程序、音乐与生活随笔"
+  mainSections:
+    - posts
+  defaultTheme: auto
+  ShowReadingTime: true
+  ShowShareButtons: false
+  ShowPostNavLinks: true
+  ShowBreadCrumbs: true
+  ShowCodeCopyButtons: true
+  ShowWordCount: true
+  ShowRssButtonInSectionTermList: true
+  ShowToc: true
+  TocOpen: false
+
+  homeInfoParams:
+    Title: "Yemilice"
+    Content: |
+      人生如逆水行舟，不进则退。
+
+      这里主要记录 **Golang / 架构 / 搜索/ AI / 游戏相关**，偶尔也写音乐、成长和一些不太想发在朋友圈的话。
+    Buttons:
+      - name: 归档
+        url: /archives/
+      - name: 关于我
+        url: /aboutme/
+
+  contentTracks:
+    - title: 技术沉淀
+      description: Golang、架构设计、ElasticSearch、分布式和踩坑复盘。
+      url: /categories/技术/
+    - title: 游戏观察
+      description: 多人游戏、网络机制、匹配逻辑，以及一些开发者视角的拆解。
+      url: /posts/%E5%A4%9A%E4%BA%BA%E6%B8%B8%E6%88%8F%E6%8A%80%E6%9C%AF%E5%9F%BA%E7%A1%80/
+    - title: 音乐与生活
+      description: 说唱、编曲、情绪记录，还有那些不太适合发在朋友圈的话。
+      url: /categories/生活/
+
+  featuredPosts:
+    - title: Golang协程基础探究
+      url: /posts/golang%E5%8D%8F%E7%A8%8B%E5%9F%BA%E7%A1%80%E6%8E%A2%E7%A9%B6/
+      tag: 系列起点
+    - title: 多人游戏技术基础
+      url: /posts/%E5%A4%9A%E4%BA%BA%E6%B8%B8%E6%88%8F%E6%8A%80%E6%9C%AF%E5%9F%BA%E7%A1%80/
+      tag: 游戏开发
+    - title: 架构设计和项目管理-写于第三个独立开发项目之后
+      url: /posts/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%92%8C%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86-%E5%86%99%E4%BA%8E%E7%AC%AC%E4%B8%89%E4%B8%AA%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91%E9%A1%B9%E7%9B%AE%E4%B9%8B%E5%90%8E/
+      tag: 经验复盘
+    - title: 2022开年礼物-拿下育碧/EA/动视Offer的随想
+      url: /posts/2022%E5%BC%80%E5%B9%B4%E7%A4%BC%E7%89%A9-%E6%8B%BF%E4%B8%8B%E8%82%B2%E7%A2%A7-%E5%8A%A8%E8%A7%86-eaoffer%E7%9A%84%E9%9A%8F%E6%83%B3/
+      tag: 人生节点
+
+  # 社交媒体链接
+  socialIcons:
+    - name: github
+      url: "https://github.com/Alexanderklau"
+    - name: email
+      url: "mailto:Yemiliceklichko@outlook.com"
+
+  # 全局启用评论（可在单篇文章中设置 comments: false 来禁用）
+  comments: true
+
+  # Waline 评论系统配置
+  waline:
+    enable: true
+    serverURL: "https://walinecomment-two.vercel.app/" # 请替换为你的 Waline 服务器地址
+
+menu:
+  main:
+    - identifier: aboutme
+      name: 关于我
+      url: /aboutme/
+      weight: 5
+    - identifier: archives
+      name: 归档
+      url: /archives/
+      weight: 10
+    - identifier: categories
+      name: 分类
+      url: /categories/
+      weight: 15
+    - identifier: search
+      name: 搜索
+      url: /search/
+      weight: 20
+    - identifier: tags
+      name: 标签
+      url: /tags/
+      weight: 30

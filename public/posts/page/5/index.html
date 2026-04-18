@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Posts | yemilice</title>
+<meta name="keywords" content="">
+<meta name="description" content="Posts - yemilice">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" type="application/rss+xml" href="http://localhost:1313/posts/index.xml" title="rss">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="Posts">
+  <meta property="og:description" content="程序、音乐与生活随笔">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="website">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Posts">
+  <meta name="twitter:description" content="程序、音乐与生活随笔">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }
+  ]
+}
+</script>
+</head>
+<body class="list" id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main"> 
+<header class="page-header"><nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a></nav>
+  <h1>
+    Posts
+    <a href="/posts/index.xml" title="RSS" aria-label="RSS">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" height="23">
+        <path d="M4 11a9 9 0 0 1 9 9" />
+        <path d="M4 4a16 16 0 0 1 16 16" />
+        <circle cx="5" cy="19" r="1" />
+      </svg>
+    </a>
+  </h1>
+</header>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Grow_Up
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 有时候觉得自己快要撑不下去
+但是依旧不能放弃
+为了爸妈
+为了自己
+为了所有人
+ONE 温热的咖啡升腾起轻薄的水雾
+满屏未敲完的代码依旧在提醒
+忙碌和疲惫的一天即将结束
+next，即将来到下一个季节
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-07-28 14:38:28 +0000 UTC'>July 28, 2020</span>&nbsp;·&nbsp;<span>1 min</span>&nbsp;·&nbsp;<span>455 words</span></footer>
+  <a class="entry-link" aria-label="post link to Grow_Up" href="http://localhost:1313/posts/grow-up/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">使用Golang的gRPC框架的一点随想
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言（写文章的原因） 最近开发项目太重了，我有些感觉自己状态不太对，想要去换一个地方生活，但是说到要做的事就一定要做，学习是不能停下来的。
+最近开发使用了一下gRPC，不同于以前我自己写的Python 的 RPC，gRPC相对来说用起来更简单，写起来更容易，可能一开始有点不好使，其实熟悉了也还是不错的，那么，这篇文章主要就写一下，gRPC的基础使用和在我项目中的实际应用吧。
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-07-07 13:32:21 +0000 UTC'>July 7, 2020</span>&nbsp;·&nbsp;<span>5 min</span>&nbsp;·&nbsp;<span>2431 words</span></footer>
+  <a class="entry-link" aria-label="post link to 使用Golang的gRPC框架的一点随想" href="http://localhost:1313/posts/%E4%BD%BF%E7%94%A8golang%E7%9A%84grpc%E6%A1%86%E6%9E%B6%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">恶性循环
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 改 不 了 写 前 言 的 毛 病
+这 个 月 心 情 很 不 美 丽
+来 自 心 底 的 呐 喊
+释 放 出 深 渊 的 野 兽
+one 我 得 了 名 为 平 庸 的 不 治 之 症
+就 让 我 在 灰 暗 的 地 底 死 去
+双 手 合 十 祈 求 神 明 的 营救
+看 不 到 的 希 望 的 祷 告 不 会 得 到 回 应
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-06-17 12:43:19 +0000 UTC'>June 17, 2020</span>&nbsp;·&nbsp;<span>1 min</span>&nbsp;·&nbsp;<span>355 words</span></footer>
+  <a class="entry-link" aria-label="post link to 恶性循环" href="http://localhost:1313/posts/%E6%81%B6%E6%80%A7%E5%BE%AA%E7%8E%AF/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">我的自我介绍
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>我的自我介绍 hello, 这是我，
+你可能不认识我，
+那么，
+现在由我来进行自我介绍。
+do it。
+我 叫 Y k，你 可 以 叫 我 l k，来 自 c d c
+出 生 在 钟 鸣 鼎 食 之 家，其 他 都 是 secret
+有 个 很 爱 我 的 妈 妈，更 多 一 点 不 能 告 诉 你
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-06-02 15:05:31 +0000 UTC'>June 2, 2020</span>&nbsp;·&nbsp;<span>1 min</span>&nbsp;·&nbsp;<span>330 words</span></footer>
+  <a class="entry-link" aria-label="post link to 我的自我介绍" href="http://localhost:1313/posts/%E6%88%91%E7%9A%84%E8%87%AA%E6%88%91%E4%BB%8B%E7%BB%8D/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Python写一个自动点餐程序
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>Python写一个自动点餐程序 为什么要写这个 公司现在用meican作为点餐渠道，每天规定的时间是早7：00-9：40点餐，有时候我经常容易忘记，或者是在地铁/公交上没办法点餐，所以总是没饭吃，只有去楼下711买点饭团之类的玩意儿，所以这是促使我写点餐小程序的原因。
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-06-02 10:17:12 +0000 UTC'>June 2, 2020</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>1316 words</span></footer>
+  <a class="entry-link" aria-label="post link to Python写一个自动点餐程序" href="http://localhost:1313/posts/python%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%8A%A8%E7%82%B9%E9%A4%90%E7%A8%8B%E5%BA%8F/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Golang中Context使用的一点随想
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>Golang中Context使用的一点随想 前言 这一篇是三巨头最后一篇了，前两篇介绍了channel，waitgroup，今天这篇来介绍一下context，相比于其他两种，我倒是更推荐context（上下文）这种控制goroutine的方法，为什呢，下面我就来详细的说一说吧。
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-06-01 10:18:36 +0000 UTC'>June 1, 2020</span>&nbsp;·&nbsp;<span>7 min</span>&nbsp;·&nbsp;<span>3303 words</span></footer>
+  <a class="entry-link" aria-label="post link to Golang中Context使用的一点随想" href="http://localhost:1313/posts/golang%E4%B8%ADcontext%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Golang中WaitGroup使用的一点随想
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>Golang中WaitGroup使用的一点随想 前言（为什么又要写一篇随想文） 上次我写了一个channel的文章，我寻思，这Golang控制三大巨头，channel，waitgroup，context，我得尽快都安排上，最近工作太忙，压力过大，但是Update Blog还是不能够停下来，所以继续补上，学习还是不能停，那么来吧。
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-05-26 13:29:11 +0000 UTC'>May 26, 2020</span>&nbsp;·&nbsp;<span>3 min</span>&nbsp;·&nbsp;<span>1297 words</span></footer>
+  <a class="entry-link" aria-label="post link to Golang中WaitGroup使用的一点随想" href="http://localhost:1313/posts/golang%E4%B8%ADwaitgroup%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Golang中Channel使用的一点随想
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>Golang中Channel使用的一点随想 前言（为什么要写这篇文章） 在Golang中，搞同步/并发控制的方法有很多，有channel(管道)，WaitGroup(等待线程结束)，context(上下文管理)，我一直想深入研究一下它们，因为这次开发我遇到了很多比较棘手的问题，我认为万变不离其宗，所以我看了一下他们的源码，然后简单的写了几个Demo，结合了我自己的开发经验，写成此文，做记录的同时，希望可以帮到其他兄弟，未来我还会出context随想，waitgroup随想，一点一点来吧。
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-05-25 18:25:38 +0000 UTC'>May 25, 2020</span>&nbsp;·&nbsp;<span>5 min</span>&nbsp;·&nbsp;<span>2007 words</span></footer>
+  <a class="entry-link" aria-label="post link to Golang中Channel使用的一点随想" href="http://localhost:1313/posts/golang%E4%B8%ADchannel%E4%BD%BF%E7%94%A8%E7%9A%84%E4%B8%80%E7%82%B9%E9%9A%8F%E6%83%B3/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">分布式数据库如何选择，几种分布式数据库优缺点一览
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>分布式数据库如何选择？几种分布式数据库优缺点一览 为什么选择分布式数据库？ 优点如下：
+具有灵活的体系结构 适应分布式的管理和控制机构 经济性能优越 系统的可靠性高、可用性好 局部应用的响应速度快 可扩展性好，易于集成现有系统。 相关的技术概念介绍 什么是分布式数据库？ 常见的分布式系统分为，
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-05-22 16:16:20 +0000 UTC'>May 22, 2020</span>&nbsp;·&nbsp;<span>8 min</span>&nbsp;·&nbsp;<span>3787 words</span></footer>
+  <a class="entry-link" aria-label="post link to 分布式数据库如何选择，几种分布式数据库优缺点一览" href="http://localhost:1313/posts/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%E5%87%A0%E7%A7%8D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BC%98%E7%BC%BA%E7%82%B9%E4%B8%80%E8%A7%88/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">开发中常用的Golang高级用法
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>开发中常用的Golang高级用法 前言 忙碌了两个月，这次开发终于要结束了，今天下午公司在重组集群机器，也没办法干活儿了，就写一些东西，相当于，留住一些东西，来纪念这辛苦的两个月吧。做一个纪念，也是为了方便以后自己去查看。在这次开发中，学习了不少Golang的高级特性，并且付诸于实现，也踩了不少坑，留下这篇文字，也是方便其他人能够查看，或者借鉴，如果帮到你，那么我也会很开心你。
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2020-05-22 14:37:09 +0000 UTC'>May 22, 2020</span>&nbsp;·&nbsp;<span>5 min</span>&nbsp;·&nbsp;<span>2493 words</span></footer>
+  <a class="entry-link" aria-label="post link to 开发中常用的Golang高级用法" href="http://localhost:1313/posts/%E5%BC%80%E5%8F%91%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84golang%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95/"></a>
+</article>
+<footer class="page-footer">
+  <nav class="pagination">
+    <a class="prev" href="http://localhost:1313/posts/page/4/">
+      «&nbsp;&nbsp;
+    </a>
+    <a class="next" href="http://localhost:1313/posts/page/6/">&nbsp;&nbsp;»
+    </a>
+  </nav>
+</footer>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

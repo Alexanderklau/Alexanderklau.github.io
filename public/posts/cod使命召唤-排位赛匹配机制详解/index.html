@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>COD(使命召唤)-排位赛匹配机制详解 | yemilice</title>
+<meta name="keywords" content="前后端, 其他技术">
+<meta name="description" content="前言
+当使奴太久了，从cod8 - cod21，前几天卖了PS5，打算彻底脱坑，再也不玩了
+
+之前被折磨的太多了，现在真的不想玩了，动视的匹配机制真的是个迷">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/cod%E4%BD%BF%E5%91%BD%E5%8F%AC%E5%94%A4-%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/cod%E4%BD%BF%E5%91%BD%E5%8F%AC%E5%94%A4-%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/cod%E4%BD%BF%E5%91%BD%E5%8F%AC%E5%94%A4-%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="COD(使命召唤)-排位赛匹配机制详解">
+  <meta property="og:description" content="前言 当使奴太久了，从cod8 - cod21，前几天卖了PS5，打算彻底脱坑，再也不玩了
+之前被折磨的太多了，现在真的不想玩了，动视的匹配机制真的是个迷">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-04-21T09:40:45+00:00">
+    <meta property="article:modified_time" content="2025-04-21T09:40:45+00:00">
+    <meta property="article:tag" content="前后端">
+    <meta property="article:tag" content="其他技术">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="COD(使命召唤)-排位赛匹配机制详解">
+  <meta name="twitter:description" content="前言 当使奴太久了，从cod8 - cod21，前几天卖了PS5，打算彻底脱坑，再也不玩了
+之前被折磨的太多了，现在真的不想玩了，动视的匹配机制真的是个迷">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "COD(使命召唤)-排位赛匹配机制详解",
+      "item": "http://localhost:1313/posts/cod%E4%BD%BF%E5%91%BD%E5%8F%AC%E5%94%A4-%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "COD(使命召唤)-排位赛匹配机制详解",
+  "name": "COD(使命召唤)-排位赛匹配机制详解",
+  "description": "前言 当使奴太久了，从cod8 - cod21，前几天卖了PS5，打算彻底脱坑，再也不玩了\n之前被折磨的太多了，现在真的不想玩了，动视的匹配机制真的是个迷\n",
+  "keywords": [
+    "前后端", "其他技术"
+  ],
+  "articleBody": "前言 当使奴太久了，从cod8 - cod21，前几天卖了PS5，打算彻底脱坑，再也不玩了\n之前被折磨的太多了，现在真的不想玩了，动视的匹配机制真的是个迷\n有时候打一把，狂杀50人+，第二把露头就死，第三把杀人个位数，总感觉煞笔动视控制了什么\n对面杀我和杀孙子一样\n这几天读了一下动视的技术白皮书，搞懂了一些东西，那么，便有此记录\n纪念一下cod的这几年，和花出去的好几千块钱，over。\n1. COD的段位和匹配机制 1.1 COD的段位等级 ​​段位名称​​ ​​玩家分布​​ ​​玩家分布​​ 青铜 (Bronze) 新手/低活跃玩家 所有人起点段位 白银 (Silver) 入门级竞技玩家 允许与青铜/黄金组队 黄金 (Gold) 主流玩家集中段 可跨3段组队（青铜至铂金） 铂金 (Platinum) 实力前30%玩家 组队跨度收缩（银-钻） 钻石 (Diamond) 顶尖玩家守门员（前10%） 仅能与黄金/铂金/钻石组队 深红 (Crimson) 职业级预备役（前3%） 仅限钻石/深红组队 虹彩 (Iridescent) 全服Top 500（含Top 250榜单） ​​实际匹配按钻石+处理 重要说明\nTop 250玩家在匹配系统中视为钻石+段位（非独立段位），因人数过少需合并匹配池 段位转换严格依赖​​SR数值门槛​​（如黄金→铂金需2500 SR） 1.2 段位的隔离机制 ​组队硬约束​​策略 ​1. ​跨段检测​​\n系统实时计算队伍\"段位差\"（Rank Disparity） 例：钻石（差值为0） + 黄金（差值2） → 整队段位差=2 ​​ 2. 动态组队锁​​\n钻石玩家邀请黄金队友 → 队伍​​立即禁止​​邀请白银玩家 虹彩玩家组队 → 全员必须为深红/虹彩\n匹配池分层策略 优先同段位匹配 系统首先寻找同段位玩家（如铂金vs铂金）\n超时降级机制 搜索开始 --\u003e 仅匹配同段位 --\u003e 超时 --\u003e 放宽至±1段 --\u003e 超时--\u003e 放宽至±2段 --\u003e 超时 --\u003e 启用跨区匹配+高延迟容忍 高级段位容易触发降级：铂金以上玩家常遇跨段匹配 TOP250处理 单独匹配池 TOP250玩家自动进入候选池\n匹配更新机制 TOP250玩家匹配时视为**钻石+**段位，最低会匹配到钻石玩家\n1.3 段位和Raw Skill（真实战力）的关系 在玩游戏的时候，我们经常会进行掉分操作，例如自雷或者自杀，或者不停的频繁去送\n让系统对我们的技术评级降低，这样就能匹配到比较菜的玩家，大杀四方（我没这么干过就是了）\n根据白皮书的描述，可以看这张图，其实动视内部有个机制，是来判定你的真实战力（Raw Skill）的\n首先先说结论\n段位 不等于 游戏的真实实力\n看这张图，\n​​1. 高段位含金量高​​：深红(Crimson)以上玩家100%集中在技能前20%（0.8-0.9十分位） ​2. ​低段位鱼龙混杂​​：青铜(Bronze)中混有​​高技能玩家​​（0.7+技能分占比超5%） ​​3. 系统强制干预痕迹​​：黄金(Gold)段聚集大量​​被系统压制的中高技能玩家​​（0.5-0.7占比达13%）\n我们继续分析这张图\n在我玩游戏初期，经常能碰到一局杀几十个人的大神，甚至还有混战码头100多杀的大牛，这点我一开始就非常疑惑\n因为本身我的KD只有0.9，或者1，这种大牛我能匹配到真的非常逆天\n其实这张图就说明了很多东西\n技能分 青铜段占比 ​​实际分布段位 0.7 0 黄金(2%)/白银(5%) 0.6 0 黄金(3%)/白银(5%) 0.5 1% ​​青铜最高技能分​​ 这里可以看出来，动视其实是不允许技能分高于0.7的玩家到青铜段炸鱼的\n那么动视是如何让0.7+的战力玩家不能在青铜呆着呢？\n白皮书上也说了\n加速晋级（战力校准机制） 如果Raw Skill ≥0.7的时候，那么就触发机制\nif current_rank == \"Bronze\" and raw_skill \u003e= 0.7: SR_gain *= 2.5 # SR获取效率翻倍 matchmaking_pool = \"Gold/Platinum\" # 强制匹配更高段位 白皮书上描述：\n​​1. 0.7技能玩家在青铜段 单场胜利SR可超100点（普通玩家20-30点）\n5连胜内必升入白银\n越段战斗（跨阶段战斗）\n在某个阶段内，给你匹配高段位玩家，根据你的raw_skill数值来判定你匹配的真实段位玩家\n有些时候会炸鱼，可能是你的匹配，把你匹到高段位玩家的池子了\n有一种经典的情况：\n我上一把杀的嘎嘎爽，下一把马上成哈皮了\n不是动视针对你 → 是系统检测到Raw Skill≥0.7\n绝壁你被划到高段位池子了，至于为什么这样做\n青铜段存在大量高玩 → 新手退游\n游戏属实就没法玩了，人全跑光了\n所以一般会安排一大堆傻人机哈哈哈哈。\n1.4 玩家成长和段位关系 从上面的分析可以看出来\n段位晋升≠线性成长 黄金→铂金：需突破\"SR收益衰减墙\"（胜场SR从50→20） 钻石→虹彩：强制\"地狱检验\"（仅匹配前10%玩家）\n系统强制干预场景 现象 触发条件 ​​玩家感受 连胜后突然连败 当前SR \u003e 目标SR+15% 妈的搞我 青铜局遇大神狂杀 高潜力玩家检测（Raw Skill\u003e0.7 妈的搞我 钻石段匹配超时 段位差规则降级失败 妈的鬼服了 2. COD的SR（Skill Rating）机制 SR我们已经在前面提过了\n这逼玩意儿简单来说，就是控制你什么时候该升到什么段位，或者是你该获取多少经验值的一种动态干预算法\n是不是有点子抽象，换个简单的语句来描述\n这表面是段位系统，实则是动视的 使奴驯化装置。\n2.1 动视内部的段位操作 首先，动视会给你进行一个评估\n根据你每局的杀敌数/死亡数，算出一个真实的隐藏分数（Raw Skill），这是你无法看见的\n这里的计算公式是\nraw_skill = (击杀×0.25 + 助攻×0.15 + 目标分×0.45 + 占点×0.15 - 死亡×0.3) / √(对局时长) ​​1. 目标分权重最高(0.45)​​（控制点位/炸弹模式核心指标） ​2. ​对局时长开平方​​（防止刷时长影响）\n假设你现在的Raw Skill=0.6\n然后根据你的真实水平（Raw Skill），动视会算出一个 ​​你应该在的段位​（Target SR）​（比如黄金需要2500分）\n动视内部有个数值，我称之为：行为调整因子，这里是分析玩家行为数据的核心数据\n这个数值的主要影响因素有：\n影响因素 原描述 修正公式（编程级精准） 高活跃度(日\u003e4h) 负向 -0.15 * log2(当日游戏小时数) 近期付费(7天消费) 正向 min(0.1, 消费金额($)/2000) 弃游风险 负向 -0.3 * (1 - min(1, 当日活跃/周平均)) 这里的Target SR计算公式是\nbase_SR = min(4500, Raw_Skill × 4500) behavior_effect = behavior_factor × 0.25 × base_SR/1000 Target_SR = base_SR + behavior_effect 写一个伪代码\n# 计算Raw Skill（每局更新） def calc_raw_skill(match_data): kills = match_data.kills assists = match_data.assists objectives = match_data.objective_points # 炸弹/点位控制分 zone_time = match_data.zone_seconds # 占点秒数 deaths = match_data.deaths duration = match_data.duration_seconds / 60 # 转为分钟 return (kills*0.25 + assists*0.15 + objectives*0.45 + zone_time*0.15 - deaths*0.3) / math.sqrt(duration) # 计算目标SR（每日更新） def calc_target_SR(raw_skill, behavior_data): base_SR = min(4500, raw_skill * 4500) # 基础映射，上限4500 # 计算行为影响值（每1000分±25%） bh_factor = calc_behavior_factor(behavior_data) behavior_effect = bh_factor * 0.25 * (base_SR / 1000) return min(5500, max(0, base_SR + behavior_effect)) # 全段位边界保护 2.2 动视关于输赢的操作 SR系统本质是 ​​动态难度调节器​​——它决定你何时能赢，何时必须输。\n连续胜 def on_win_streak(streak_count): if streak_count \u003e= 3: # 触发三连胜协议 # 1. 匹配系统启动\"段位跃升测试\" matchmaking.set_opponent_rank(current_rank + 2) # 匹配高2段车队 # 2. SR收益压制系统激活 win_reward = max(10, base_SR * 0.4) # 基础分打4折 # 3. 表现分封顶机制 performance_bonus = min(5, raw_performance) # 杀50人只算5分 return win_reward + performance_bonus 当你三连胜时，下局必遇 ​​钻石车队打黄金局​​（白皮书第5.2.3节称其为“confidence-based calibration”） 就算你力挽狂澜赢了 原可获25基础分+15表现分=40分 现强制压制为(25 * 0.4)+5=15分（砍掉62.5%） 所以你赢了好几把之后，你是一定会输的，你打不到那前100，你输的概率都是非常大的。\n连续输 def on_lose_streak(streak_count, player_type): if streak_count \u003e= 3: # 三连败触发救济 if player_type == \"NEWBIE\": # 新手保护 spawn_bot_lobby() # 生成人机局 return 30 # 固定+30分（希望药剂） else: # 老油条处置 reduce_next_opponent_skill(40) # 下局对手强度-40% return -10 # 扣分减半（从-18→-10） elif player_type == \"WHALE\": # 付费玩家特殊关怀 return abs(base_SR) * 0.3 # 扣分再打7折 白皮书上也说了：\nLoss streak interventions boost retention by 22%\n玩家类型 三连败救济方案 萌新 人机局​​ → +30分 老玩家 对手强度-40% \u0026 扣分减半 充值玩家 扣分再打7折 2.3 赛季控制的操作 赛季重置 ​1. ​软性段位重置 (Soft Rank Reset)​ 将所有玩家的可视段位重置至初始等级（如青铜），但保留隐藏实力分（Raw Skill）的90%\n2.​​差异化匹配处理 (Tiered Matchmaking Treatment)​ 根据玩家历史实力划分匹配池，高竞争力玩家仍与原段位玩家对战\n​​3.加速晋升协议 (Accelerated Promotion Protocol)​ 高竞争力玩家在重置后获得额外SR增益系数\n动视白皮书描述（Sec 7.2）：​​\n\"Rank resets apply cosmetic demotions while preserving core skill metrics, enabling high-skill players to rapidly return to appropriate tiers.\" （段位重置仅应用表面降级，同时保留核心技能指标，使高水平玩家能快速返回适当段位） 控制晋级 1.​​动态难度校准 (Dynamic Difficulty Calibration)​ 根据玩家实时状态调整晋升赛对手强度\n2.受控晋升率 (Controlled Promotion Rate)​ 系统精确控制不同段位间的晋升成功率（通常53-58%）\n3.检验性匹配 (Validation Matching) 晋升关键局分配高强度对手验证玩家实力\n动视白皮书描述（Sec 5.3）：​​ \"Promotion matches trigger validation protocols, exposing players to marginally superior opponents to confirm tier readiness.\" （晋升赛触发检验协议，使玩家面对略强对手以确认段位准备度） 所以你会直接感受到如下的游玩体验\n玩家视角 技术术语 真实目的 新赛季新开始 软性段位重置 维护高玩炸鱼特权 晋级赛遇大神 检验性匹配 压制自然晋升率 刚升段就连败 段位适应性调节 迫使玩家停留当前段位 赛季初被血虐 差异化匹配处理 用低段玩家供养高玩留存 3. 三个重要匹配机制 3.1 网络优先机制 排位赛强制 ​​Delta Ping≤50ms​​（红线），而普通模式无限制 当匹配超时后会强制放宽至15ms 等于说玩游戏的人受两种折磨\n第一个就是，你会在低分段，受到来自匹配超时大佬的暴击（可能\n第二个就是，在高段位，你等待排队的时间只会更长/延迟更大\n3.2 段位/SR双过滤机制 坐标轴 技术含义 白皮书关联机制 ​​横轴 Lobby Max SR​​ 当局所有玩家中的​​最高SR值​​ 决定匹配强度（3.2.1节） ​​纵轴 Count​​ 遭遇该SR值的​​对局次数占比​​ 组队惩罚算法（5.3节） 如果你是单排玩家，并且你的SR非常高（2000-3000R），你的匹配速度会更快，因为系统会加速校准 如果你是组队玩家，你的SR出现异常高峰（队内有钻石大佬），就会触发跨段惩罚机制 # 单排青铜 if solo_player and bronze_rank: lobby_max_sr = target_sr * 1.2 # 系统校准性匹配 # 结果：集中于2000-3000（黄金段） # 组队 if partied_with_diamond: lobby_max_sr = max(diamond_sr)*1.5 # 惩罚系数 # 结果：5000-8000异常峰（虹彩段） # 当青铜与钻石组队 → 按钻石SR×1.5匹配 → 青铜面对7500SR虹彩战神 3.3 Raw Skill干预机制 坐标轴 技术含义 ​​横轴 Lobby Max SR​​ 当局最高SR值 → 代表对局强度等级 ​​纵轴 Probability​​ 玩家在该强度对局中的​​存活概率​​ # 底层玩家封锁（白皮书4.3节） if player.percentile \u003c 0.25: target_sr = min(1500, raw_skill*5000) # 锁白银 allow_high_tier = False # 禁止接触高端局 # 顶尖玩家特权 if player.percentile \u003e 0.95: bypass_rank_constraints = True # 可突破段位隔离 这个的核心意思就是，后25%玩家永远在青铜困住，真玩家胜率只会越来越低\n4. 结尾 动视的白皮书，一共出了三个部分\n排位赛匹配机制详解 Ping机制详解 SBMM（Skill-Based Matchmaking，基于技术水平的匹配机制） 我这段时间，会依次把这些文章读完并且发出来\n脱坑cod之后，刹那天地宽\n再也不玩了，再也不买了，靠\n",
+  "wordCount" : "4372",
+  "inLanguage": "zh-cn",
+  "datePublished": "2025-04-21T09:40:45Z",
+  "dateModified": "2025-04-21T09:40:45Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/cod%E4%BD%BF%E5%91%BD%E5%8F%AC%E5%94%A4-%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            COD(使命召唤)-排位赛匹配机制详解
+        </h1>
+        <div class="post-meta"><span title='2025-04-21 09:40:45 +0000 UTC'>April 21, 2025</span>&nbsp;·&nbsp;<span>9 min</span>&nbsp;·&nbsp;<span>4372 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#%e5%89%8d%e8%a8%80" aria-label="前言">前言</a></li>
+            <li>
+                <a href="#1-cod%e7%9a%84%e6%ae%b5%e4%bd%8d%e5%92%8c%e5%8c%b9%e9%85%8d%e6%9c%ba%e5%88%b6" aria-label="1. COD的段位和匹配机制">1. COD的段位和匹配机制</a><ul>
+                    
+            <li>
+                <a href="#11-cod%e7%9a%84%e6%ae%b5%e4%bd%8d%e7%ad%89%e7%ba%a7" aria-label="1.1 COD的段位等级">1.1 COD的段位等级</a></li>
+            <li>
+                <a href="#12-%e6%ae%b5%e4%bd%8d%e7%9a%84%e9%9a%94%e7%a6%bb%e6%9c%ba%e5%88%b6" aria-label="1.2 段位的隔离机制">1.2 段位的隔离机制</a><ul>
+                    
+            <li>
+                <a href="#%e7%bb%84%e9%98%9f%e7%a1%ac%e7%ba%a6%e6%9d%9f%e7%ad%96%e7%95%a5" aria-label="​组队硬约束​​策略">​组队硬约束​​策略</a></li>
+            <li>
+                <a href="#%e5%8c%b9%e9%85%8d%e6%b1%a0%e5%88%86%e5%b1%82%e7%ad%96%e7%95%a5" aria-label="匹配池分层策略">匹配池分层策略</a></li>
+            <li>
+                <a href="#top250%e5%a4%84%e7%90%86" aria-label="TOP250处理">TOP250处理</a></li></ul>
+            </li>
+            <li>
+                <a href="#13-%e6%ae%b5%e4%bd%8d%e5%92%8craw-skill%e7%9c%9f%e5%ae%9e%e6%88%98%e5%8a%9b%e7%9a%84%e5%85%b3%e7%b3%bb" aria-label="1.3 段位和Raw Skill（真实战力）的关系">1.3 段位和Raw Skill（真实战力）的关系</a></li>
+            <li>
+                <a href="#14-%e7%8e%a9%e5%ae%b6%e6%88%90%e9%95%bf%e5%92%8c%e6%ae%b5%e4%bd%8d%e5%85%b3%e7%b3%bb" aria-label="1.4 玩家成长和段位关系">1.4 玩家成长和段位关系</a></li></ul>
+            </li>
+            <li>
+                <a href="#2-cod%e7%9a%84srskill-rating%e6%9c%ba%e5%88%b6" aria-label="2. COD的SR（Skill Rating）机制">2. COD的SR（Skill Rating）机制</a><ul>
+                    
+            <li>
+                <a href="#21-%e5%8a%a8%e8%a7%86%e5%86%85%e9%83%a8%e7%9a%84%e6%ae%b5%e4%bd%8d%e6%93%8d%e4%bd%9c" aria-label="2.1 动视内部的段位操作">2.1 动视内部的段位操作</a></li>
+            <li>
+                <a href="#22-%e5%8a%a8%e8%a7%86%e5%85%b3%e4%ba%8e%e8%be%93%e8%b5%a2%e7%9a%84%e6%93%8d%e4%bd%9c" aria-label="2.2 动视关于输赢的操作">2.2 动视关于输赢的操作</a><ul>
+                    
+            <li>
+                <a href="#%e8%bf%9e%e7%bb%ad%e8%83%9c" aria-label="连续胜">连续胜</a></li>
+            <li>
+                <a href="#%e8%bf%9e%e7%bb%ad%e8%be%93" aria-label="连续输">连续输</a></li></ul>
+            </li>
+            <li>
+                <a href="#23-%e8%b5%9b%e5%ad%a3%e6%8e%a7%e5%88%b6%e7%9a%84%e6%93%8d%e4%bd%9c" aria-label="2.3 赛季控制的操作">2.3 赛季控制的操作</a><ul>
+                    
+            <li>
+                <a href="#%e8%b5%9b%e5%ad%a3%e9%87%8d%e7%bd%ae" aria-label="赛季重置">赛季重置</a></li>
+            <li>
+                <a href="#%e6%8e%a7%e5%88%b6%e6%99%8b%e7%ba%a7" aria-label="控制晋级">控制晋级</a></li></ul>
+            </li></ul>
+            </li>
+            <li>
+                <a href="#3-%e4%b8%89%e4%b8%aa%e9%87%8d%e8%a6%81%e5%8c%b9%e9%85%8d%e6%9c%ba%e5%88%b6" aria-label="3. 三个重要匹配机制">3. 三个重要匹配机制</a><ul>
+                    
+            <li>
+                <a href="#31-%e7%bd%91%e7%bb%9c%e4%bc%98%e5%85%88%e6%9c%ba%e5%88%b6" aria-label="3.1 网络优先机制">3.1 网络优先机制</a></li>
+            <li>
+                <a href="#32-%e6%ae%b5%e4%bd%8dsr%e5%8f%8c%e8%bf%87%e6%bb%a4%e6%9c%ba%e5%88%b6" aria-label="3.2 段位/SR双过滤机制">3.2 段位/SR双过滤机制</a></li>
+            <li>
+                <a href="#33-raw-skill%e5%b9%b2%e9%a2%84%e6%9c%ba%e5%88%b6" aria-label="3.3 Raw Skill干预机制">3.3 Raw Skill干预机制</a></li></ul>
+            </li>
+            <li>
+                <a href="#4-%e7%bb%93%e5%b0%be" aria-label="4. 结尾">4. 结尾</a>
+            </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h2 id="前言">前言<a hidden class="anchor" aria-hidden="true" href="#前言">#</a></h2>
+<p>当使奴太久了，从cod8 - cod21，前几天卖了PS5，打算彻底脱坑，再也不玩了</p>
+<p><img alt="alt text" loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/image-7.png"></p>
+<p>之前被折磨的太多了，现在真的不想玩了，动视的匹配机制真的是个迷</p>
+<p>有时候打一把，狂杀50人+，第二把露头就死，第三把杀人个位数，总感觉煞笔动视控制了什么</p>
+<p>对面杀我和杀孙子一样</p>
+<p><img alt="alt text" loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/image-6.png"></p>
+<p>这几天读了一下动视的技术白皮书，搞懂了一些东西，那么，便有此记录</p>
+<p>纪念一下cod的这几年，和花出去的好几千块钱，over。</p>
+<h2 id="1-cod的段位和匹配机制">1. COD的段位和匹配机制<a hidden class="anchor" aria-hidden="true" href="#1-cod的段位和匹配机制">#</a></h2>
+<h3 id="11-cod的段位等级">1.1 COD的段位等级<a hidden class="anchor" aria-hidden="true" href="#11-cod的段位等级">#</a></h3>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: center">​​段位名称​​</th>
+          <th style="text-align: center">​​玩家分布​​</th>
+          <th style="text-align: center">​​玩家分布​​</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: center">青铜 (Bronze)</td>
+          <td style="text-align: center">新手/低活跃玩家</td>
+          <td style="text-align: center">所有人起点段位</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">白银 (Silver)</td>
+          <td style="text-align: center">入门级竞技玩家</td>
+          <td style="text-align: center">允许与青铜/黄金组队</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">黄金 (Gold)</td>
+          <td style="text-align: center">主流玩家集中段</td>
+          <td style="text-align: center">可跨3段组队（青铜至铂金）</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">铂金 (Platinum)</td>
+          <td style="text-align: center">实力前30%玩家</td>
+          <td style="text-align: center">组队跨度收缩（银-钻）</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">钻石 (Diamond)</td>
+          <td style="text-align: center">顶尖玩家守门员（前10%）</td>
+          <td style="text-align: center">仅能与黄金/铂金/钻石组队</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">深红 (Crimson)</td>
+          <td style="text-align: center">职业级预备役（前3%）</td>
+          <td style="text-align: center">仅限钻石/深红组队</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">虹彩 (Iridescent)</td>
+          <td style="text-align: center">全服Top 500（含Top 250榜单）</td>
+          <td style="text-align: center">​​实际匹配按钻石+处理</td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>重要说明</strong></p>
+<ol>
+<li>Top 250玩家在匹配系统中视为钻石+段位（非独立段位），因人数过少需合并匹配池</li>
+<li>段位转换严格依赖<strong>​​SR数值</strong>门槛​​（如黄金→铂金需2500 SR）</li>
+</ol>
+<h3 id="12-段位的隔离机制">1.2 段位的隔离机制<a hidden class="anchor" aria-hidden="true" href="#12-段位的隔离机制">#</a></h3>
+<h4 id="组队硬约束策略">​组队硬约束​​策略<a hidden class="anchor" aria-hidden="true" href="#组队硬约束策略">#</a></h4>
+<p>​1. ​跨段检测​​</p>
+<p>系统实时计算队伍&quot;段位差&quot;（Rank Disparity）
+例：钻石（差值为0） + 黄金（差值2） → 整队段位差=2
+​​
+2. 动态组队锁​​</p>
+<p>钻石玩家邀请黄金队友 → 队伍​​立即禁止​​邀请白银玩家
+虹彩玩家组队 → 全员必须为深红/虹彩</p>
+<h4 id="匹配池分层策略">匹配池分层策略<a hidden class="anchor" aria-hidden="true" href="#匹配池分层策略">#</a></h4>
+<ol>
+<li>优先同段位匹配</li>
+</ol>
+<p>系统首先寻找同段位玩家（如铂金vs铂金）</p>
+<ol start="2">
+<li>超时降级机制</li>
+</ol>
+<pre tabindex="0"><code>搜索开始 --&gt; 仅匹配同段位 --&gt; 超时 --&gt; 放宽至±1段 --&gt; 超时--&gt; 放宽至±2段 --&gt; 超时 --&gt; 启用跨区匹配+高延迟容忍
+</code></pre><p><img alt="alt text" loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/image-1.png"></p>
+<ol>
+<li>高级段位容易触发降级：铂金以上玩家常遇跨段匹配</li>
+</ol>
+<h4 id="top250处理">TOP250处理<a hidden class="anchor" aria-hidden="true" href="#top250处理">#</a></h4>
+<ol>
+<li>单独匹配池</li>
+</ol>
+<p>TOP250玩家自动进入候选池</p>
+<ol start="2">
+<li>匹配更新机制</li>
+</ol>
+<p>TOP250玩家匹配时视为**钻石+**段位，最低会匹配到钻石玩家</p>
+<h3 id="13-段位和raw-skill真实战力的关系">1.3 段位和Raw Skill（真实战力）的关系<a hidden class="anchor" aria-hidden="true" href="#13-段位和raw-skill真实战力的关系">#</a></h3>
+<p>在玩游戏的时候，我们经常会进行掉分操作，例如自雷或者自杀，或者不停的频繁去送</p>
+<p>让系统对我们的技术评级降低，这样就能匹配到比较菜的玩家，大杀四方（我没这么干过就是了）</p>
+<p><img alt="alt text" loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/image.png"></p>
+<p>根据白皮书的描述，可以看这张图，其实动视内部有个机制，是来判定你的真实战力（Raw Skill）的</p>
+<p>首先先说结论</p>
+<p>段位 <strong>不等于</strong> 游戏的真实实力</p>
+<p>看这张图，</p>
+<p>​​1. 高段位含金量高​​：深红(Crimson)以上玩家100%集中在技能前20%（0.8-0.9十分位）
+​2. ​低段位鱼龙混杂​​：青铜(Bronze)中混有​​高技能玩家​​（0.7+技能分占比超5%）
+​​3. 系统强制干预痕迹​​：黄金(Gold)段聚集大量​​被系统压制的中高技能玩家​​（0.5-0.7占比达13%）</p>
+<p>我们继续分析这张图</p>
+<p>在我玩游戏初期，经常能碰到一局杀几十个人的大神，甚至还有混战码头100多杀的大牛，这点我一开始就非常疑惑</p>
+<p>因为本身我的KD只有0.9，或者1，这种大牛我能匹配到真的非常逆天</p>
+<p>其实这张图就说明了很多东西</p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: center">技能分</th>
+          <th style="text-align: center">青铜段占比</th>
+          <th style="text-align: center">​​实际分布段位</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: center">0.7</td>
+          <td style="text-align: center">0</td>
+          <td style="text-align: center">黄金(2%)/白银(5%)</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">0.6</td>
+          <td style="text-align: center">0</td>
+          <td style="text-align: center">黄金(3%)/白银(5%)</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">0.5</td>
+          <td style="text-align: center">1%</td>
+          <td style="text-align: center">​​青铜最高技能分​​</td>
+      </tr>
+  </tbody>
+</table>
+<p>这里可以看出来，动视其实是<strong>不允许技能分高于0.7</strong>的玩家到青铜段炸鱼的</p>
+<p>那么动视是如何让0.7+的战力玩家不能在青铜呆着呢？</p>
+<p>白皮书上也说了</p>
+<ol>
+<li>加速晋级（战力校准机制）</li>
+</ol>
+<p>如果Raw Skill ≥0.7的时候，那么就触发机制</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> current_rank <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;Bronze&#34;</span> <span style="color:#f92672">and</span> raw_skill <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">0.7</span>:
+</span></span><span style="display:flex;"><span>    SR_gain <span style="color:#f92672">*=</span> <span style="color:#ae81ff">2.5</span>  <span style="color:#75715e"># SR获取效率翻倍</span>
+</span></span><span style="display:flex;"><span>    matchmaking_pool <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Gold/Platinum&#34;</span>  <span style="color:#75715e"># 强制匹配更高段位</span>
+</span></span></code></pre></div><p>白皮书上描述：</p>
+<p>​​1. 0.7技能玩家在青铜段 单场胜利SR可超100点（普通玩家20-30点）</p>
+<ol>
+<li>
+<p>5连胜内必升入白银</p>
+</li>
+<li>
+<p>越段战斗（跨阶段战斗）</p>
+</li>
+</ol>
+<p>在某个阶段内，给你匹配高段位玩家，根据你的raw_skill数值来判定你匹配的真实段位玩家</p>
+<p>有些时候会炸鱼，可能是你的匹配，把你匹到高段位玩家的池子了</p>
+<p>有一种经典的情况：</p>
+<p><strong>我上一把杀的嘎嘎爽，下一把马上成哈皮了</strong></p>
+<p>不是动视针对你 → 是系统检测到Raw Skill≥0.7</p>
+<p>绝壁你被划到高段位池子了，至于为什么这样做</p>
+<p><strong>青铜段存在大量高玩 → 新手退游</strong></p>
+<p>游戏属实就没法玩了，人全跑光了</p>
+<p>所以一般会安排一大堆傻人机哈哈哈哈。</p>
+<h3 id="14-玩家成长和段位关系">1.4 玩家成长和段位关系<a hidden class="anchor" aria-hidden="true" href="#14-玩家成长和段位关系">#</a></h3>
+<p>从上面的分析可以看出来</p>
+<ol>
+<li>段位晋升≠线性成长</li>
+</ol>
+<p>黄金→铂金：需突破&quot;SR收益衰减墙&quot;（胜场SR从50→20）
+钻石→虹彩：强制&quot;地狱检验&quot;（仅匹配前10%玩家）</p>
+<ol start="2">
+<li>系统强制干预场景</li>
+</ol>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: center">现象</th>
+          <th style="text-align: center">触发条件</th>
+          <th style="text-align: center">​​玩家感受</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: center">连胜后突然连败</td>
+          <td style="text-align: center">当前SR &gt; 目标SR+15%</td>
+          <td style="text-align: center">妈的搞我</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">青铜局遇大神狂杀</td>
+          <td style="text-align: center">高潜力玩家检测（Raw Skill&gt;0.7</td>
+          <td style="text-align: center">妈的搞我</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">钻石段匹配超时</td>
+          <td style="text-align: center">段位差规则降级失败</td>
+          <td style="text-align: center">妈的鬼服了</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="2-cod的srskill-rating机制">2. COD的SR（Skill Rating）机制<a hidden class="anchor" aria-hidden="true" href="#2-cod的srskill-rating机制">#</a></h2>
+<p>SR我们已经在前面提过了</p>
+<p>这逼玩意儿简单来说，就是控制你什么时候该升到什么段位，或者是你该获取多少经验值的一种动态干预算法</p>
+<p>是不是有点子抽象，换个简单的语句来描述</p>
+<p>这表面是段位系统，实则是动视的 <strong>使奴驯化装置</strong>。</p>
+<h3 id="21-动视内部的段位操作">2.1 动视内部的段位操作<a hidden class="anchor" aria-hidden="true" href="#21-动视内部的段位操作">#</a></h3>
+<p>首先，动视会给你进行一个评估</p>
+<p>根据你每局的杀敌数/死亡数，算出一个真实的隐藏分数（Raw Skill），这是你无法看见的</p>
+<p>这里的计算公式是</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>raw_skill <span style="color:#f92672">=</span> (击杀<span style="color:#960050;background-color:#1e0010">×</span><span style="color:#ae81ff">0.25</span> <span style="color:#f92672">+</span> 助攻<span style="color:#960050;background-color:#1e0010">×</span><span style="color:#ae81ff">0.15</span> <span style="color:#f92672">+</span> 目标分<span style="color:#960050;background-color:#1e0010">×</span><span style="color:#ae81ff">0.45</span> <span style="color:#f92672">+</span> 占点<span style="color:#960050;background-color:#1e0010">×</span><span style="color:#ae81ff">0.15</span> <span style="color:#f92672">-</span> 死亡<span style="color:#960050;background-color:#1e0010">×</span><span style="color:#ae81ff">0.3</span>) <span style="color:#f92672">/</span> <span style="color:#960050;background-color:#1e0010">√</span>(对局时长)
+</span></span></code></pre></div><p>​​1. 目标分权重最高(0.45)​​（控制点位/炸弹模式核心指标）
+​2. ​对局时长开平方​​（防止刷时长影响）</p>
+<p>假设你现在的Raw Skill=0.6</p>
+<p>然后根据你的真实水平（Raw Skill），动视会算出一个 ​​你<strong>应该</strong>在的段位​（Target SR）​（比如黄金需要2500分）</p>
+<p>动视内部有个数值，我称之为：<strong>行为调整因子</strong>，这里是分析玩家行为数据的核心数据</p>
+<p>这个数值的主要影响因素有：</p>
+<table>
+  <thead>
+      <tr>
+          <th>影响因素</th>
+          <th>原描述</th>
+          <th>修正公式（编程级精准）</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>高活跃度(日&gt;4h)</td>
+          <td>负向</td>
+          <td>-0.15 * log2(当日游戏小时数)</td>
+      </tr>
+      <tr>
+          <td>近期付费(7天消费)</td>
+          <td>正向</td>
+          <td>min(0.1, 消费金额($)/2000)</td>
+      </tr>
+      <tr>
+          <td>弃游风险</td>
+          <td>负向</td>
+          <td>-0.3 * (1 - min(1, 当日活跃/周平均))</td>
+      </tr>
+  </tbody>
+</table>
+<p>这里的Target SR计算公式是</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>base_SR <span style="color:#f92672">=</span> min(<span style="color:#ae81ff">4500</span>, Raw_Skill <span style="color:#960050;background-color:#1e0010">×</span> <span style="color:#ae81ff">4500</span>)
+</span></span><span style="display:flex;"><span>behavior_effect <span style="color:#f92672">=</span> behavior_factor <span style="color:#960050;background-color:#1e0010">×</span> <span style="color:#ae81ff">0.25</span> <span style="color:#960050;background-color:#1e0010">×</span> base_SR<span style="color:#f92672">/</span><span style="color:#ae81ff">1000</span>
+</span></span><span style="display:flex;"><span>Target_SR <span style="color:#f92672">=</span> base_SR <span style="color:#f92672">+</span> behavior_effect
+</span></span></code></pre></div><p>写一个伪代码</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 计算Raw Skill（每局更新）</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">calc_raw_skill</span>(match_data):
+</span></span><span style="display:flex;"><span>    kills <span style="color:#f92672">=</span> match_data<span style="color:#f92672">.</span>kills
+</span></span><span style="display:flex;"><span>    assists <span style="color:#f92672">=</span> match_data<span style="color:#f92672">.</span>assists
+</span></span><span style="display:flex;"><span>    objectives <span style="color:#f92672">=</span> match_data<span style="color:#f92672">.</span>objective_points  <span style="color:#75715e"># 炸弹/点位控制分</span>
+</span></span><span style="display:flex;"><span>    zone_time <span style="color:#f92672">=</span> match_data<span style="color:#f92672">.</span>zone_seconds       <span style="color:#75715e"># 占点秒数</span>
+</span></span><span style="display:flex;"><span>    deaths <span style="color:#f92672">=</span> match_data<span style="color:#f92672">.</span>deaths
+</span></span><span style="display:flex;"><span>    duration <span style="color:#f92672">=</span> match_data<span style="color:#f92672">.</span>duration_seconds <span style="color:#f92672">/</span> <span style="color:#ae81ff">60</span>  <span style="color:#75715e"># 转为分钟</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> (kills<span style="color:#f92672">*</span><span style="color:#ae81ff">0.25</span> <span style="color:#f92672">+</span> assists<span style="color:#f92672">*</span><span style="color:#ae81ff">0.15</span> <span style="color:#f92672">+</span> objectives<span style="color:#f92672">*</span><span style="color:#ae81ff">0.45</span> <span style="color:#f92672">+</span> zone_time<span style="color:#f92672">*</span><span style="color:#ae81ff">0.15</span> <span style="color:#f92672">-</span> deaths<span style="color:#f92672">*</span><span style="color:#ae81ff">0.3</span>) <span style="color:#f92672">/</span> math<span style="color:#f92672">.</span>sqrt(duration)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 计算目标SR（每日更新）</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">calc_target_SR</span>(raw_skill, behavior_data):
+</span></span><span style="display:flex;"><span>    base_SR <span style="color:#f92672">=</span> min(<span style="color:#ae81ff">4500</span>, raw_skill <span style="color:#f92672">*</span> <span style="color:#ae81ff">4500</span>)  <span style="color:#75715e"># 基础映射，上限4500</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 计算行为影响值（每1000分±25%）</span>
+</span></span><span style="display:flex;"><span>    bh_factor <span style="color:#f92672">=</span> calc_behavior_factor(behavior_data)
+</span></span><span style="display:flex;"><span>    behavior_effect <span style="color:#f92672">=</span> bh_factor <span style="color:#f92672">*</span> <span style="color:#ae81ff">0.25</span> <span style="color:#f92672">*</span> (base_SR <span style="color:#f92672">/</span> <span style="color:#ae81ff">1000</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> min(<span style="color:#ae81ff">5500</span>, max(<span style="color:#ae81ff">0</span>, base_SR <span style="color:#f92672">+</span> behavior_effect))  <span style="color:#75715e"># 全段位边界保护</span>
+</span></span></code></pre></div><h3 id="22-动视关于输赢的操作">2.2 动视关于输赢的操作<a hidden class="anchor" aria-hidden="true" href="#22-动视关于输赢的操作">#</a></h3>
+<p>SR系统本质是 ​​动态难度调节器​​——它决定你何时能赢，何时必须输。</p>
+<h4 id="连续胜">连续胜<a hidden class="anchor" aria-hidden="true" href="#连续胜">#</a></h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">on_win_streak</span>(streak_count):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> streak_count <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">3</span>:  <span style="color:#75715e"># 触发三连胜协议</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 1. 匹配系统启动&#34;段位跃升测试&#34;</span>
+</span></span><span style="display:flex;"><span>        matchmaking<span style="color:#f92672">.</span>set_opponent_rank(current_rank <span style="color:#f92672">+</span> <span style="color:#ae81ff">2</span>)  <span style="color:#75715e"># 匹配高2段车队</span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 2. SR收益压制系统激活</span>
+</span></span><span style="display:flex;"><span>        win_reward <span style="color:#f92672">=</span> max(<span style="color:#ae81ff">10</span>, base_SR <span style="color:#f92672">*</span> <span style="color:#ae81ff">0.4</span>)  <span style="color:#75715e"># 基础分打4折</span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 3. 表现分封顶机制</span>
+</span></span><span style="display:flex;"><span>        performance_bonus <span style="color:#f92672">=</span> min(<span style="color:#ae81ff">5</span>, raw_performance)  <span style="color:#75715e"># 杀50人只算5分</span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> win_reward <span style="color:#f92672">+</span> performance_bonus
+</span></span></code></pre></div><ol>
+<li>当你三连胜时，下局必遇 ​​钻石车队打黄金局​​（白皮书第5.2.3节称其为“confidence-based calibration”）</li>
+<li>就算你力挽狂澜赢了</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>原可获25基础分<span style="color:#f92672">+</span><span style="color:#ae81ff">15</span>表现分<span style="color:#f92672">=</span><span style="color:#ae81ff">40</span>分  
+</span></span><span style="display:flex;"><span>现强制压制为(<span style="color:#ae81ff">25</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">0.4</span>)<span style="color:#f92672">+</span><span style="color:#ae81ff">5</span><span style="color:#f92672">=</span><span style="color:#ae81ff">15</span>分<span style="color:#960050;background-color:#1e0010">（</span>砍掉62<span style="color:#ae81ff">.5</span><span style="color:#f92672">%</span><span style="color:#960050;background-color:#1e0010">）</span>  
+</span></span></code></pre></div><p>所以你赢了好几把之后，你是一定会输的，你打不到那前100，你输的概率都是非常大的。</p>
+<h4 id="连续输">连续输<a hidden class="anchor" aria-hidden="true" href="#连续输">#</a></h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">on_lose_streak</span>(streak_count, player_type):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> streak_count <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">3</span>:  <span style="color:#75715e"># 三连败触发救济</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> player_type <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;NEWBIE&#34;</span>:  <span style="color:#75715e"># 新手保护</span>
+</span></span><span style="display:flex;"><span>            spawn_bot_lobby()  <span style="color:#75715e"># 生成人机局</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">30</span>  <span style="color:#75715e"># 固定+30分（希望药剂）</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">else</span>:  <span style="color:#75715e"># 老油条处置</span>
+</span></span><span style="display:flex;"><span>            reduce_next_opponent_skill(<span style="color:#ae81ff">40</span>)  <span style="color:#75715e"># 下局对手强度-40%</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">10</span>  <span style="color:#75715e"># 扣分减半（从-18→-10）</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">elif</span> player_type <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;WHALE&#34;</span>:  <span style="color:#75715e"># 付费玩家特殊关怀</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> abs(base_SR) <span style="color:#f92672">*</span> <span style="color:#ae81ff">0.3</span>  <span style="color:#75715e"># 扣分再打7折</span>
+</span></span></code></pre></div><p>白皮书上也说了：</p>
+<p>Loss streak interventions boost retention by 22%</p>
+<table>
+  <thead>
+      <tr>
+          <th>玩家类型</th>
+          <th>三连败救济方案</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>萌新</td>
+          <td>人机局​​ → +30分</td>
+      </tr>
+      <tr>
+          <td>老玩家</td>
+          <td>对手强度-40% &amp; 扣分减半</td>
+      </tr>
+      <tr>
+          <td>充值玩家</td>
+          <td>扣分再打7折</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="23-赛季控制的操作">2.3 赛季控制的操作<a hidden class="anchor" aria-hidden="true" href="#23-赛季控制的操作">#</a></h3>
+<h4 id="赛季重置">赛季重置<a hidden class="anchor" aria-hidden="true" href="#赛季重置">#</a></h4>
+<p>​1. ​软性段位重置 (Soft Rank Reset)​
+将所有玩家的可视段位重置至初始等级（如青铜），但保留隐藏实力分（Raw Skill）的90%</p>
+<p>2.​​差异化匹配处理 (Tiered Matchmaking Treatment)​
+根据玩家历史实力划分匹配池，高竞争力玩家仍与原段位玩家对战</p>
+<p>​​3.加速晋升协议 (Accelerated Promotion Protocol)​
+高竞争力玩家在重置后获得额外SR增益系数</p>
+<p>动视白皮书描述（Sec 7.2）：​​</p>
+<pre tabindex="0"><code>&#34;Rank resets apply cosmetic demotions while preserving core skill metrics, 
+enabling high-skill players to rapidly return to appropriate tiers.&#34;
+（段位重置仅应用表面降级，同时保留核心技能指标，使高水平玩家能快速返回适当段位）
+</code></pre><h4 id="控制晋级">控制晋级<a hidden class="anchor" aria-hidden="true" href="#控制晋级">#</a></h4>
+<p>1.​​动态难度校准 (Dynamic Difficulty Calibration)​
+根据玩家实时状态调整晋升赛对手强度</p>
+<p>2.受控晋升率 (Controlled Promotion Rate)​
+系统精确控制不同段位间的晋升成功率（通常53-58%）</p>
+<p>3.检验性匹配 (Validation Matching)
+晋升关键局分配高强度对手验证玩家实力</p>
+<pre tabindex="0"><code>动视白皮书描述（Sec 5.3）：​​
+
+&#34;Promotion matches trigger validation protocols, 
+
+exposing players to marginally superior opponents to confirm tier readiness.&#34;
+（晋升赛触发检验协议，使玩家面对略强对手以确认段位准备度）
+</code></pre><p>所以你会直接感受到如下的游玩体验</p>
+<table>
+  <thead>
+      <tr>
+          <th>玩家视角</th>
+          <th>技术术语</th>
+          <th>真实目的</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>新赛季新开始</td>
+          <td>软性段位重置</td>
+          <td>维护高玩炸鱼特权</td>
+      </tr>
+      <tr>
+          <td>晋级赛遇大神</td>
+          <td>检验性匹配</td>
+          <td>压制自然晋升率</td>
+      </tr>
+      <tr>
+          <td>刚升段就连败</td>
+          <td>段位适应性调节</td>
+          <td>迫使玩家停留当前段位</td>
+      </tr>
+      <tr>
+          <td>赛季初被血虐</td>
+          <td>差异化匹配处理</td>
+          <td>用低段玩家供养高玩留存</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="3-三个重要匹配机制">3. 三个重要匹配机制<a hidden class="anchor" aria-hidden="true" href="#3-三个重要匹配机制">#</a></h2>
+<h3 id="31-网络优先机制">3.1 网络优先机制<a hidden class="anchor" aria-hidden="true" href="#31-网络优先机制">#</a></h3>
+<p><img alt="alt text" loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/image-2.png"></p>
+<ol>
+<li>排位赛强制 ​​Delta Ping≤50ms​​（红线），而普通模式无限制</li>
+<li>当匹配超时后会强制放宽至15ms</li>
+</ol>
+<p>等于说玩游戏的人受两种折磨</p>
+<p>第一个就是，你会在低分段，受到来自匹配超时大佬的暴击（可能</p>
+<p>第二个就是，在高段位，你等待排队的时间只会更长/延迟更大</p>
+<p><img alt="alt text" loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/11a266797b5c3.png"></p>
+<h3 id="32-段位sr双过滤机制">3.2 段位/SR双过滤机制<a hidden class="anchor" aria-hidden="true" href="#32-段位sr双过滤机制">#</a></h3>
+<p><img alt="alt text" loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/image-3.png"></p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: center">坐标轴</th>
+          <th style="text-align: center">技术含义</th>
+          <th style="text-align: center">白皮书关联机制</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: center">​​横轴 Lobby Max SR​​</td>
+          <td style="text-align: center">当局所有玩家中的​​最高SR值​​</td>
+          <td style="text-align: center">决定匹配强度（3.2.1节）</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">​​纵轴 Count​​</td>
+          <td style="text-align: center">遭遇该SR值的​​对局次数占比​​</td>
+          <td style="text-align: center">组队惩罚算法（5.3节）</td>
+      </tr>
+  </tbody>
+</table>
+<ol>
+<li>如果你是单排玩家，并且你的SR非常高（2000-3000R），你的匹配速度会更快，因为系统会加速校准</li>
+<li>如果你是组队玩家，你的SR出现异常高峰（队内有钻石大佬），就会触发跨段惩罚机制</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 单排青铜</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> solo_player <span style="color:#f92672">and</span> bronze_rank:
+</span></span><span style="display:flex;"><span>    lobby_max_sr <span style="color:#f92672">=</span> target_sr <span style="color:#f92672">*</span> <span style="color:#ae81ff">1.2</span>  <span style="color:#75715e"># 系统校准性匹配</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 结果：集中于2000-3000（黄金段）</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 组队</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> partied_with_diamond:
+</span></span><span style="display:flex;"><span>    lobby_max_sr <span style="color:#f92672">=</span> max(diamond_sr)<span style="color:#f92672">*</span><span style="color:#ae81ff">1.5</span>  <span style="color:#75715e"># 惩罚系数</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 结果：5000-8000异常峰（虹彩段）</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># 当青铜与钻石组队 → 按钻石SR×1.5匹配 → 青铜面对7500SR虹彩战神</span>
+</span></span></code></pre></div><h3 id="33-raw-skill干预机制">3.3 Raw Skill干预机制<a hidden class="anchor" aria-hidden="true" href="#33-raw-skill干预机制">#</a></h3>
+<p><img alt="alt text" loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/%E6%8E%92%E4%BD%8D%E8%B5%9B%E5%8C%B9%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3/image-4.png"></p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: center">坐标轴</th>
+          <th style="text-align: center">技术含义</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: center">​​横轴 Lobby Max SR​​</td>
+          <td style="text-align: center">当局最高SR值 → 代表对局强度等级</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">​​纵轴 Probability​​</td>
+          <td style="text-align: center">玩家在该强度对局中的​​存活概率​​</td>
+      </tr>
+  </tbody>
+</table>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># 底层玩家封锁（白皮书4.3节）</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> player<span style="color:#f92672">.</span>percentile <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0.25</span>:
+</span></span><span style="display:flex;"><span>    target_sr <span style="color:#f92672">=</span> min(<span style="color:#ae81ff">1500</span>, raw_skill<span style="color:#f92672">*</span><span style="color:#ae81ff">5000</span>)  <span style="color:#75715e"># 锁白银</span>
+</span></span><span style="display:flex;"><span>    allow_high_tier <span style="color:#f92672">=</span> <span style="color:#66d9ef">False</span>  <span style="color:#75715e"># 禁止接触高端局</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 顶尖玩家特权</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> player<span style="color:#f92672">.</span>percentile <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0.95</span>:
+</span></span><span style="display:flex;"><span>    bypass_rank_constraints <span style="color:#f92672">=</span> <span style="color:#66d9ef">True</span>  <span style="color:#75715e"># 可突破段位隔离</span>
+</span></span></code></pre></div><p>这个的核心意思就是，后25%玩家永远在青铜困住，真玩家胜率只会越来越低</p>
+<h2 id="4-结尾">4. 结尾<a hidden class="anchor" aria-hidden="true" href="#4-结尾">#</a></h2>
+<p>动视的白皮书，一共出了三个部分</p>
+<ol>
+<li>排位赛匹配机制详解</li>
+<li>Ping机制详解</li>
+<li>SBMM（Skill-Based Matchmaking，基于技术水平的匹配机制）</li>
+</ol>
+<p>我这段时间，会依次把这些文章读完并且发出来</p>
+<p>脱坑cod之后，刹那天地宽</p>
+<p>再也不玩了，再也不买了，靠</p>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a></li>
+            <li><a href="http://localhost:1313/tags/%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF/">其他技术</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="next" href="http://localhost:1313/posts/gitlab-argocd-jenkins%E6%96%B9%E6%A1%88%E6%A2%B3%E7%90%86%E5%92%8C%E5%AF%B9%E6%AF%94/">
+    <span class="title"> »</span>
+    <span>GitLab/ArgoCD/Jenkins CI/CD方案梳理和对比</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="auto" data-theme="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Golang利用context实现一个任务并发框架 | yemilice</title>
+<meta name="keywords" content="前后端">
+<meta name="description" content="Golang利用context实现一个任务并发框架
+消失这么久的原因
+疫情太严重，哥们本来打算在新疆滑雪&#43;吃烤肉度过一个美好的假期，结果没成想给困那里了，这不就尴尬了么，这不，博客没更新，现在我又回来了，哈哈哈哈！">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/golang%E5%88%A9%E7%94%A8context%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E4%BB%BB%E5%8A%A1%E5%B9%B6%E5%8F%91%E6%A1%86%E6%9E%B6/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.9e010bc22ef5794c0560b82f657f315607f24d8b05e0088e95b900c22246f5c0.css" integrity="sha256-ngELwi71eUwFYLgvZX8xVgfyTYsF4AiOlbkAwiJG9cA=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="zh-cn" href="http://localhost:1313/posts/golang%E5%88%A9%E7%94%A8context%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E4%BB%BB%E5%8A%A1%E5%B9%B6%E5%8F%91%E6%A1%86%E6%9E%B6/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+                color-scheme: dark;
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .toc {
+                background: var(--entry);
+            }
+        }
+
+    </style>
+</noscript>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else if (localStorage.getItem("pref-theme") === "light") {
+       document.querySelector("html").dataset.theme = 'light';
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.querySelector("html").dataset.theme = 'dark';
+    } else {
+        document.querySelector("html").dataset.theme = 'light';
+    }
+
+</script><link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" /><style>
+    .main {
+        gap: 1.25rem;
+    }
+
+    .first-entry.home-info {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 2rem;
+        background:
+            radial-gradient(circle at top right, rgba(120, 119, 198, 0.10), transparent 30%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 8px);
+    }
+
+    .home-info .entry-header h1 {
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        letter-spacing: -0.03em;
+    }
+
+    .home-info .entry-content {
+        margin-top: 0.5rem;
+        color: var(--secondary);
+        font-size: 1rem;
+        line-height: 1.9;
+    }
+
+    .home-info .entry-content p {
+        margin: 0 0 0.9rem;
+    }
+
+    .home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .home-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 6.5rem;
+        padding: 0.72rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--theme);
+        color: var(--primary);
+        text-decoration: none;
+        transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .home-action:hover {
+        transform: translateY(-1px);
+        border-color: var(--primary);
+    }
+
+    .home-info .entry-footer {
+        margin-top: 1.25rem;
+    }
+
+    .home-section {
+        margin: 0 0 2rem;
+    }
+
+    .section-heading {
+        margin: 0 auto 1rem;
+        max-width: 860px;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+        margin: 0.45rem 0 0;
+        color: var(--secondary);
+    }
+
+    .home-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .track-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-card {
+        display: block;
+        padding: 1.2rem;
+        background: var(--entry);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .home-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-card-kicker,
+    .home-card-tag,
+    .home-card-date {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .home-card-kicker,
+    .home-card-tag {
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .home-card h3 {
+        margin: 0.8rem 0 0.55rem;
+        font-size: 1.15rem;
+        line-height: 1.5;
+    }
+
+    .home-card h3 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .home-card p {
+        margin: 0;
+        color: var(--secondary);
+        line-height: 1.75;
+    }
+
+    .home-card-topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: var(--secondary);
+    }
+
+    .home-card-meta {
+        margin-top: 0.9rem;
+        color: var(--secondary);
+        font-size: 13px;
+    }
+
+    .featured-card {
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .featured-card h3 {
+        margin: 0.65rem 0 0.45rem;
+        font-size: 1.02rem;
+        line-height: 1.45;
+    }
+
+    .featured-card p {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .featured-card .home-card-meta {
+        margin-top: 0.7rem;
+        font-size: 12px;
+    }
+
+    .home-latest {
+        margin-top: 2rem;
+    }
+
+    .latest-entry {
+        padding: 1rem 1.1rem;
+    }
+
+    .latest-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: var(--secondary);
+        font-size: 12px;
+    }
+
+    .latest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.48rem;
+        border-radius: 999px;
+        background: var(--code-bg);
+        color: var(--secondary);
+    }
+
+    .latest-date {
+        white-space: nowrap;
+    }
+
+    .latest-entry .entry-header h2 {
+        font-size: 1.08rem;
+        line-height: 1.45;
+    }
+
+    .latest-entry .entry-content {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-top: 0.35rem;
+        font-size: 13.5px;
+        line-height: 1.65;
+    }
+
+    .latest-entry .entry-footer {
+        margin-top: 0.55rem;
+        font-size: 12px;
+    }
+
+    .social-icons a {
+        transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .social-icons a:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+
+    .post-entry {
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .post-entry:hover {
+        transform: translateY(-2px);
+        border-color: var(--secondary);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .entry-header h2 {
+        line-height: 1.4;
+    }
+
+    .entry-content {
+        -webkit-line-clamp: 3;
+        font-size: 14.5px;
+        line-height: 1.75;
+    }
+
+    .post-content,
+    .post-single .post-header,
+    .post-single .post-footer {
+        max-width: 860px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img,
+    .post-content video,
+    .post-content audio {
+        display: block;
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .post-content img {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .post-content blockquote {
+        background: var(--code-bg);
+        padding: 1rem 1rem 1rem 1.1rem;
+        border-radius: var(--radius);
+        border-inline-start-width: 0.25rem;
+    }
+
+    .post-content pre {
+        border-radius: var(--radius);
+    }
+
+    @media (max-width: 768px) {
+        .first-entry.home-info {
+            padding: 1.4rem;
+        }
+
+        .track-grid,
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .latest-topline {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .home-actions {
+            gap: 0.6rem;
+        }
+
+        .home-action {
+            width: 100%;
+        }
+    }
+</style>
+<meta property="og:url" content="http://localhost:1313/posts/golang%E5%88%A9%E7%94%A8context%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E4%BB%BB%E5%8A%A1%E5%B9%B6%E5%8F%91%E6%A1%86%E6%9E%B6/">
+  <meta property="og:site_name" content="yemilice">
+  <meta property="og:title" content="Golang利用context实现一个任务并发框架">
+  <meta property="og:description" content="Golang利用context实现一个任务并发框架 消失这么久的原因 疫情太严重，哥们本来打算在新疆滑雪&#43;吃烤肉度过一个美好的假期，结果没成想给困那里了，这不就尴尬了么，这不，博客没更新，现在我又回来了，哈哈哈哈！">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-03-20T15:57:48+00:00">
+    <meta property="article:modified_time" content="2020-03-20T15:57:48+00:00">
+    <meta property="article:tag" content="前后端">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Golang利用context实现一个任务并发框架">
+  <meta name="twitter:description" content="Golang利用context实现一个任务并发框架 消失这么久的原因 疫情太严重，哥们本来打算在新疆滑雪&#43;吃烤肉度过一个美好的假期，结果没成想给困那里了，这不就尴尬了么，这不，博客没更新，现在我又回来了，哈哈哈哈！">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Golang利用context实现一个任务并发框架",
+      "item": "http://localhost:1313/posts/golang%E5%88%A9%E7%94%A8context%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E4%BB%BB%E5%8A%A1%E5%B9%B6%E5%8F%91%E6%A1%86%E6%9E%B6/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Golang利用context实现一个任务并发框架",
+  "name": "Golang利用context实现一个任务并发框架",
+  "description": "Golang利用context实现一个任务并发框架 消失这么久的原因 疫情太严重，哥们本来打算在新疆滑雪+吃烤肉度过一个美好的假期，结果没成想给困那里了，这不就尴尬了么，这不，博客没更新，现在我又回来了，哈哈哈哈！\n",
+  "keywords": [
+    "前后端"
+  ],
+  "articleBody": "Golang利用context实现一个任务并发框架 消失这么久的原因 疫情太严重，哥们本来打算在新疆滑雪+吃烤肉度过一个美好的假期，结果没成想给困那里了，这不就尴尬了么，这不，博客没更新，现在我又回来了，哈哈哈哈！\n我要实现个什么玩意儿 有一个需求，简单的说就是我要写一个任务管理框架，主要功能有任务开启，任务关闭，任务监控等等。说的抽象点，就是我要用Golang写一个任务管理的功能，任务很可能有多个，并且我想停任务就停任务，想开始任务我就开始任务！我不要你觉得，我要我觉得！\n为什么我要用Golang 众所周知，golang这东西，有个黑科技，叫goroutine，这东西很牛逼，牛逼在哪儿呢？简单的说，快，小，短！协程切换快，占用资源少，并且，异步的，可以开多个，直接一个go 关键字就给人家打开了，多棒！\n实际需求分析 结合我们上面的任务需求，实现一个任务开始，任务停止的逻辑，这就说明，任务肯定不只有一个，并且任务都在后台，我们该怎么去监控，或者去管理这个go任务，或者go函数呢，golang提供了很多解决办法，例如WaitGroup，context等方法。\n思考一下，我们的这个需求，任务都是跑在后台的异步并发逻辑，这就说明不只一个任务会被启动和停止，这样对我们的任务管理是一个很大的挑战，因为任务都是在后台隐秘执行的，如果是一般逻辑，我们要停止任务，首先要找到任务的pid，然后kill任务进程，这是一个完整的结束任务的流程。\n回到我们这个需求，基本的流程就是：\n发送一个任务请求(开启任务/停止任务) -\u003e 接收到任务请求 -\u003e 执行任务请求\n思考一下，如果，我们开启任务之后，任务进入后台，那么，我们在停止任务的时候，怎么保证，能够找到这个任务，精准的打击（停止）它呢？看了题目你应该就知道了，用context就好了。下面我就来介绍一下它吧。\n主角context介绍 网上很多博客介绍它，我粗粗看了一眼，非常抽象，很多人再一描述，就更麻烦更抽象了。我这里不说的太麻烦，简单描述一下，这个东西context，是干嘛呢，你们理解一下株连，连坐这两个词汇，这个东西相当于就是锁链，铁锁连舟，不进则退，说明白点，就是一个串连上下文的类似信号传递的玩意儿。每个调用链上的函数都要以它作为函数进行传递，举个例子,“株九族\"这个词，是因为一个人犯罪，结果家人都因为他被砍了头，这个犯罪的人，就是父context，其他因为他被杀的人，就是子context，还可能有孙context，他被砍头了，其他人也得跟着一起死，用代码表示一波\n// 这是儿子函数 func gen(ctx context.Context) \u003c-chan int { dst := make(chan int) n := 1 go func() { for { select { // 接收到爹挂了的消息 case \u003c-ctx.Done(): fmt.Println(\"儿子被砍头了。\") // 退出任务 return case dst \u003c- n: n++ time.Sleep(time.Second * 1) } } }() return dst } // 这是爹函数 fun test() { ctx, cancel := context.WithCancel(context.Background()) // 让我造个儿子，给我儿子传个ctx intChan := gen(ctx) // 我被干了，cancel是结束 defer Cancel() } 这下说的明白了么？其实context还有很多别的，例如timeout之类的，但是那个是我后面准备写的，这一节就不写这些了。\n实现我们的需求 我们的武器context已经准备好了，大概的使用逻辑我们也明白了，现在你们可以看到，我们只要拿到主函数（爹函数）的ctx和cancel，我们就可以控制子函数（儿子函数）的死活，我们在开发当中，任务的状态是不断在变化的，一个爹对应一个儿子，但是可能有多个任务，多个任务我们该怎么管理它？\n在一般的开发任务中，我们习惯将任务记录到数据库当中，然后在开发当中不停的遍历数据库，去判断任务的状态到底是开启还是停止，这里我们要考虑到，频繁遍历数据库，会不会带来大量的访问堆积？还是否有别的解决办法？\n我的解决方案 这次开发中，我选择定义一个全局变量的主map，并且定义一个任务的struct类型，代码如下\n// 全局map var jobmap = make(map[string]interface{}) //Job 任务 type Jobs struct { ID string Status int Ctx context.Context Cancel context.CancelFunc } 然后我选择在任务开始的时候（创造儿子的时候），将信息填充，修改test代码如下\nfunc test() { var jobs Jobs ctx, cancel := context.WithCancel(context.Background()) // 造一个儿子 intChan := gen(ctx) // 任务开始了 fmt.Println(\"start job\") // 重要的东西传进去 jobs.Status = 1 jobs.Cancel = cancel jobs.Ctx = ctx // 定义一个任务id，这个可以用uuid，或者随便整个别的 jobs.ID = \"sdads\" m1[\"sdads\"] = jobs // 阻塞任务，假装任务执行很久 for n := range intChan { fmt.Println(n) if n == 1000 { break } } 再然后，我选择写一个停止函数（砍头函数）\nfunc stopGetmi(id string) { //把任务停掉 fmt.Println(\"stop jobs\") jobss := m1[id] //interface 转 struct op, ok := jobss.(Jobs) // 调用砍头函数cancel defer op.Cancel() } 进行测试\nfunc main() { go test() go stopGetmi(\"sdads\") time.Sleep(time.Second * 200) } 发现任务执行结果\n这样你就完成了干掉老爹，也干掉儿子的素质操作。\n总结 主要是context的基础和说明，其实context我还是推荐大家去看看原版，我这里写的太过于简单，不过这篇博客，也是我记录一下自己开发中遇到的难题，当时看网上没有类似的说明，于是写了这篇博客，希望大家多多包涵。\n祝大家都能躲过瘟疫，我们终究会在春花花开的地方相见。\n",
+  "wordCount" : "1971",
+  "inLanguage": "zh-cn",
+  "datePublished": "2020-03-20T15:57:48Z",
+  "dateModified": "2020-03-20T15:57:48Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/golang%E5%88%A9%E7%94%A8context%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E4%BB%BB%E5%8A%A1%E5%B9%B6%E5%8F%91%E6%A1%86%E6%9E%B6/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "yemilice",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="header-nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="yemilice (Alt + H)">yemilice</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" class="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu" class="menu">
+            <li>
+                <a href="http://localhost:1313/aboutme/" title="关于我">
+                    <span>关于我</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/archives/" title="归档">
+                    <span>归档</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/categories/" title="分类">
+                    <span>分类</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="搜索 (Alt &#43; /)" accesskey=/>
+                    <span>搜索</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="标签">
+                    <span>标签</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+    <header class="post-header">
+        <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    <a href='http://localhost:1313/'>Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="http://localhost:1313/posts/">Posts</a></nav>
+        <h1 class="post-title entry-hint-parent">
+            Golang利用context实现一个任务并发框架
+        </h1>
+        <div class="post-meta"><span title='2020-03-20 15:57:48 +0000 UTC'>March 20, 2020</span>&nbsp;·&nbsp;<span>4 min</span>&nbsp;·&nbsp;<span>1971 words</span>
+
+</div>
+    </header> <details class="toc" >
+    <summary accesskey="c" title="(Alt + C)">
+        <span class="title">Table of Contents</span>
+    </summary>
+
+    <div class="inner"><ul>
+            <li>
+                <a href="#golang%e5%88%a9%e7%94%a8context%e5%ae%9e%e7%8e%b0%e4%b8%80%e4%b8%aa%e4%bb%bb%e5%8a%a1%e5%b9%b6%e5%8f%91%e6%a1%86%e6%9e%b6" aria-label="Golang利用context实现一个任务并发框架">Golang利用context实现一个任务并发框架</a><ul>
+                    
+            <li>
+                <a href="#%e6%b6%88%e5%a4%b1%e8%bf%99%e4%b9%88%e4%b9%85%e7%9a%84%e5%8e%9f%e5%9b%a0" aria-label="消失这么久的原因">消失这么久的原因</a></li>
+            <li>
+                <a href="#%e6%88%91%e8%a6%81%e5%ae%9e%e7%8e%b0%e4%b8%aa%e4%bb%80%e4%b9%88%e7%8e%a9%e6%84%8f%e5%84%bf" aria-label="我要实现个什么玩意儿">我要实现个什么玩意儿</a></li>
+            <li>
+                <a href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e6%88%91%e8%a6%81%e7%94%a8golang" aria-label="为什么我要用Golang">为什么我要用Golang</a></li>
+            <li>
+                <a href="#%e5%ae%9e%e9%99%85%e9%9c%80%e6%b1%82%e5%88%86%e6%9e%90" aria-label="实际需求分析">实际需求分析</a></li>
+            <li>
+                <a href="#%e4%b8%bb%e8%a7%92context%e4%bb%8b%e7%bb%8d" aria-label="主角context介绍">主角context介绍</a></li>
+            <li>
+                <a href="#%e5%ae%9e%e7%8e%b0%e6%88%91%e4%bb%ac%e7%9a%84%e9%9c%80%e6%b1%82" aria-label="实现我们的需求">实现我们的需求</a><ul>
+                    
+            <li>
+                <a href="#%e6%88%91%e7%9a%84%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88" aria-label="我的解决方案">我的解决方案</a></li></ul>
+            </li>
+            <li>
+                <a href="#%e6%80%bb%e7%bb%93" aria-label="总结">总结</a>
+            </li>
+        </ul>
+        </li>
+        </ul>
+    </div>
+</details>
+
+    <div class="post-content md-content"><h1 id="golang利用context实现一个任务并发框架">Golang利用context实现一个任务并发框架<a hidden class="anchor" aria-hidden="true" href="#golang利用context实现一个任务并发框架">#</a></h1>
+<h2 id="消失这么久的原因">消失这么久的原因<a hidden class="anchor" aria-hidden="true" href="#消失这么久的原因">#</a></h2>
+<p>疫情太严重，哥们本来打算在新疆滑雪+吃烤肉度过一个美好的假期，结果没成想给困那里了，这不就尴尬了么，这不，博客没更新，现在我又回来了，哈哈哈哈！</p>
+<h2 id="我要实现个什么玩意儿">我要实现个什么玩意儿<a hidden class="anchor" aria-hidden="true" href="#我要实现个什么玩意儿">#</a></h2>
+<p>有一个需求，简单的说就是我要写一个任务管理框架，主要功能有任务开启，任务关闭，任务监控等等。说的抽象点，就是我要用Golang写一个任务管理的功能，任务很可能有多个，并且我想停任务就停任务，想开始任务我就开始任务！我不要你觉得，我要我觉得！</p>
+<h2 id="为什么我要用golang">为什么我要用Golang<a hidden class="anchor" aria-hidden="true" href="#为什么我要用golang">#</a></h2>
+<p>众所周知，golang这东西，有个黑科技，叫goroutine，这东西很牛逼，牛逼在哪儿呢？简单的说，快，小，短！协程切换快，占用资源少，并且，异步的，可以开多个，直接一个go 关键字就给人家打开了，多棒！</p>
+<h2 id="实际需求分析">实际需求分析<a hidden class="anchor" aria-hidden="true" href="#实际需求分析">#</a></h2>
+<p>结合我们上面的任务需求，实现一个任务开始，任务停止的逻辑，这就说明，任务肯定不只有一个，并且任务都在后台，我们该怎么去监控，或者去管理这个go任务，或者go函数呢，golang提供了很多解决办法，例如WaitGroup，context等方法。<br>
+思考一下，我们的这个需求，任务都是跑在后台的异步并发逻辑，这就说明不只一个任务会被启动和停止，这样对我们的任务管理是一个很大的挑战，因为任务都是在后台隐秘执行的，如果是一般逻辑，我们要停止任务，首先要找到任务的pid，然后kill任务进程，这是一个完整的结束任务的流程。<br>
+回到我们这个需求，基本的流程就是：</p>
+<p>发送一个任务请求(开启任务/停止任务) -&gt; 接收到任务请求 -&gt; 执行任务请求</p>
+<p>思考一下，如果，我们开启任务之后，任务进入后台，那么，我们在停止任务的时候，怎么保证，能够找到这个任务，精准的打击（停止）它呢？看了题目你应该就知道了，用context就好了。下面我就来介绍一下它吧。</p>
+<h2 id="主角context介绍">主角context介绍<a hidden class="anchor" aria-hidden="true" href="#主角context介绍">#</a></h2>
+<p>网上很多博客介绍它，我粗粗看了一眼，非常抽象，很多人再一描述，就更麻烦更抽象了。我这里不说的太麻烦，简单描述一下，这个东西context，是干嘛呢，你们理解一下株连，连坐这两个词汇，这个东西相当于就是锁链，铁锁连舟，不进则退，说明白点，就是一个串连上下文的类似信号传递的玩意儿。每个调用链上的函数都要以它作为函数进行传递，举个例子,&ldquo;株九族&quot;这个词，是因为一个人犯罪，结果家人都因为他被砍了头，这个犯罪的人，就是父context，其他因为他被杀的人，就是子context，还可能有孙context，他被砍头了，其他人也得跟着一起死，用代码表示一波</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 这是儿子函数</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">gen</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>) <span style="color:#f92672">&lt;-</span><span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">int</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">dst</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">int</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 接收到爹挂了的消息</span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">ctx</span>.<span style="color:#a6e22e">Done</span>():
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;儿子被砍头了。&#34;</span>)
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 退出任务</span>
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">dst</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">n</span>:
+</span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">n</span><span style="color:#f92672">++</span>
+</span></span><span style="display:flex;"><span>				<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">dst</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 这是爹函数</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fun</span> <span style="color:#a6e22e">test</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">cancel</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">WithCancel</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Background</span>())
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 让我造个儿子，给我儿子传个ctx</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">intChan</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gen</span>(<span style="color:#a6e22e">ctx</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 我被干了，cancel是结束</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">Cancel</span>()
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这下说的明白了么？其实context还有很多别的，例如timeout之类的，但是那个是我后面准备写的，这一节就不写这些了。</p>
+<h2 id="实现我们的需求">实现我们的需求<a hidden class="anchor" aria-hidden="true" href="#实现我们的需求">#</a></h2>
+<p>我们的武器context已经准备好了，大概的使用逻辑我们也明白了，现在你们可以看到，我们只要拿到主函数（爹函数）的ctx和cancel，我们就可以控制子函数（儿子函数）的死活，我们在开发当中，任务的状态是不断在变化的，一个爹对应一个儿子，但是可能有多个任务，多个任务我们该怎么管理它？<br>
+在一般的开发任务中，我们习惯将任务记录到数据库当中，然后在开发当中不停的遍历数据库，去判断任务的状态到底是开启还是停止，这里我们要考虑到，频繁遍历数据库，会不会带来大量的访问堆积？还是否有别的解决办法？</p>
+<h3 id="我的解决方案">我的解决方案<a hidden class="anchor" aria-hidden="true" href="#我的解决方案">#</a></h3>
+<p>这次开发中，我选择定义一个全局变量的主map，并且定义一个任务的struct类型，代码如下</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 全局map</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">jobmap</span> = make(<span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">string</span>]<span style="color:#66d9ef">interface</span>{})
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//Job 任务</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Jobs</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">ID</span>     <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Status</span> <span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Ctx</span>    <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Cancel</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">CancelFunc</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>然后我选择在任务开始的时候（创造儿子的时候），将信息填充，修改test代码如下</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">test</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">jobs</span> <span style="color:#a6e22e">Jobs</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">cancel</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">WithCancel</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Background</span>())
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 造一个儿子</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">intChan</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gen</span>(<span style="color:#a6e22e">ctx</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 任务开始了</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;start job&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 重要的东西传进去</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">jobs</span>.<span style="color:#a6e22e">Status</span> = <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">jobs</span>.<span style="color:#a6e22e">Cancel</span> = <span style="color:#a6e22e">cancel</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">jobs</span>.<span style="color:#a6e22e">Ctx</span> = <span style="color:#a6e22e">ctx</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 定义一个任务id，这个可以用uuid，或者随便整个别的</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">jobs</span>.<span style="color:#a6e22e">ID</span> = <span style="color:#e6db74">&#34;sdads&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">m1</span>[<span style="color:#e6db74">&#34;sdads&#34;</span>] = <span style="color:#a6e22e">jobs</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 阻塞任务，假装任务执行很久</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">intChan</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">n</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">n</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">1000</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span></code></pre></div><p>再然后，我选择写一个停止函数（砍头函数）</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">stopGetmi</span>(<span style="color:#a6e22e">id</span> <span style="color:#66d9ef">string</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">//把任务停掉</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;stop jobs&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">jobss</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m1</span>[<span style="color:#a6e22e">id</span>]
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//interface 转 struct</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">op</span>, <span style="color:#a6e22e">ok</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">jobss</span>.(<span style="color:#a6e22e">Jobs</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 调用砍头函数cancel</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">op</span>.<span style="color:#a6e22e">Cancel</span>()
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>进行测试</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#a6e22e">test</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#a6e22e">stopGetmi</span>(<span style="color:#e6db74">&#34;sdads&#34;</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">200</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>发现任务执行结果<br>
+<img loading="lazy" src="https://blog-1256169066.cos.ap-chengdu.myqcloud.com/images/3.png"><br>
+这样你就完成了干掉老爹，也干掉儿子的素质操作。</p>
+<h2 id="总结">总结<a hidden class="anchor" aria-hidden="true" href="#总结">#</a></h2>
+<p>主要是context的基础和说明，其实context我还是推荐大家去看看原版，我这里写的太过于简单，不过这篇博客，也是我记录一下自己开发中遇到的难题，当时看网上没有类似的说明，于是写了这篇博客，希望大家多多包涵。<br>
+祝大家都能躲过瘟疫，我们终究会在春花花开的地方相见。</p>
+
+
+    </div>
+
+    <footer class="post-footer">
+        <ul class="post-tags">
+            <li><a href="http://localhost:1313/tags/%E5%89%8D%E5%90%8E%E7%AB%AF/">前后端</a></li>
+        </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/golang-%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AA-crontab%E5%AE%9A%E6%97%B6%E5%99%A81/">
+    <span class="title">« </span>
+    <span>Golang 完成一个 Crontab定时器（1）</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/etcd%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E9%80%89%E4%B8%BB%E6%9C%BA%E5%88%B6-golang/">
+    <span class="title"> »</span>
+    <span>ETCD分布式锁实现选主机制(Golang)</span>
+  </a>
+</nav>
+
+    </footer><div id="waline-pv-uv" style="text-align: center; padding: 10px 0; color: #999; font-size: 12px;">
+    <span id="waline-pv">PV: <strong>0</strong></span>
+    <span style="margin: 0 10px;">|</span>
+    <span id="waline-uv">UV: <strong>0</strong></span>
+</div>
+
+<script>
+    
+    function getCurrentPageKey() {
+        return 'waline_page_' + window.location.pathname;
+    }
+
+    
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('waline_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('waline_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+
+    
+    function updatePVUV() {
+        const pageKey = getCurrentPageKey();
+        const visitorId = getOrCreateVisitorId();
+
+        
+        let pageData = JSON.parse(localStorage.getItem(pageKey) || '{"pv": 0, "visitors": []}');
+
+        
+        pageData.pv = (pageData.pv || 0) + 1;
+
+        
+        if (!pageData.visitors) {
+            pageData.visitors = [];
+        }
+        if (!pageData.visitors.includes(visitorId)) {
+            pageData.visitors.push(visitorId);
+        }
+
+        
+        localStorage.setItem(pageKey, JSON.stringify(pageData));
+
+        
+        const pv = pageData.pv;
+        const uv = pageData.visitors.length;
+
+        const pvElement = document.getElementById('waline-pv');
+        const uvElement = document.getElementById('waline-uv');
+
+        if (pvElement) {
+            pvElement.innerHTML = `PV: <strong>${pv}</strong>`;
+        }
+        if (uvElement) {
+            uvElement.innerHTML = `UV: <strong>${uv}</strong>`;
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updatePVUV);
+    } else {
+        updatePVUV();
+    }
+</script>
+
+<style>
+    #waline-pv-uv strong {
+        color: #333;
+        font-weight: bold;
+    }
+</style>
+<div id="vcomments-box">
+    <div class="comment-tip" style="padding: 10px 0; color: #999; font-size: 14px;">
+        💬 欢迎留言！可以匿名评论，邮箱和网站为可选项。
+    </div>
+    <div id="vcomments"></div>
+</div>
+
+<script type="module">
+    import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+
+    function initWalineComments() {
+        try {
+            init({
+                el: '#vcomments',
+                serverURL: 'https:\/\/walinecomment-two.vercel.app\/',
+                path: window.location.pathname,
+                lang: 'zh-CN',
+                locale: {
+                    nick: '昵称',
+                    mail: '邮箱',
+                    link: '网站'
+                },
+                meta: ['nick', 'mail', 'link'],
+                requiredMeta: [],
+                reaction: false,
+                dark: 'html[data-theme="dark"]'
+            });
+        } catch (error) {
+            console.error('Waline initialization error:', error);
+        }
+    }
+
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWalineComments);
+    } else {
+        initWalineComments();
+    }
+</script>
+
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2026 <a href="http://localhost:1313/">yemilice</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" id="top-link" class="top-link hidden" aria-label="go to top" title="Go to Top (Alt + G)" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevrons-up">
+        <polyline points="17 11 12 6 7 11"></polyline>
+        <polyline points="17 18 12 13 7 18"></polyline>
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var toplink = document.getElementById("top-link");
+    window.onscroll = function () {
+        const scrollThreshold = window.innerHeight;
+        if (document.body.scrollTop > scrollThreshold || document.documentElement.scrollTop > scrollThreshold) {
+            toplink.classList.remove("hidden");
+        } else {
+            toplink.classList.add("hidden");
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        const html = document.querySelector("html");
+        if (html.dataset.theme === "dark") {
+            html.dataset.theme = 'light';
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            html.dataset.theme = 'dark';
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

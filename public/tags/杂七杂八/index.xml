@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>杂七杂八 on yemilice</title>
+    <link>http://localhost:1313/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/</link>
+    <description>Recent content in 杂七杂八 on yemilice</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Tue, 25 Jan 2022 09:02:04 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>2022开年礼物-拿下育碧/EA/动视Offer的随想</title>
+      <link>http://localhost:1313/posts/2022%E5%BC%80%E5%B9%B4%E7%A4%BC%E7%89%A9-%E6%8B%BF%E4%B8%8B%E8%82%B2%E7%A2%A7-%E5%8A%A8%E8%A7%86-eaoffer%E7%9A%84%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Tue, 25 Jan 2022 09:02:04 +0000</pubDate>
+      <guid>http://localhost:1313/posts/2022%E5%BC%80%E5%B9%B4%E7%A4%BC%E7%89%A9-%E6%8B%BF%E4%B8%8B%E8%82%B2%E7%A2%A7-%E5%8A%A8%E8%A7%86-eaoffer%E7%9A%84%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;大家好，好久不见！&lt;/p&gt;
+&lt;p&gt;最近太忙了，实在没时间上来写blog，昨天收获了最后一个offer（育碧），自此，我的跳槽计划完全结束&lt;/p&gt;
+&lt;p&gt;我在一个月的时间拿下了育碧，动视，EA的Offer&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>刷KPI的HR就不要给我发面试邀请了吧</title>
+      <link>http://localhost:1313/posts/%E5%88%B7kpi%E7%9A%84hr%E5%B0%B1%E4%B8%8D%E8%A6%81%E7%BB%99%E6%88%91%E5%8F%91%E9%9D%A2%E8%AF%95%E9%82%80%E8%AF%B7%E4%BA%86%E5%90%A7/</link>
+      <pubDate>Wed, 23 Jun 2021 14:42:49 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%88%B7kpi%E7%9A%84hr%E5%B0%B1%E4%B8%8D%E8%A6%81%E7%BB%99%E6%88%91%E5%8F%91%E9%9D%A2%E8%AF%95%E9%82%80%E8%AF%B7%E4%BA%86%E5%90%A7/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;去年这个时候面试了一家小公司叫&lt;strong&gt;无糖信息&lt;/strong&gt;，大概是叫这个名字&lt;/p&gt;
+&lt;p&gt;面试的体验极差，HR从头到尾都是隐形人，我感觉就是不停的刷KPI的，忽悠你去面试&lt;/p&gt;
+&lt;p&gt;我过去先等了半个小时，那面试官都没来&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>2020的回顾和2021的展望</title>
+      <link>http://localhost:1313/posts/2020%E7%9A%84%E5%9B%9E%E9%A1%BE%E5%92%8C2021%E7%9A%84%E5%B1%95%E6%9C%9B/</link>
+      <pubDate>Mon, 04 Jan 2021 09:13:05 +0000</pubDate>
+      <guid>http://localhost:1313/posts/2020%E7%9A%84%E5%9B%9E%E9%A1%BE%E5%92%8C2021%E7%9A%84%E5%B1%95%E6%9C%9B/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;现在是2021年1月4日早上的九点十四分&lt;/p&gt;
+&lt;p&gt;这是我2021开年第一篇日志，就为2020做一个回顾和2021年做一个展望吧。&lt;/p&gt;
+&lt;h2 id=&#34;回顾2020&#34;&gt;回顾2020&lt;/h2&gt;
+&lt;p&gt;2020其实是一个特殊的年份，想一想似乎大家都在生活当中挣扎。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Elasticsearch大数据量下的优化方法</title>
+      <link>http://localhost:1313/posts/elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/</link>
+      <pubDate>Fri, 09 Oct 2020 09:10:22 +0000</pubDate>
+      <guid>http://localhost:1313/posts/elasticsearch%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F%E4%B8%8B%E7%9A%84%E4%BC%98%E5%8C%96%E6%96%B9%E6%B3%95/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;十一在家待着玩了两天COD，突然想起来似乎放假前有一个Elasticsearch的问题需要处理，的确，现在距离开工也只剩下四天了，哎，假期的日子过的飞快，又到时候说拜拜，又要开始社畜的生活啦，想到心里就万分悲痛。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Python的协程知识</title>
+      <link>http://localhost:1313/posts/python%E7%9A%84%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/</link>
+      <pubDate>Tue, 01 Sep 2020 10:20:47 +0000</pubDate>
+      <guid>http://localhost:1313/posts/python%E7%9A%84%E5%8D%8F%E7%A8%8B%E7%9F%A5%E8%AF%86/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;最近心情一直不是太好，写出来的东西感觉也没有灵感，有些时候做了很多事，但是回想起来感觉自己还是什么都没有做。这是9月份第一次更新blog，也更新一篇相对高级一些的技术吧，有一阵没看Python了，想想还是不要落下了，剧透一下，下一篇文章还是针对Elasticsearch或者是前端框架React的，学习还是不能停下来，最近写歌也有问题，感觉自己什么也写不出来，仿佛失去了灵感，是生活还是时间消磨了我的灵气呢？我不愿意这么想，我会努力的，状态会调整过来的。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>读Python的协程库asyncio源码随想</title>
+      <link>http://localhost:1313/posts/%E8%AF%BBpython%E7%9A%84%E5%8D%8F%E7%A8%8B%E5%BA%93asyncio%E6%BA%90%E7%A0%81%E9%9A%8F%E6%83%B3/</link>
+      <pubDate>Thu, 27 Aug 2020 14:39:33 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E8%AF%BBpython%E7%9A%84%E5%8D%8F%E7%A8%8B%E5%BA%93asyncio%E6%BA%90%E7%A0%81%E9%9A%8F%E6%83%B3/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;其实想了一下，Python有一阵没好好看了，这样不好。刚好前阵子看了一下Golang的协程，我寻思看了那么多协程逻辑，也该看看Python的。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>似乎要沉下心来处理一些事</title>
+      <link>http://localhost:1313/posts/%E4%BC%BC%E4%B9%8E%E8%A6%81%E6%B2%89%E4%B8%8B%E5%BF%83%E6%9D%A5%E5%A4%84%E7%90%86%E4%B8%80%E4%BA%9B%E4%BA%8B/</link>
+      <pubDate>Mon, 24 Aug 2020 16:22:14 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E4%BC%BC%E4%B9%8E%E8%A6%81%E6%B2%89%E4%B8%8B%E5%BF%83%E6%9D%A5%E5%A4%84%E7%90%86%E4%B8%80%E4%BA%9B%E4%BA%8B/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;今天面试感觉不是特别好&lt;/p&gt;
+&lt;p&gt;其实我一直都觉得自己的技术似乎还行，我估摸着&amp;quot;还行&amp;quot;这个定义真的稍微模糊了一点，更多可能就是我什么都懂一些，其实内部什么也不懂&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>出埃及记_普通程序员的买房之路</title>
+      <link>http://localhost:1313/posts/%E5%87%BA%E5%9F%83%E5%8F%8A%E8%AE%B0-%E6%99%AE%E9%80%9A%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E4%B9%B0%E6%88%BF%E4%B9%8B%E8%B7%AF/</link>
+      <pubDate>Mon, 10 Aug 2020 08:56:30 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E5%87%BA%E5%9F%83%E5%8F%8A%E8%AE%B0-%E6%99%AE%E9%80%9A%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E4%B9%B0%E6%88%BF%E4%B9%8B%E8%B7%AF/</guid>
+      <description>&lt;h2 id=&#34;出埃及记-前篇-买房理由&#34;&gt;出埃及记-前篇-买房理由&lt;/h2&gt;
+&lt;p&gt;有时候时间一晃，就过去了4年多，我2016年毕业，现在已经是2020年。&lt;/p&gt;
+&lt;p&gt;按道理说我也是老油条了，不比刚入行的小鲜肉了，但是依旧没个成就，也没个方向。说起买房，无非就是和兄弟朋友推杯换盏中听到的，谁又买了房，谁又结了婚罢了。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Grow_Up</title>
+      <link>http://localhost:1313/posts/grow-up/</link>
+      <pubDate>Tue, 28 Jul 2020 14:38:28 +0000</pubDate>
+      <guid>http://localhost:1313/posts/grow-up/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;有时候觉得自己快要撑不下去&lt;/p&gt;
+&lt;p&gt;但是依旧不能放弃&lt;/p&gt;
+&lt;p&gt;为了爸妈&lt;/p&gt;
+&lt;p&gt;为了自己&lt;/p&gt;
+&lt;p&gt;为了所有人&lt;/p&gt;
+&lt;h2 id=&#34;one&#34;&gt;ONE&lt;/h2&gt;
+&lt;p&gt;温热的咖啡升腾起轻薄的水雾&lt;/p&gt;
+&lt;p&gt;满屏未敲完的代码依旧在提醒&lt;/p&gt;
+&lt;p&gt;忙碌和疲惫的一天即将结束&lt;/p&gt;
+&lt;p&gt;next，即将来到下一个季节&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>恶性循环</title>
+      <link>http://localhost:1313/posts/%E6%81%B6%E6%80%A7%E5%BE%AA%E7%8E%AF/</link>
+      <pubDate>Wed, 17 Jun 2020 12:43:19 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E6%81%B6%E6%80%A7%E5%BE%AA%E7%8E%AF/</guid>
+      <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;p&gt;改 不 了 写 前 言 的 毛 病&lt;/p&gt;
+&lt;p&gt;这 个 月 心 情 很 不 美 丽&lt;/p&gt;
+&lt;p&gt;来 自 心 底 的 呐 喊&lt;/p&gt;
+&lt;p&gt;释 放 出 深 渊 的 野 兽&lt;/p&gt;
+&lt;h2 id=&#34;one&#34;&gt;one&lt;/h2&gt;
+&lt;p&gt;我 得 了 名 为 平 庸 的 不 治 之 症&lt;/p&gt;
+&lt;p&gt;就 让 我 在 灰 暗 的 地 底 死 去&lt;/p&gt;
+&lt;p&gt;双 手 合 十 祈 求 神 明 的 营救&lt;/p&gt;
+&lt;p&gt;看 不 到 的 希 望 的 祷 告 不 会 得 到 回 应&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>这次绩效考评会成为压垮我的稻草么？</title>
+      <link>http://localhost:1313/posts/%E8%BF%99%E6%AC%A1%E7%BB%A9%E6%95%88%E8%80%83%E8%AF%84%E4%BC%9A%E6%88%90%E4%B8%BA%E5%8E%8B%E5%9E%AE%E6%88%91%E7%9A%84%E7%A8%BB%E8%8D%89%E4%B9%88/</link>
+      <pubDate>Tue, 14 Apr 2020 10:06:30 +0000</pubDate>
+      <guid>http://localhost:1313/posts/%E8%BF%99%E6%AC%A1%E7%BB%A9%E6%95%88%E8%80%83%E8%AF%84%E4%BC%9A%E6%88%90%E4%B8%BA%E5%8E%8B%E5%9E%AE%E6%88%91%E7%9A%84%E7%A8%BB%E8%8D%89%E4%B9%88/</guid>
+      <description>&lt;h2 id=&#34;写这篇文章的原因&#34;&gt;写这篇文章的原因&lt;/h2&gt;
+&lt;p&gt;按理说，你们看过我博客的人，都知道，我是一个相当乐观的人，我从来都不会怎么丧气一些事儿，特别是在工作上，我永远都是顶在最前面，有困难bug我来，有难题我来攻关，按理说我就像是一个长者，身经百战，见的多了！那些naive的问题，我都不放在心上，可今天，恩，一个绩效考评，算是让我有了一些感到心累或者说是心寒吧。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
